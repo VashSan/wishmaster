@@ -1,9 +1,11 @@
 {
   "name": "wishmaster",
   "version": "0.0.1",
-  "description": "* Install Node\r * npm -g install typescript\r * npm -g install eslint\r * add excludes to workspace settings",
+  "description": "IRC Bot",
   "main": "app.js",
   "dependencies": {
+    "irc": "^0.5.2",
+    "typescript": "^2.7.1",
     "typescript-collections": "^1.3.2"
   },
   "devDependencies": {},
