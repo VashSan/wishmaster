@@ -1,4 +1,5 @@
 # Wishmaster
+I am learning TypeScript with this project.
 
 ## Setup Workspace
 * Install Node
