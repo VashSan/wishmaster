@@ -13,7 +13,8 @@
             "program": "${workspaceFolder}/app.ts",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
-            ]
+            ],
+            "preLaunchTask": "build"
         }
     ]
 }
