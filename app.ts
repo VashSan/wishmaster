@@ -3,8 +3,6 @@ import { Loopback } from "./src/Plugins/Loopback";
 import * as IRC from "irc";
 import { Configuration } from "./src/Configuration";
 
-//import * as Collections from "typescript-collections";
-
 class Startup {
     public static main(): number {
 
@@ -19,6 +17,10 @@ class Startup {
             }
         );
 
+        let proc = new MP.MessageProcessor();
+        
+        let plg = new Loopback(null);
+        proc.registerPlugin(plg);
 
         client.addListener("raw", message => {
             console.log("raw: ", message);
@@ -29,7 +31,8 @@ class Startup {
         });
 
         client.addListener("message", (from, to, message) => {
-            console.log(from + " => " + to + ": " + message);
+            let m = new MP.Message({from: from, channel: to, text: message});
+            proc.add(m);
         });
 
         client.connect(() => {
@@ -39,27 +42,6 @@ class Startup {
             client.say(config.channel, "I'm a bot!");
 
         });
-
-        let proc = new MP.MessageProcessor();
-        let plg: MP.IPlugin = new Loopback(null);
-
-        proc.registerPlugin(plg);
-
-        let m1: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd1" });
-        let m2: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd2" });
-        let m3: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd3" });
-        let m4: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd4" });
-        let m5: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd5" });
-        let m6: MP.Message = new MP.Message({ channel: "1", from: "a", text: "asd6" });
-
-        console.log(m1.toString());
-
-        proc.add(m1);
-        proc.add(m2);
-        proc.add(m3);
-        proc.add(m4);
-        proc.add(m5);
-        proc.add(m6);
 
         return 0;
     }
