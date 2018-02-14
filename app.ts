@@ -19,8 +19,11 @@ class Startup {
 
         let proc = new MP.MessageProcessor();
         
-        let plg = new Loopback(null);
+        let plg = new Loopback("");
         proc.registerPlugin(plg);
+
+        let plg2 = new Loopback("test");
+        proc.registerPlugin(plg2);
 
         client.addListener("raw", message => {
             console.log("raw: ", message);
@@ -32,7 +35,7 @@ class Startup {
 
         client.addListener("message", (from, to, message) => {
             let m = new MP.Message({from: from, channel: to, text: message});
-            proc.add(m);
+            proc.process(m);
         });
 
         client.connect(() => {

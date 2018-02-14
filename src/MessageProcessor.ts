@@ -1,11 +1,11 @@
-import * as Collections from 'typescript-collections';
+import { isNullOrUndefined } from "util";
 
 export interface IPlugin {
     trigger: string;
-    act(message: Message): BotAnswer;
+    act(message: Message): IPluginResponse;
 }
 
-export class BotAnswer {
+export interface IPluginResponse {
     message: Message;
 }
 
@@ -25,47 +25,61 @@ export class Message {
 }
 
 export class MessageProcessor {
-    messageProcessingThreshold = 5;
-    messageQueue = new Collections.Queue<Message>();
-    plugins = new Collections.LinkedList<IPlugin>();
-
-    constructor() {
-
-    }
-
-    add(message: Message) {
-        this.messageQueue.enqueue(message);
-        if (this.messageQueue.size() % this.messageProcessingThreshold == 0) {
-            this.processMessages();
-        }
-    }
+    plugins = new Map<string, Set<IPlugin>>();
 
     registerPlugin(plugin: IPlugin) {
-        if (plugin.trigger != null) {
-            plugin.trigger = plugin.trigger.toLowerCase();
+        if (plugin.trigger == null){
+            return;
+        }
+        
+        let trigger = plugin.trigger.toLowerCase().trim();
+
+        let pluginSet : Set<IPlugin>;
+        if (this.plugins.has(trigger)){
+            pluginSet = this.plugins.get(trigger);
+        } else {
+            pluginSet = new Set<IPlugin>();
+            this.plugins.set(trigger, pluginSet);
         }
 
-        this.plugins.forEach(function (p) {
-            if (p.trigger == plugin.trigger) {
-                throw "Can not add plugin because same trigger exists already";
-            }
-        });
-
-        this.plugins.add(plugin);
+        pluginSet.add(plugin);
     }
 
-    private processMessages() {
+    process(message: Message) {
+        let alwaysTriggered = this.plugins.get("");
+        this.invokePlugins(message, alwaysTriggered);
 
-        while (this.messageQueue.size() > 0) {
-            let msg = this.messageQueue.dequeue();
-            this.plugins.forEach(function (p) {
-                let words = msg.text.split(" ", 1);
-                if (p.trigger == null || words[0].toLowerCase() == p.trigger) {
-                    p.act(msg);
-                }
-            });
+        let trigger = this.getTrigger(message);
+        if (trigger == null){
+            return;
         }
 
+        let thisTimeTriggered = this.plugins.get(trigger);
+        this.invokePlugins(message, thisTimeTriggered);
+    }
+
+    private getTrigger(msg: Message) : string{
+        if(!msg.text.startsWith("!")){
+            return null;
+        }
+
+        let spaceIndex = msg.text.indexOf(" ");
+        if (spaceIndex == 1){
+            return null; // second char is " " ... thats not triggering stuff
+        }
+        if (spaceIndex == -1){
+            return msg.text; // trigger is one word only
+        }
+
+        return msg.text.substring(1, spaceIndex).toLowerCase();
+    }
+
+    private invokePlugins(msg: Message, plugins : Set<IPlugin> ){
+        if (!isNullOrUndefined(plugins)){
+            for(let p of plugins){
+                p.act(msg);
+            }
+        }
     }
 }
 

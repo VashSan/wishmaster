@@ -7,7 +7,7 @@ export class Loopback implements mp.IPlugin {
         this.trigger = trigger;
     }
 
-    act(msg: mp.Message) : mp.BotAnswer {
+    act(msg: mp.Message) : mp.IPluginResponse {
         let str : string = msg.toString();
         console.log(str);
 
