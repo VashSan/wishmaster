@@ -1,3 +1,4 @@
+import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 
 export interface IFeature {
@@ -25,9 +26,14 @@ export class Message {
 }
 
 export class MessageProcessor {
-    plugins = new Map<string, Set<IFeature>>();
+    private plugins = new Map<string, Set<IFeature>>();
+    private client: IRC.Client;
 
-    registerPlugin(plugin: IFeature) {
+    constructor(client: IRC.Client){
+        this.client = client;
+    }
+
+    public registerPlugin(plugin: IFeature) {
         if (plugin.trigger == null){
             return;
         }
@@ -45,7 +51,7 @@ export class MessageProcessor {
         pluginSet.add(plugin);
     }
 
-    process(message: Message) {
+    public process(message: Message) {
         let alwaysTriggered = this.plugins.get("");
         this.invokePlugins(message, alwaysTriggered);
 
@@ -68,7 +74,7 @@ export class MessageProcessor {
             return null; // second char is " " ... thats not triggering stuff
         }
         if (spaceIndex == -1){
-            return msg.text; // trigger is one word only
+            return msg.text.substring(1); // trigger is one word only
         }
 
         return msg.text.substring(1, spaceIndex).toLowerCase();
@@ -77,8 +83,19 @@ export class MessageProcessor {
     private invokePlugins(msg: Message, plugins : Set<IFeature> ){
         if (!isNullOrUndefined(plugins)){
             for(let p of plugins){
-                p.act(msg);
+                let response = p.act(msg);
+                this.processResponse(response);
             }
+        }
+    }
+
+    private processResponse(r: IFeatureResponse){
+        if (r == null){
+            return;
+        }
+
+        if(!isNullOrUndefined(r.message) && !isNullOrUndefined(r.message.text)){
+            this.client.say(r.message.channel, r.message.text);
         }
     }
 }

@@ -1,6 +1,6 @@
 import * as MP from "./src/MessageProcessor";
-import { Loopback } from "./src/Features/Loopback";
 import * as IRC from "irc";
+import { Loopback } from "./src/Features/Loopback";
 import { Configuration } from "./src/Configuration";
 
 class Startup {
@@ -17,7 +17,7 @@ class Startup {
             }
         );
 
-        let proc = new MP.MessageProcessor();
+        let proc = new MP.MessageProcessor(client);
         
         let plg = new Loopback("");
         proc.registerPlugin(plg);
