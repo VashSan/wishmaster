@@ -1,11 +1,11 @@
 import { isNullOrUndefined } from "util";
 
-export interface IPlugin {
+export interface IFeature {
     trigger: string;
-    act(message: Message): IPluginResponse;
+    act(message: Message): IFeatureResponse;
 }
 
-export interface IPluginResponse {
+export interface IFeatureResponse {
     message: Message;
 }
 
@@ -25,20 +25,20 @@ export class Message {
 }
 
 export class MessageProcessor {
-    plugins = new Map<string, Set<IPlugin>>();
+    plugins = new Map<string, Set<IFeature>>();
 
-    registerPlugin(plugin: IPlugin) {
+    registerPlugin(plugin: IFeature) {
         if (plugin.trigger == null){
             return;
         }
         
         let trigger = plugin.trigger.toLowerCase().trim();
 
-        let pluginSet : Set<IPlugin>;
+        let pluginSet : Set<IFeature>;
         if (this.plugins.has(trigger)){
             pluginSet = this.plugins.get(trigger);
         } else {
-            pluginSet = new Set<IPlugin>();
+            pluginSet = new Set<IFeature>();
             this.plugins.set(trigger, pluginSet);
         }
 
@@ -74,7 +74,7 @@ export class MessageProcessor {
         return msg.text.substring(1, spaceIndex).toLowerCase();
     }
 
-    private invokePlugins(msg: Message, plugins : Set<IPlugin> ){
+    private invokePlugins(msg: Message, plugins : Set<IFeature> ){
         if (!isNullOrUndefined(plugins)){
             for(let p of plugins){
                 p.act(msg);

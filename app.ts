@@ -1,5 +1,5 @@
 import * as MP from "./src/MessageProcessor";
-import { Loopback } from "./src/Plugins/Loopback";
+import { Loopback } from "./src/Features/Loopback";
 import * as IRC from "irc";
 import { Configuration } from "./src/Configuration";
 
