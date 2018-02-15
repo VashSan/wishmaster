@@ -39,10 +39,15 @@ class Startup {
         });
 
         client.connect(() => {
-
+            
             client.join(config.channel);
 
-            client.say(config.channel, "I'm a bot!");
+            var helloMessage = [
+                "Master", "Apprentice", "Heartborne", 
+                "7th Seeker", "Warrior", "Disciple", "Wishmaster"];
+            var hi = (Math.random() * 7 | 0);
+
+            client.say(config.channel, helloMessage[hi]);
 
         });
 
