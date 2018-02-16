@@ -1,3 +1,5 @@
+///<reference path="./src/sub/irc-types/irc.d.ts" />
+
 import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
 import { Loopback } from "./src/Features/Loopback";
@@ -7,6 +9,7 @@ class Startup {
     public static main(): number {
 
         let config = new Configuration();
+
 
         let client = new IRC.Client(
             config.server,
@@ -38,7 +41,7 @@ class Startup {
             proc.process(m);
         });
 
-        client.connect(() => {
+        client.connect(0, () => {
             
             client.join(config.channel);
 
