@@ -28,4 +28,8 @@ export class Configuration {
         (<any>Object).assign(this, configObj);
     }
 
+    public getConfigDir() : string {
+        return this.configDir;
+    }
+
 }

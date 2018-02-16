@@ -4,6 +4,7 @@ import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
 import { Loopback } from "./src/Features/Loopback";
 import { Configuration } from "./src/Configuration";
+import { Harvest } from "./src/Features/Harvest";
 
 class Startup {
     public static main(): number {
@@ -28,6 +29,9 @@ class Startup {
         let plg2 = new Loopback("test");
         proc.registerPlugin(plg2);
 
+        let plg3 = new Harvest(config);
+        proc.registerPlugin(plg3);
+
         client.addListener("raw", message => {
             console.log("raw: ", message);
         });
@@ -50,7 +54,7 @@ class Startup {
                 "7th Seeker", "Warrior", "Disciple", "Wishmaster"];
             var hi = (Math.random() * 7 | 0);
 
-            client.say(config.channel, helloMessage[hi]);
+            client.say(config.channel, `/me ${helloMessage[hi]}`);
 
         });
 
