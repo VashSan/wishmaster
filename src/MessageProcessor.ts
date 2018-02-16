@@ -2,7 +2,7 @@ import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 
 export interface IFeature {
-    trigger: string;
+    readonly trigger: string;
     act(message: Message): IFeatureResponse;
 }
 
