@@ -1,3 +1,6 @@
 [submodule "src/sub/irc-types"]
 	path = src/sub/irc-types
 	url = https://gist.github.com/4505821403966fb4f94d7b45b7b174a8.git
+[submodule "src/sub/typescript-node-definitions"]
+	path = src/sub/typescript-node-definitions
+	url = https://github.com/soywiz/typescript-node-definitions.git
