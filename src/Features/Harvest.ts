@@ -47,7 +47,33 @@ export class Harvest implements mp.IFeature {
     }
 
     private updateLog(msg: mp.Message) {
-        this.db.log.insert(msg, (err, newDoc) => {
+        let emotes = [];
+        msg.tags.emoteList.forEach(e => {
+            emotes.push({
+                id: e.id,
+                start: e.start,
+                end: e.end
+            });
+        });
+
+        let log = {
+            from: msg.from,
+            channel: msg.channel,
+            text: msg.text,
+            bits: msg.tags.bits,
+            color: msg.tags.color,
+            emoteList: emotes,
+            isEmoteOnly: msg.tags.isEmoteOnly,
+            isMod: msg.tags.isMod,
+            isSub: msg.tags.isSubscriber,
+            isTurbo: msg.tags.isTurbo,
+            msgId: msg.tags.messageId,
+            userId: msg.tags.userId,
+            msgReceivedTime: msg.tags.serverReceivedMsgTime,
+            m: msg.tags.roomId
+        };
+
+        this.db.log.insert(log, (err, newDoc) => {
             if (err != null) {
                 console.error("Error when inserting message:", err);
             }

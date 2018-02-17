@@ -162,6 +162,9 @@ export class Tags {
     }
 
     private parseEmotes(value: string){
+        if(value == ""){
+            return;
+        }
         // emoteDefintion[/emoteDefintion]...
         let emotes = value.split("/");
         
