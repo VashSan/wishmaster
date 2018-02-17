@@ -76,7 +76,7 @@ export class Tags {
             case "display-name":
                 this.displayName = value;
                 break;
-            case "emoteOnly":
+            case "emote-only":
                 this.isEmoteOnly = this.parseBool(value);
                 break;
             case "emotes":
@@ -107,7 +107,7 @@ export class Tags {
                 this.userType = this.parseUserType(value);
                 break;
             default:
-                console.warn("Unknown tag: ", value);
+                console.error(`Unknown tag: '${name}' = '${value}'`);
         }
     }
 
