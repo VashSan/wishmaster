@@ -34,7 +34,6 @@ export class Tags {
     public isMod: boolean = false;
     public roomId: number = 0;
     public isSubscriber: boolean = false;
-    public messageReceived: number = 0;
     public serverReceivedMsgTime: number = 0;
     public isTurbo: boolean = false;
     public userId: number = 0;
@@ -153,7 +152,10 @@ export class Tags {
         
         for (const badge of bList) {
             let b = badge.split("/");
-            result.push(b[0]);
+
+            if(b[0].length > 0) {
+                result.push(b[0]);
+            }
         }
 
         return result;
