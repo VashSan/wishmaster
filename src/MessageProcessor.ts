@@ -11,8 +11,36 @@ export interface IFeatureResponse {
     message: Message;
 }
 
+export class Emote {
+    id: number;
+    start: number;
+    end: number;
+}
+
+export enum UserType {
+    Normal,
+    Moderator,
+    GlobalMod,
+    Admin,
+    Staff
+}
+
 export class Tags {
-    public color = "";
+    public color: string = "";
+    public displayName: string = "";
+    public isEmoteOnly: boolean = false;
+    public emoteList: Set<Emote> = new Set<Emote>();
+    public messageId: string = "";
+    public isMod: boolean = false;
+    public roomId: number = 0;
+    public isSubscriber: boolean = false;
+    public messageReceived: number = 0;
+    public serverReceivedMsgTime: number = 0;
+    public isTurbo: boolean = false;
+    public userId: number = 0;
+    public userType: UserType = UserType.Normal;
+    public bits: number = 0;
+    public badgeList: string[] = [];
 
     constructor(tags: string){
         if(!tags.startsWith("@")){
@@ -30,27 +58,134 @@ export class Tags {
             let tagTuple = tag.split("=");
             let tagName = tagTuple[0];
             let tagValue = tagTuple[1];
-            switch(tagName.toLowerCase()){
-                case "color":
-                    this.color = tagValue;
-                    break;
-                default:
-                    console.warn("Unknown tag: ", tagName);
+            
+            this.assignTag(tagName, tagValue);
+        }
+    }
+
+    private assignTag(name: string, value: string): void{
+        switch(name.toLowerCase()){
+            case "color":
+                this.color = value;
+                break;
+            case "bits":
+                this.bits = this.parseInt(value);
+            case "badges":
+                this.badgeList = this.parseBadges(value);
+                break;
+            case "display-name":
+                this.displayName = value;
+                break;
+            case "emoteOnly":
+                this.isEmoteOnly = this.parseBool(value);
+                break;
+            case "emotes":
+                this.parseEmotes(value);
+                break;
+            case "id":
+                this.messageId = value;
+                break;
+            case "mod":
+                this.isMod = this.parseBool(value);
+                break;
+            case "room-id":
+                this.roomId = this.parseInt(value);
+                break;
+            case "subscriber":
+                this.isSubscriber = this.parseBool(value);
+                break;
+            case "tmi-sent-ts":
+                this.serverReceivedMsgTime = Number.parseInt(value);
+                break;
+            case "turbo":
+                this.isTurbo = this.parseBool(value);
+                break;
+            case "user-id":
+                this.userId = this.parseInt(value);
+                break;
+            case "user-type":
+                this.userType = this.parseUserType(value);
+                break;
+            default:
+                console.warn("Unknown tag: ", value);
+        }
+    }
+
+    private parseUserType(t:string): UserType{
+        switch(t.toLowerCase()){
+            case "":
+                return UserType.Normal;
+            case "mod":
+                return UserType.Moderator;
+            case "global_mod":
+                return UserType.GlobalMod;
+            case "admin":
+                return UserType.Admin;
+            case "staff":
+                return UserType.Staff;
+        }
+
+        console.error("Unknown UserType:", t);
+        return UserType.Normal;
+    }
+
+    private parseBool(b:string): boolean{
+        try {
+            return b != "0";
+        } catch (ex) {
+            console.error(ex);
+            return false;
+        }
+    }
+
+    private parseInt(i:string): number{
+        try {
+            return Number.parseFloat(i);
+        } catch (ex) {
+            console.error(ex);
+            return 0;
+        }
+    }
+
+    private parseBadges(badgesString:string): string[] {
+        let bList = badgesString.split(",");
+        let result: string[] = [];
+        
+        for (const badge of bList) {
+            let b = badge.split("/");
+            result.push(b[0]);
+        }
+
+        return result;
+    }
+
+    private parseEmotes(value: string){
+        // emoteDefintion[/emoteDefintion]...
+        let emotes = value.split("/");
+        
+        for (const emoteString of emotes) {
+            // emoteDefintion = emoteId:emotePositionList
+            let separatorPos = emoteString.indexOf(":");
+            let emoteName = emoteString.substring(0, separatorPos);
+            let emoteId = this.parseInt(emoteName);
+            let emotePositionString = emoteString.substring(separatorPos + 1);
+            
+            // emotePositionList = position[,position]
+            let emotePositionList = emotePositionString.split(",");
+            for (const position of emotePositionList) {
+                // position = start-end
+                let positionTuple = position.split("-");
+                let start: number = this.parseInt(positionTuple[0]);
+                let end: number = this.parseInt(positionTuple[1]);
+
+                let emote = new Emote();
+                emote.id = emoteId;
+                emote.start = start;
+                emote.end = end;
+
+                this.emoteList.add(emote);
             }
         }
-            // badges=subscriber/6,bits/50000
-            // color=#FF0000"
-            // display-name=Kemli
-            // emote-only=1
-            // emotes=425618:0-2
-            // id=a6da0696-e409-4a3b-85d0-0884e1bb3d33
-            // mod=0
-            // room-id=19571641
-            // subscriber=1
-            // tmi-sent-ts=1518890298206
-            // turbo=0
-            // user-id=29515071
-            // user-type=
     }
 }
 
