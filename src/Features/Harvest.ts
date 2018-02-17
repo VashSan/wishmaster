@@ -15,7 +15,9 @@ export class Harvest implements mp.IFeature {
 
         this.db = new Nedb(dbOptions);
         this.db.loadDatabase(err => {
-            console.log(err);
+            if(err != null){
+                console.error("Error when loading database:", err);
+            }
         });
     }
 
@@ -23,7 +25,9 @@ export class Harvest implements mp.IFeature {
     act(msg: mp.Message) : mp.IFeatureResponse {
 
         this.db.insert(msg, (err, newDoc) => {
-            console.log(err);
+            if(err != null){
+                console.log("Error when inserting message:", err);
+            }
         });
 
         return null;
