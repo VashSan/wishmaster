@@ -33,7 +33,7 @@ export class MessageProcessor {
         this.client = client;
     }
 
-    public registerPlugin(plugin: IFeature) {
+    public registerFeature(plugin: IFeature) {
         if (plugin.trigger == null){
             return;
         }

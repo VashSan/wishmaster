@@ -21,16 +21,16 @@ class Startup {
             }
         );
 
-        let proc = new MP.MessageProcessor(client);
+        let featureList = new Set<MP.IFeature>([
+            new Loopback(""),
+            new Loopback("test"),
+            new Harvest(config)
+        ]);
         
-        let plg = new Loopback("");
-        proc.registerPlugin(plg);
-
-        let plg2 = new Loopback("test");
-        proc.registerPlugin(plg2);
-
-        let plg3 = new Harvest(config);
-        proc.registerPlugin(plg3);
+        let proc = new MP.MessageProcessor(client);
+        for (const f of featureList) {
+            proc.registerFeature(f);
+        }
 
         client.addListener("raw", message => {
             console.log("raw: ", message);
@@ -46,16 +46,7 @@ class Startup {
         });
 
         client.connect(0, () => {
-            
             client.join(config.channel);
-
-            var helloMessage = [
-                "Master", "Apprentice", "Heartborne", 
-                "7th Seeker", "Warrior", "Disciple", "Wishmaster"];
-            var hi = (Math.random() * 7 | 0);
-
-            client.say(config.channel, `/me ${helloMessage[hi]}`);
-
         });
 
         return 0;
