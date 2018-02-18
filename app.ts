@@ -32,7 +32,7 @@ class Startup {
         return 0;
     }
 
-    private static setupDb(){
+    private static setupDb() {
         let dbLogOptions = {
             filename: `${this.config.getConfigDir()}\\log.db`,
             timestampData: true
@@ -59,7 +59,7 @@ class Startup {
         }
     }
 
-    private static setupChat(){
+    private static setupChat() {
         let client = new IRC.Client(
             this.config.server,
             this.config.nickname,
@@ -82,21 +82,21 @@ class Startup {
 
         client.addListener("raw", message => {
             let cmd: string = message.command;
-            
-            if(cmd.startsWith("@")){ // thats a twitch chat tagged message something our lib does not recongnize 
+
+            if (cmd.startsWith("@")) { // thats a twitch chat tagged message something our lib does not recongnize 
                 let payload: string = message.args[0];
 
                 let x: string[] = payload.split(" ", 2); // need to check command
-                if(x[1].toUpperCase() == "PRIVMSG"){
+                if (x[1].toUpperCase() == "PRIVMSG") {
                     this.taggedMessageReceived(payload, cmd);
                     return;
                 }
             }
 
-            if(cmd.toUpperCase() != "PRIVMSG"){
+            if (cmd.toUpperCase() != "PRIVMSG") {
                 this.logger.log("raw: ", message);
             }
-            
+
         });
 
         client.addListener("error", message => {
@@ -113,10 +113,10 @@ class Startup {
         });
     }
 
-    private static taggedMessageReceived(payload: string, tags: string){
+    private static taggedMessageReceived(payload: string, tags: string) {
         let separatorPos = payload.indexOf(":"); // left is meta data, right is message text
         let metaData = payload.substring(0, separatorPos);
-        
+
 
         let metaDataList = metaData.split(" ");
 
@@ -124,7 +124,7 @@ class Startup {
         let from = fromRaw.substring(0, fromRaw.indexOf("!"));
 
         let command = metaDataList.shift();
-        if(command.toUpperCase() != "PRIVMSG"){
+        if (command.toUpperCase() != "PRIVMSG") {
             throw "Wrong handler was called";
         }
 
@@ -133,31 +133,31 @@ class Startup {
         this.messageReceived(from, to, text, tags);
     }
 
-    private static messageReceived(from: string, to: string, message: string, tagsString?: string){
+    private static messageReceived(from: string, to: string, message: string, tagsString?: string) {
         let m;
-        if(!isNullOrUndefined(tagsString)){
+        if (!isNullOrUndefined(tagsString)) {
             let t = new MP.Tags(tagsString);
-            m = new MP.Message({from: from, channel: to, text: message}, t);
+            m = new MP.Message({ from: from, channel: to, text: message }, t);
         }
         else {
-            m = new MP.Message({from: from, channel: to, text: message});
-        } 
+            m = new MP.Message({ from: from, channel: to, text: message });
+        }
 
         this.logger.log(`${to} ${from}: ${message}`);
 
         this.msgProcessor.process(m);
     }
 
-    private static setupConsole(){
+    private static setupConsole() {
         var stdin = process.openStdin();
-        stdin.addListener("data", (function(d) {
+        stdin.addListener("data", (function (d) {
             // note:  d is an object, and when converted to a string it will
             // end with a linefeed.  so we (rather crudely) account for that  
             // with toString() and then trim() 
             let val = d.toString().trim();
-            
-            this.db.users.find({ name: val }, function(err, doc){
-                if(err != null){
+
+            this.db.users.find({ name: val }, function (err, doc) {
+                if (err != null) {
                     console.error(err);
                 } else {
                     console.log(doc[0], doc[1]);
@@ -173,7 +173,7 @@ export class Logger {
     private isWarn: boolean;
     private isError: boolean;
 
-    constructor(config: Configuration){
+    constructor(config: Configuration) {
         let v = config.verbosity.toLowerCase();
         this.isLog = v.indexOf("log") > -1;
         this.isInfo = v.indexOf("info") > -1;
@@ -181,26 +181,26 @@ export class Logger {
         this.isError = v.indexOf("error") > -1;
     }
 
-    public log(text: any, ...args: any[]){
-        if(this.isLog){
+    public log(text: any, ...args: any[]) {
+        if (this.isLog) {
             console.log(text, args);
         }
     }
 
-    public info(text: any, ...args: any[]){
-        if(this.isInfo){
+    public info(text: any, ...args: any[]) {
+        if (this.isInfo) {
             console.log(text, args);
         }
     }
 
-    public warn(text: any, ...args: any[]){
-        if(this.isWarn){
+    public warn(text: any, ...args: any[]) {
+        if (this.isWarn) {
             console.warn(text, args);
         }
     }
 
-    public error(text: any, ...args: any[]){
-        if(this.isError){
+    public error(text: any, ...args: any[]) {
+        if (this.isError) {
             console.error(text, args);
         }
     }

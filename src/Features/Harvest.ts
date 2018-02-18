@@ -55,15 +55,15 @@ export class Harvest implements mp.IFeature {
     }
 
     private updateUser(msg: mp.Message) {
-        if(msg.tags == null){
+        if (msg.tags == null) {
             // if tags dont work we wont collect user stats for now
             return;
         }
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
-        this.db.users.findOne({_id: msg.tags.userId}, function(err, doc){
-            if(err != null){
+        this.db.users.findOne({ _id: msg.tags.userId }, function (err, doc) {
+            if (err != null) {
                 console.error(err);
                 return;
             }
@@ -71,7 +71,7 @@ export class Harvest implements mp.IFeature {
             let totalBits = 0;
             let emoteOnlyCount = 0;
             let messageCount = 0;
-            if(doc != null){
+            if (doc != null) {
                 totalBits = doc.totalBits + msg.tags.bits;
                 emoteOnlyCount = doc.emoteOnlyCount + msg.tags.isEmoteOnly ? 1 : 0;
                 messageCount = doc.messageCount + 1;
@@ -80,21 +80,21 @@ export class Harvest implements mp.IFeature {
             let user = that.getUserObj(msg, totalBits, emoteOnlyCount, messageCount);
             that.upsertUser(msg.tags.userId, user);
         });
-       
+
     }
 
-    private upsertUser(id: number, user:object){
-        this.db.users.update({_id: id}, user, { upsert: true }, function (err, numReplaced, upsert) {
+    private upsertUser(id: number, user: object) {
+        this.db.users.update({ _id: id }, user, { upsert: true }, function (err, numReplaced, upsert) {
             // numReplaced = 1, upsert = { _id: 'id5', planet: 'Pluton', inhabited: false }
             // A new document { _id: 'id5', planet: 'Pluton', inhabited: false } has been added to the collection
 
-            if(err != null){
+            if (err != null) {
                 console.error(err);
             }
         });
     }
 
-    private getUserObj(m: mp.Message, bits: number, emoteOnlyCount: number, messageCount: number): object{
+    private getUserObj(m: mp.Message, bits: number, emoteOnlyCount: number, messageCount: number): object {
         return {
             _id: m.tags.userId,
             name: m.tags.displayName,

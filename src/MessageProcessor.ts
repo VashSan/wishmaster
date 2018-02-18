@@ -41,8 +41,8 @@ export class Tags {
     public bits: number = 0;
     public badgeList: string[] = [];
 
-    constructor(tags: string){
-        if(!tags.startsWith("@")){
+    constructor(tags: string) {
+        if (!tags.startsWith("@")) {
             console.error("does not seem to be valid tag", tags);
             return;
         }
@@ -50,20 +50,20 @@ export class Tags {
         this.parseTags(tags.substring(1));
     }
 
-    private parseTags(tags: string){
+    private parseTags(tags: string) {
         let tagList: string[] = tags.split(";");
 
         for (const tag of tagList) {
             let tagTuple = tag.split("=");
             let tagName = tagTuple[0];
             let tagValue = tagTuple[1];
-            
+
             this.assignTag(tagName, tagValue);
         }
     }
 
-    private assignTag(name: string, value: string): void{
-        switch(name.toLowerCase()){
+    private assignTag(name: string, value: string): void {
+        switch (name.toLowerCase()) {
             case "color":
                 this.color = value;
                 break;
@@ -110,8 +110,8 @@ export class Tags {
         }
     }
 
-    private parseUserType(t:string): UserType{
-        switch(t.toLowerCase()){
+    private parseUserType(t: string): UserType {
+        switch (t.toLowerCase()) {
             case "":
                 return UserType.Normal;
             case "mod":
@@ -128,7 +128,7 @@ export class Tags {
         return UserType.Normal;
     }
 
-    private parseBool(b:string): boolean{
+    private parseBool(b: string): boolean {
         try {
             return b != "0";
         } catch (ex) {
@@ -137,7 +137,7 @@ export class Tags {
         }
     }
 
-    private parseInt(i:string): number{
+    private parseInt(i: string): number {
         try {
             return Number.parseFloat(i);
         } catch (ex) {
@@ -146,14 +146,14 @@ export class Tags {
         }
     }
 
-    private parseBadges(badgesString:string): string[] {
+    private parseBadges(badgesString: string): string[] {
         let bList = badgesString.split(",");
         let result: string[] = [];
-        
+
         for (const badge of bList) {
             let b = badge.split("/");
 
-            if(b[0].length > 0) {
+            if (b[0].length > 0) {
                 result.push(b[0]);
             }
         }
@@ -161,20 +161,20 @@ export class Tags {
         return result;
     }
 
-    private parseEmotes(value: string){
-        if(value == ""){
+    private parseEmotes(value: string) {
+        if (value == "") {
             return;
         }
         // emoteDefintion[/emoteDefintion]...
         let emotes = value.split("/");
-        
+
         for (const emoteString of emotes) {
             // emoteDefintion = emoteId:emotePositionList
             let separatorPos = emoteString.indexOf(":");
             let emoteName = emoteString.substring(0, separatorPos);
             let emoteId = this.parseInt(emoteName);
             let emotePositionString = emoteString.substring(separatorPos + 1);
-            
+
             // emotePositionList = position[,position]
             let emotePositionList = emotePositionString.split(",");
             for (const position of emotePositionList) {
@@ -202,7 +202,7 @@ export class Message {
 
     constructor(init: Partial<Message>, tags?: Tags) {
         (<any>Object).assign(this, init);
-        if(isNullOrUndefined(tags)){
+        if (isNullOrUndefined(tags)) {
             this.tags = null;
         } else {
             this.tags = tags;
@@ -219,19 +219,19 @@ export class MessageProcessor {
     private plugins = new Map<string, Set<IFeature>>();
     private client: IRC.Client;
 
-    constructor(client: IRC.Client){
+    constructor(client: IRC.Client) {
         this.client = client;
     }
 
     public registerFeature(plugin: IFeature) {
-        if (plugin.trigger == null){
+        if (plugin.trigger == null) {
             return;
         }
-        
+
         let trigger = plugin.trigger.toLowerCase().trim();
 
-        let pluginSet : Set<IFeature>;
-        if (this.plugins.has(trigger)){
+        let pluginSet: Set<IFeature>;
+        if (this.plugins.has(trigger)) {
             pluginSet = this.plugins.get(trigger);
         } else {
             pluginSet = new Set<IFeature>();
@@ -246,7 +246,7 @@ export class MessageProcessor {
         this.invokePlugins(message, alwaysTriggered);
 
         let trigger = this.getTrigger(message);
-        if (trigger == null){
+        if (trigger == null) {
             return;
         }
 
@@ -254,37 +254,37 @@ export class MessageProcessor {
         this.invokePlugins(message, thisTimeTriggered);
     }
 
-    private getTrigger(msg: Message) : string{
-        if(!msg.text.startsWith("!")){
+    private getTrigger(msg: Message): string {
+        if (!msg.text.startsWith("!")) {
             return null;
         }
 
         let spaceIndex = msg.text.indexOf(" ");
-        if (spaceIndex == 1){
+        if (spaceIndex == 1) {
             return null; // second char is " " ... thats not triggering stuff
         }
-        if (spaceIndex == -1){
+        if (spaceIndex == -1) {
             return msg.text.substring(1); // trigger is one word only
         }
 
         return msg.text.substring(1, spaceIndex).toLowerCase();
     }
 
-    private invokePlugins(msg: Message, plugins : Set<IFeature> ){
-        if (!isNullOrUndefined(plugins)){
-            for(let p of plugins){
+    private invokePlugins(msg: Message, plugins: Set<IFeature>) {
+        if (!isNullOrUndefined(plugins)) {
+            for (let p of plugins) {
                 let response = p.act(msg);
                 this.processResponse(response);
             }
         }
     }
 
-    private processResponse(r: IFeatureResponse){
-        if (r == null){
+    private processResponse(r: IFeatureResponse) {
+        if (r == null) {
             return;
         }
 
-        if(!isNullOrUndefined(r.message) && !isNullOrUndefined(r.message.text)){
+        if (!isNullOrUndefined(r.message) && !isNullOrUndefined(r.message.text)) {
             this.client.say(r.message.channel, r.message.text);
         }
     }
