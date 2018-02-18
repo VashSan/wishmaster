@@ -192,25 +192,25 @@ export class Logger {
 
     public log(text: any, ...args: any[]) {
         if (this.isLog) {
-            console.log(text, args);
+            console.log(text, ...args);
         }
     }
 
     public info(text: any, ...args: any[]) {
         if (this.isInfo) {
-            console.log(text, args);
+            console.log(text, ...args);
         }
     }
 
     public warn(text: any, ...args: any[]) {
         if (this.isWarn) {
-            console.warn(text, args);
+            console.warn(text, ...args);
         }
     }
 
     public error(text: any, ...args: any[]) {
         if (this.isError) {
-            console.error(text, args);
+            console.error(text, ...args);
         }
     }
 }

@@ -95,6 +95,9 @@ export class Tags {
             case "subscriber":
                 this.isSubscriber = this.parseBool(value);
                 break;
+            case "sent-ts":
+                console.log("Unknow tag sent-ts received");
+                break;
             case "tmi-sent-ts":
                 this.serverReceivedMsgTime = Number.parseInt(value);
                 break;
