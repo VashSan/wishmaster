@@ -1,40 +1,14 @@
 import * as mp from "../MessageProcessor";
 import { Configuration } from "../Configuration";
-import Nedb = require("nedb");
-
-interface Database {
-    users: Nedb;
-    log: Nedb;
-}
+import { Database } from "../Interfaces";
 
 /** Pushes information into the database */
 export class Harvest implements mp.IFeature {
     readonly trigger: string = "";
     private db: Database;
 
-    constructor(config: Configuration) {
-        let dbLogOptions = {
-            filename: `${config.getConfigDir()}\\log.db`,
-            timestampData: true
-        };
-
-        let dbUserOptions = {
-            filename: `${config.getConfigDir()}\\user.db`,
-            timestampData: true
-        };
-
-        this.db = {
-            users: new Nedb(dbUserOptions),
-            log: new Nedb(dbLogOptions)
-        };
-        this.db.users.loadDatabase(this.loadDatabaseCallback);
-        this.db.log.loadDatabase(this.loadDatabaseCallback);
-    }
-
-    private loadDatabaseCallback(err): void {
-        if (err != null) {
-            console.error("Error when loading database:", err);
-        }
+    constructor(db: Database) {
+        this.db = db;
     }
 
     /** Return the message we just received */

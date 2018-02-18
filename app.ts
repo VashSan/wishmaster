@@ -2,6 +2,8 @@
 
 import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
+import Nedb = require("nedb");
+import { Database } from "./src/Interfaces";
 import { Loopback } from "./src/Features/Loopback";
 import { Configuration } from "./src/Configuration";
 import { Harvest } from "./src/Features/Harvest";
@@ -11,11 +13,15 @@ class Startup {
     private static config: Configuration;
     private static logger: Logger;
     private static msgProcessor: MP.MessageProcessor;
+    private static db: Database;
 
     public static main(): number {
 
         this.config = new Configuration();
         this.logger = new Logger(this.config);
+
+        this.logger.info("setting up db");
+        this.setupDb();
 
         this.logger.info("setting up chat");
         this.setupChat();
@@ -24,6 +30,31 @@ class Startup {
         this.setupConsole();
 
         return 0;
+    }
+
+    private static setupDb(){
+        let dbLogOptions = {
+            filename: `${this.config.getConfigDir()}\\log.db`,
+            timestampData: true
+        };
+
+        let dbUserOptions = {
+            filename: `${this.config.getConfigDir()}\\user.db`,
+            timestampData: true
+        };
+
+        this.db = {
+            users: new Nedb(dbUserOptions),
+            log: new Nedb(dbLogOptions)
+        };
+        this.db.users.loadDatabase(this.loadDatabaseCallback);
+        this.db.log.loadDatabase(this.loadDatabaseCallback);
+    }
+
+    private static loadDatabaseCallback(err): void {
+        if (err != null) {
+            this.logger.error("Error when loading database:", err);
+        }
     }
 
     private static setupChat(){
@@ -39,7 +70,7 @@ class Startup {
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            new Harvest(this.config)
+            new Harvest(this.db)
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(client);
@@ -116,20 +147,7 @@ class Startup {
     }
 
     private static setupConsole(){
-        // const readline = require("readline");
-        // const rl = readline.createInterface({
-        //     input: process.stdin,
-        //     output: process.stdout
-        // });
-        
-        // rl.question('What do you think of Node.js? ', (answer) => {
-        //     console.log('Thank you for your valuable feedback:', answer);
-        //     rl.close();
-        // });
-
         var stdin = process.openStdin();
-
-        console.log("xxx");
         stdin.addListener("data", function(d) {
             // note:  d is an object, and when converted to a string it will
             // end with a linefeed.  so we (rather crudely) account for that  
