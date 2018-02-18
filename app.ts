@@ -47,13 +47,15 @@ class Startup {
             users: new Nedb(dbUserOptions),
             log: new Nedb(dbLogOptions)
         };
-        this.db.users.loadDatabase(this.loadDatabaseCallback);
-        this.db.log.loadDatabase(this.loadDatabaseCallback);
+        this.db.users.loadDatabase(this.loadDatabaseCallback.bind(this));
+        this.db.log.loadDatabase(this.loadDatabaseCallback.bind(this));
     }
 
     private static loadDatabaseCallback(err): void {
         if (err != null) {
             this.logger.error("Error when loading database:", err);
+        } else {
+            this.logger.info("DB loaded");
         }
     }
 
@@ -148,13 +150,20 @@ class Startup {
 
     private static setupConsole(){
         var stdin = process.openStdin();
-        stdin.addListener("data", function(d) {
+        stdin.addListener("data", (function(d) {
             // note:  d is an object, and when converted to a string it will
             // end with a linefeed.  so we (rather crudely) account for that  
             // with toString() and then trim() 
-            console.log("you entered: [" + 
-                d.toString().trim() + "]");
-        });
+            let val = d.toString().trim();
+            
+            this.db.users.find({ name: val }, function(err, doc){
+                if(err != null){
+                    console.error(err);
+                } else {
+                    console.log(doc[0], doc[1]);
+                }
+            });
+        }).bind(this));
     }
 }
 
