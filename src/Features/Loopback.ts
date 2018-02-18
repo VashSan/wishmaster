@@ -13,17 +13,17 @@ export class Loopback implements mp.IFeature {
     }
 
     /** Return the message we just received */
-    act(msg: mp.Message): mp.IFeatureResponse {
+    public act(msg: mp.Message, callback: mp.ResponseCallback): void {
         let str: string = msg.toString();
 
         let answer = new mp.Message({
-            from: null,
+            from: "",
             channel: msg.channel,
             text: "Loopback-" + msg.toString()
         });
 
         let response = { message: answer };
-        return response;
+        callback(null, response);
     }
 }
 

@@ -5,11 +5,11 @@ export class Configuration {
     private configFile: string = "wishmaster.json";
     private configFilePath: string;
 
-    server: string;
-    nickname: string;
-    password: string;
-    channel: string;
-    verbosity: string;
+    server: string = "";
+    nickname: string = "";
+    password: string = "";
+    channel: string = "";
+    verbosity: string = "";
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;

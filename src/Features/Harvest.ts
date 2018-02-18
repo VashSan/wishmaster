@@ -12,16 +12,21 @@ export class Harvest implements mp.IFeature {
     }
 
     /** Return the message we just received */
-    act(msg: mp.Message): mp.IFeatureResponse {
+    public act(msg: mp.Message, callback: (error: string, response: mp.IFeatureResponse) => void): void {
 
         this.updateUser(msg);
         this.updateLog(msg);
 
-        return null;
     }
 
     private updateLog(msg: mp.Message) {
-        let emotes = [];
+        if (msg.tags == null) {
+            console.warn("If tags are not set we cannot update log");
+            return;
+        }
+
+        let emotes: object[] = [];
+
         msg.tags.emoteList.forEach(e => {
             emotes.push({
                 id: e.id,
@@ -62,9 +67,14 @@ export class Harvest implements mp.IFeature {
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
-        this.db.users.findOne({ _id: msg.tags.userId }, function (err, doc) {
+        this.db.users.findOne({ _id: msg.tags.userId }, function (err: Error, doc: any) {
             if (err != null) {
                 console.error(err);
+                return;
+            }
+
+            if (msg.tags == null) {
+                console.warn("If tags are not set we cannot update user");
                 return;
             }
 
@@ -76,8 +86,23 @@ export class Harvest implements mp.IFeature {
                 emoteOnlyCount = doc.emoteOnlyCount + msg.tags.isEmoteOnly ? 1 : 0;
                 messageCount = doc.messageCount + 1;
             }
+            
+            let user = {
+                _id: msg.tags.userId,
+                name: msg.tags.displayName,
+                color: msg.tags.color,
+                badges: msg.tags.badgeList,
+                emoteOnlyCount: emoteOnlyCount,
+                messageCount: messageCount,
+                totalBits: totalBits,
+                isMod: msg.tags.isMod,
+                isSubscriber: msg.tags.isSubscriber,
+                isTurbo: msg.tags.isTurbo,
+                lastRoomSeen: msg.tags.roomId,
+                lastTimeSeen: msg.tags.serverReceivedMsgTime,
+                type: msg.tags.userType
+            };
 
-            let user = that.getUserObj(msg, totalBits, emoteOnlyCount, messageCount);
             that.upsertUser(msg.tags.userId, user);
         });
 
@@ -92,24 +117,6 @@ export class Harvest implements mp.IFeature {
                 console.error(err);
             }
         });
-    }
-
-    private getUserObj(m: mp.Message, bits: number, emoteOnlyCount: number, messageCount: number): object {
-        return {
-            _id: m.tags.userId,
-            name: m.tags.displayName,
-            color: m.tags.color,
-            badges: m.tags.badgeList,
-            emoteOnlyCount: emoteOnlyCount,
-            messageCount: messageCount,
-            totalBits: bits,
-            isMod: m.tags.isMod,
-            isSubscriber: m.tags.isSubscriber,
-            isTurbo: m.tags.isTurbo,
-            lastRoomSeen: m.tags.roomId,
-            lastTimeSeen: m.tags.serverReceivedMsgTime,
-            type: m.tags.userType
-        };
     }
 }
 

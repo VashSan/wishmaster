@@ -2,20 +2,7 @@ import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 import { DH_CHECK_P_NOT_SAFE_PRIME } from "constants";
 
-export interface IFeature {
-    readonly trigger: string;
-    act(message: Message): IFeatureResponse;
-}
-
-export interface IFeatureResponse {
-    message: Message;
-}
-
-export class Emote {
-    id: number;
-    start: number;
-    end: number;
-}
+export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
 export enum UserType {
     Normal,
@@ -24,6 +11,21 @@ export enum UserType {
     Admin,
     Staff
 }
+export interface IFeature {
+    readonly trigger: string;
+    act(message: Message, callback: ResponseCallback): void;
+}
+
+export interface IFeatureResponse {
+    message: Message;
+}
+
+export class Emote {
+    id: number = 0;
+    start: number = 0;
+    end: number = 0;
+}
+
 
 export class Tags {
     public color: string = "";
@@ -195,10 +197,10 @@ export class Tags {
 }
 
 export class Message {
-    text: string;
-    from: string;
-    channel: string;
-    tags: Tags;
+    text: string = "";
+    from: string = "";
+    channel: string = "";
+    tags: Tags | null;
 
     constructor(init: Partial<Message>, tags?: Tags) {
         (<any>Object).assign(this, init);
@@ -230,10 +232,8 @@ export class MessageProcessor {
 
         let trigger = plugin.trigger.toLowerCase().trim();
 
-        let pluginSet: Set<IFeature>;
-        if (this.plugins.has(trigger)) {
-            pluginSet = this.plugins.get(trigger);
-        } else {
+        let pluginSet = this.plugins.get(trigger);
+        if (isNullOrUndefined(pluginSet)) {
             pluginSet = new Set<IFeature>();
             this.plugins.set(trigger, pluginSet);
         }
@@ -254,7 +254,11 @@ export class MessageProcessor {
         this.invokePlugins(message, thisTimeTriggered);
     }
 
-    private getTrigger(msg: Message): string {
+    private getTrigger(msg: Message): string | null {
+        if (msg.text.length == 0) {
+            return null;
+        }
+
         if (!msg.text.startsWith("!")) {
             return null;
         }
@@ -270,21 +274,20 @@ export class MessageProcessor {
         return msg.text.substring(1, spaceIndex).toLowerCase();
     }
 
-    private invokePlugins(msg: Message, plugins: Set<IFeature>) {
+    private invokePlugins(msg: Message, plugins: Set<IFeature> | undefined) {
         if (!isNullOrUndefined(plugins)) {
             for (let p of plugins) {
-                let response = p.act(msg);
-                this.processResponse(response);
+                p.act(msg, this.processResponse.bind(this));
             }
         }
     }
 
-    private processResponse(r: IFeatureResponse) {
+    private processResponse(err: string, r: IFeatureResponse) {
         if (r == null) {
             return;
         }
 
-        if (!isNullOrUndefined(r.message) && !isNullOrUndefined(r.message.text)) {
+        if (!isNullOrUndefined(r.message) && r.message.text != "" && r.message.channel != "") {
             this.client.say(r.message.channel, r.message.text);
         }
     }

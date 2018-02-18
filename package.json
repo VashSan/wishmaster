@@ -4,6 +4,7 @@
   "description": "IRC Bot",
   "main": "app.js",
   "dependencies": {
+    "@types/nedb": "^1.8.5",
     "@types/node": "^9.4.5",
     "irc": "^0.5.2",
     "nedb": "^1.8.0",

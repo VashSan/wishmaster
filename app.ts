@@ -51,7 +51,7 @@ class Startup {
         this.db.log.loadDatabase(this.loadDatabaseCallback.bind(this));
     }
 
-    private static loadDatabaseCallback(err): void {
+    private static loadDatabaseCallback(err: any): void {
         if (err != null) {
             this.logger.error("Error when loading database:", err);
         } else {
@@ -117,20 +117,27 @@ class Startup {
         let separatorPos = payload.indexOf(":"); // left is meta data, right is message text
         let metaData = payload.substring(0, separatorPos);
 
-
         let metaDataList = metaData.split(" ");
 
         let fromRaw = metaDataList.shift();
-        let from = fromRaw.substring(0, fromRaw.indexOf("!"));
+        if (isNullOrUndefined(fromRaw)) {
+            this.logger.error("Could not parse message tags.");
+        } else {
+            let from = fromRaw.substring(0, fromRaw.indexOf("!"));
 
-        let command = metaDataList.shift();
-        if (command.toUpperCase() != "PRIVMSG") {
-            throw "Wrong handler was called";
+            let command = metaDataList.shift();
+            if (isNullOrUndefined(command) || command.toUpperCase() != "PRIVMSG") {
+                throw "Wrong handler was called";
+            }
+
+            let to = metaDataList.shift();
+            if(isNullOrUndefined(to)){
+                this.logger.error("Could not parse 'to' from meta data");
+            } else {
+                let text = payload.substring(separatorPos + 1);
+                this.messageReceived(from, to, text, tags);
+            }
         }
-
-        let to = metaDataList.shift();
-        let text = payload.substring(separatorPos + 1);
-        this.messageReceived(from, to, text, tags);
     }
 
     private static messageReceived(from: string, to: string, message: string, tagsString?: string) {
@@ -150,20 +157,22 @@ class Startup {
 
     private static setupConsole() {
         var stdin = process.openStdin();
-        stdin.addListener("data", (function (d) {
-            // note:  d is an object, and when converted to a string it will
-            // end with a linefeed.  so we (rather crudely) account for that  
-            // with toString() and then trim() 
-            let val = d.toString().trim();
+        stdin.addListener("data", this.consoleCallback.bind(this));
+    }
 
-            this.db.users.find({ name: val }, function (err, doc) {
-                if (err != null) {
-                    console.error(err);
-                } else {
-                    console.log(doc[0], doc[1]);
-                }
-            });
-        }).bind(this));
+    private static consoleCallback(d: object) {
+        // note:  d is an object, and when converted to a string it will
+        // end with a linefeed.  so we (rather crudely) account for that  
+        // with toString() and then trim() 
+        let val = d.toString().trim();
+
+        this.db.users.find({ name: val }, function (err: any, doc: any) {
+            if (err != null) {
+                console.error(err);
+            } else {
+                console.log(doc[0], doc[1]);
+            }
+        });
     }
 }
 
