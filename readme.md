@@ -1,5 +1,5 @@
 # Wishmaster
-I am learning TypeScript with this project.
+I am learning TypeScript / NEDB with this project.
 
 ## Setup Workspace
 * Install Node

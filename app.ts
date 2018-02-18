@@ -8,26 +8,38 @@ import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
 
 class Startup {
+    private static config: Configuration;
+    private static logger: Logger;
     private static msgProcessor: MP.MessageProcessor;
 
     public static main(): number {
 
-        let config = new Configuration();
+        this.config = new Configuration();
+        this.logger = new Logger(this.config);
 
+        this.logger.info("setting up chat");
+        this.setupChat();
 
+        this.logger.info("setting up console");
+        this.setupConsole();
+
+        return 0;
+    }
+
+    private static setupChat(){
         let client = new IRC.Client(
-            config.server,
-            config.nickname,
+            this.config.server,
+            this.config.nickname,
             {
                 autoConnect: false,
-                password: config.password
+                password: this.config.password
             }
         );
 
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            new Harvest(config)
+            new Harvest(this.config)
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(client);
@@ -49,13 +61,13 @@ class Startup {
             }
 
             if(cmd.toUpperCase() != "PRIVMSG"){
-                console.log("raw: ", message);
+                this.logger.log("raw: ", message);
             }
             
         });
 
         client.addListener("error", message => {
-            console.error("IRC client error: ", message);
+            this.logger.error("IRC client error: ", message);
         });
 
         client.addListener("message", (from, to, message) => {
@@ -64,10 +76,8 @@ class Startup {
 
         client.connect(0, () => {
             client.send("CAP REQ", "twitch.tv/tags");
-            client.join(config.channel);
+            client.join(this.config.channel);
         });
-
-        return 0;
     }
 
     private static taggedMessageReceived(payload: string, tags: string){
@@ -100,9 +110,72 @@ class Startup {
             m = new MP.Message({from: from, channel: to, text: message});
         } 
 
-        console.log(`${to} ${from}: ${message}`);
+        this.logger.log(`${to} ${from}: ${message}`);
 
         this.msgProcessor.process(m);
+    }
+
+    private static setupConsole(){
+        // const readline = require("readline");
+        // const rl = readline.createInterface({
+        //     input: process.stdin,
+        //     output: process.stdout
+        // });
+        
+        // rl.question('What do you think of Node.js? ', (answer) => {
+        //     console.log('Thank you for your valuable feedback:', answer);
+        //     rl.close();
+        // });
+
+        var stdin = process.openStdin();
+
+        console.log("xxx");
+        stdin.addListener("data", function(d) {
+            // note:  d is an object, and when converted to a string it will
+            // end with a linefeed.  so we (rather crudely) account for that  
+            // with toString() and then trim() 
+            console.log("you entered: [" + 
+                d.toString().trim() + "]");
+        });
+    }
+}
+
+export class Logger {
+    private isLog: boolean;
+    private isInfo: boolean;
+    private isWarn: boolean;
+    private isError: boolean;
+
+    constructor(config: Configuration){
+        let v = config.verbosity.toLowerCase();
+        this.isLog = v.indexOf("log") > -1;
+        this.isInfo = v.indexOf("info") > -1;
+        this.isWarn = v.indexOf("warn") > -1;
+        this.isError = v.indexOf("error") > -1;
+    }
+
+    public log(text: any, ...args: any[]){
+        if(this.isLog){
+            console.log(text, args);
+        }
+    }
+
+    public info(text: any, ...args: any[]){
+        if(this.isInfo){
+            console.log(text, args);
+        }
+    }
+
+    public warn(text: any, ...args: any[]){
+        if(this.isWarn){
+            console.warn(text, args);
+        }
+    }
+
+    public error(text: any, ...args: any[]){
+        if(this.isError){
+            console.error(text, args);
+        }
     }
 }
 

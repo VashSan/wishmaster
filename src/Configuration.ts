@@ -9,6 +9,7 @@ export class Configuration {
     nickname: string;
     password: string;
     channel: string;
+    verbosity: string;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
