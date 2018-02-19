@@ -1,14 +1,16 @@
 import * as mp from "../MessageProcessor";
 import { Configuration } from "../Configuration";
 import { Database } from "../Interfaces";
+import { Context } from "../../app";
+import { isNullOrUndefined } from "util";
 
 /** Pushes information into the database */
 export class Harvest implements mp.IFeature {
     readonly trigger: string = "";
     private db: Database;
 
-    constructor(db: Database) {
-        this.db = db;
+    constructor(context: Context) {
+        this.db = context.db;
     }
 
     /** Return the message we just received */

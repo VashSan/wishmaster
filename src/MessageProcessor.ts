@@ -1,6 +1,7 @@
 import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
-import { DH_CHECK_P_NOT_SAFE_PRIME } from "constants";
+import { Context, Logger } from "../app";
+import { Configuration } from "./Configuration";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
@@ -11,9 +12,14 @@ export enum UserType {
     Admin,
     Staff
 }
+
 export interface IFeature {
     readonly trigger: string;
     act(message: Message, callback: ResponseCallback): void;
+}
+
+declare var IFeature: {
+    new(context: Context): IFeature;
 }
 
 export interface IFeatureResponse {
@@ -223,9 +229,97 @@ export class Message {
 export class MessageProcessor {
     private plugins = new Map<string, Set<IFeature>>();
     private client: IRC.Client;
+    private context: Context;
+    private config: Configuration;
+    private logger: Logger;
 
-    constructor(client: IRC.Client) {
-        this.client = client;
+    constructor(context: Context) {
+        this.context = context;
+        this.config = context.config;
+        this.logger = context.logger;
+
+        this.client = new IRC.Client(
+            this.config.server,
+            this.config.nickname,
+            {
+                autoConnect: false,
+                password: this.config.password
+            }
+        );
+        
+        this.client.addListener("raw", message => {
+            let cmd: string = message.command;
+
+            if (cmd.startsWith("@")) { // thats a twitch chat tagged message something our lib does not recongnize 
+                let payload: string = message.args[0];
+
+                let x: string[] = payload.split(" ", 2); // need to check command
+                if (x[1].toUpperCase() == "PRIVMSG") {
+                    this.taggedMessageReceived(payload, cmd);
+                    return;
+                }
+            }
+
+            if (cmd.toUpperCase() != "PRIVMSG") {
+                this.logger.log("raw: ", message);
+            }
+
+        });
+
+        this.client.addListener("error", message => {
+            this.logger.error("IRC client error: ", message);
+        });
+
+        this.client.addListener("message", (from, to, message) => {
+            this.messageReceived(from, to, message);
+        });
+
+        this.client.connect(0, () => {
+            this.client.send("CAP REQ", "twitch.tv/tags");
+            this.client.join(this.config.channel);
+        });
+    }
+
+    private taggedMessageReceived(payload: string, tags: string) {
+        let separatorPos = payload.indexOf(":"); // left is meta data, right is message text
+        let metaData = payload.substring(0, separatorPos);
+
+        let metaDataList = metaData.split(" ");
+
+        let fromRaw = metaDataList.shift();
+        if (isNullOrUndefined(fromRaw)) {
+            this.logger.error("Could not parse message tags.");
+        } else {
+            let from = fromRaw.substring(0, fromRaw.indexOf("!"));
+
+            let command = metaDataList.shift();
+            if (isNullOrUndefined(command) || command.toUpperCase() != "PRIVMSG") {
+                throw "Wrong handler was called";
+            }
+
+            let to = metaDataList.shift();
+            if (isNullOrUndefined(to)) {
+                this.logger.error("Could not parse 'to' from meta data");
+            } else {
+                let text = payload.substring(separatorPos + 1);
+                this.messageReceived(from, to, text, tags);
+            }
+        }
+    }
+
+    private messageReceived(from: string, to: string, message: string, tagsString?: string) {
+        let m;
+        if (!isNullOrUndefined(tagsString)) {
+            let t = new Tags(tagsString);
+            m = new Message({ from: from, channel: to, text: message }, t);
+        }
+        else {
+            m = new Message({ from: from, channel: to, text: message });
+        }
+
+        this.logger.log(`${to} ${from}: ${message}`);
+
+        this.process(m);
     }
 
     public registerFeature(plugin: IFeature) {

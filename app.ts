@@ -9,11 +9,28 @@ import { Configuration } from "./src/Configuration";
 import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
 
+
+
+export class Context {
+    public readonly config: Configuration;
+    public readonly logger: Logger;
+    public readonly db: Database;
+
+    constructor(config: Configuration, logger: Logger, db: Database) {
+        this.config = config;
+        this.logger = logger;
+        this.db = db;
+    }
+}
+
 class Startup {
     private static config: Configuration;
     private static logger: Logger;
     private static msgProcessor: MP.MessageProcessor;
     private static db: Database;
+
+    private static loadedCollections = 0;
+    private static erroredCollections = 0;
 
     public static main(): number {
 
@@ -23,136 +40,64 @@ class Startup {
         this.logger.info("setting up db");
         this.setupDb();
 
-        this.logger.info("setting up chat");
-        this.setupChat();
-
-        this.logger.info("setting up console");
-        this.setupConsole();
-
         return 0;
     }
 
     private static setupDb() {
-        let dbLogOptions = {
+        this.db = new Database();
+
+        this.db.createCollection("log", {
             filename: `${this.config.getConfigDir()}\\log.db`,
             timestampData: true
-        };
+        }, this.loadDatabaseCallback.bind(this));
 
-        let dbUserOptions = {
+        this.db.createCollection("users", {
             filename: `${this.config.getConfigDir()}\\user.db`,
             timestampData: true
-        };
-
-        this.db = {
-            users: new Nedb(dbUserOptions),
-            log: new Nedb(dbLogOptions)
-        };
-        this.db.users.loadDatabase(this.loadDatabaseCallback.bind(this));
-        this.db.log.loadDatabase(this.loadDatabaseCallback.bind(this));
+        }, this.loadDatabaseCallback.bind(this));
     }
 
     private static loadDatabaseCallback(err: any): void {
         if (err != null) {
             this.logger.error("Error when loading database:", err);
+            this.erroredCollections += 1;
         } else {
             this.logger.info("DB loaded");
+            this.loadedCollections += 1;
+        }
+
+        this.finalInit();
+    }
+
+    private static finalInit(){
+        if (this.db.size == this.loadedCollections){
+            this.logger.info("setting up chat");
+            this.setupChat();
+    
+            this.logger.info("setting up console");
+            this.setupConsole();    
+        }
+        
+        if (this.erroredCollections > 0 && this.db.size == this.erroredCollections + this.loadedCollections){
+            this.logger.error("Can not work without all databases loaded. Terminating.");
+            process.exitCode = 1;
         }
     }
 
     private static setupChat() {
-        let client = new IRC.Client(
-            this.config.server,
-            this.config.nickname,
-            {
-                autoConnect: false,
-                password: this.config.password
-            }
-        );
+
+        let context = new Context(this.config, this.logger, this.db);
 
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            new Harvest(this.db)
+            new Harvest(context)
         ]);
 
-        this.msgProcessor = new MP.MessageProcessor(client);
+        this.msgProcessor = new MP.MessageProcessor(context);
         for (const f of featureList) {
             this.msgProcessor.registerFeature(f);
         }
-
-        client.addListener("raw", message => {
-            let cmd: string = message.command;
-
-            if (cmd.startsWith("@")) { // thats a twitch chat tagged message something our lib does not recongnize 
-                let payload: string = message.args[0];
-
-                let x: string[] = payload.split(" ", 2); // need to check command
-                if (x[1].toUpperCase() == "PRIVMSG") {
-                    this.taggedMessageReceived(payload, cmd);
-                    return;
-                }
-            }
-
-            if (cmd.toUpperCase() != "PRIVMSG") {
-                this.logger.log("raw: ", message);
-            }
-
-        });
-
-        client.addListener("error", message => {
-            this.logger.error("IRC client error: ", message);
-        });
-
-        client.addListener("message", (from, to, message) => {
-            this.messageReceived(from, to, message);
-        });
-
-        client.connect(0, () => {
-            client.send("CAP REQ", "twitch.tv/tags");
-            client.join(this.config.channel);
-        });
-    }
-
-    private static taggedMessageReceived(payload: string, tags: string) {
-        let separatorPos = payload.indexOf(":"); // left is meta data, right is message text
-        let metaData = payload.substring(0, separatorPos);
-
-        let metaDataList = metaData.split(" ");
-
-        let fromRaw = metaDataList.shift();
-        if (isNullOrUndefined(fromRaw)) {
-            this.logger.error("Could not parse message tags.");
-        } else {
-            let from = fromRaw.substring(0, fromRaw.indexOf("!"));
-
-            let command = metaDataList.shift();
-            if (isNullOrUndefined(command) || command.toUpperCase() != "PRIVMSG") {
-                throw "Wrong handler was called";
-            }
-
-            let to = metaDataList.shift();
-            if(isNullOrUndefined(to)){
-                this.logger.error("Could not parse 'to' from meta data");
-            } else {
-                let text = payload.substring(separatorPos + 1);
-                this.messageReceived(from, to, text, tags);
-            }
-        }
-    }
-
-    private static messageReceived(from: string, to: string, message: string, tagsString?: string) {
-        let m;
-        if (!isNullOrUndefined(tagsString)) {
-            let t = new MP.Tags(tagsString);
-            m = new MP.Message({ from: from, channel: to, text: message }, t);
-        }
-        else {
-            m = new MP.Message({ from: from, channel: to, text: message });
-        }
-
-        this.logger.log(`${to} ${from}: ${message}`);
-
-        this.msgProcessor.process(m);
     }
 
     private static setupConsole() {
@@ -166,9 +111,11 @@ class Startup {
         // with toString() and then trim() 
         let val = d.toString().trim();
 
+        let that = this;
+
         this.db.users.find({ name: val }, function (err: any, doc: any) {
             if (err != null) {
-                console.error(err);
+                that.logger.error(err);
             } else {
                 console.log(doc[0], doc[1]);
             }
