@@ -117,7 +117,7 @@ class Startup {
             if (err != null) {
                 that.logger.error(err);
             } else {
-                console.log(doc[0], doc[1]);
+                that.logger.log(doc[0], doc[1]);
             }
         });
     }

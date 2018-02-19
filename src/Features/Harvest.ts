@@ -1,29 +1,29 @@
 import * as mp from "../MessageProcessor";
 import { Configuration } from "../Configuration";
 import { Database } from "../Interfaces";
-import { Context } from "../../app";
+import { Context, Logger } from "../../app";
 import { isNullOrUndefined } from "util";
 
 /** Pushes information into the database */
 export class Harvest implements mp.IFeature {
     readonly trigger: string = "";
     private db: Database;
+    private logger: Logger;
 
     constructor(context: Context) {
         this.db = context.db;
+        this.logger = context.logger;
     }
 
     /** Return the message we just received */
     public act(msg: mp.Message, callback: (error: string, response: mp.IFeatureResponse) => void): void {
-
         this.updateUser(msg);
         this.updateLog(msg);
-
     }
 
     private updateLog(msg: mp.Message) {
         if (msg.tags == null) {
-            console.warn("If tags are not set we cannot update log");
+            this.logger.warn("If tags are not set we cannot update log");
             return;
         }
 
@@ -54,9 +54,10 @@ export class Harvest implements mp.IFeature {
             m: msg.tags.roomId
         };
 
+        let that = this;
         this.db.log.insert(log, (err, newDoc) => {
             if (err != null) {
-                console.error("Error when inserting message:", err);
+                that.logger.error("Error when inserting message:", err);
             }
         });
     }
@@ -71,12 +72,12 @@ export class Harvest implements mp.IFeature {
         // However this is easy and fast enough as it seems at first glance.
         this.db.users.findOne({ _id: msg.tags.userId }, function (err: Error, doc: any) {
             if (err != null) {
-                console.error(err);
+                that.logger.error(err);
                 return;
             }
 
             if (msg.tags == null) {
-                console.warn("If tags are not set we cannot update user");
+                that.logger.warn("If tags are not set we cannot update user");
                 return;
             }
 
@@ -111,12 +112,13 @@ export class Harvest implements mp.IFeature {
     }
 
     private upsertUser(id: number, user: object) {
+        let that = this;
         this.db.users.update({ _id: id }, user, { upsert: true }, function (err, numReplaced, upsert) {
             // numReplaced = 1, upsert = { _id: 'id5', planet: 'Pluton', inhabited: false }
             // A new document { _id: 'id5', planet: 'Pluton', inhabited: false } has been added to the collection
 
             if (err != null) {
-                console.error(err);
+                that.logger.error(err);
             }
         });
     }

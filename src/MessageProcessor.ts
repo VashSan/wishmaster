@@ -18,10 +18,6 @@ export interface IFeature {
     act(message: Message, callback: ResponseCallback): void;
 }
 
-declare var IFeature: {
-    new(context: Context): IFeature;
-}
-
 export interface IFeatureResponse {
     message: Message;
 }
@@ -34,6 +30,7 @@ export class Emote {
 
 
 export class Tags {
+    private logger: Logger;
     public color: string = "";
     public displayName: string = "";
     public isEmoteOnly: boolean = false;
@@ -49,12 +46,12 @@ export class Tags {
     public bits: number = 0;
     public badgeList: string[] = [];
 
-    constructor(tags: string) {
+    constructor(tags: string, logger: Logger) {
+        this.logger = logger;
         if (!tags.startsWith("@")) {
-            console.error("does not seem to be valid tag", tags);
+            logger.error("does not seem to be valid tag", tags);
             return;
         }
-
         this.parseTags(tags.substring(1));
     }
 
@@ -102,7 +99,7 @@ export class Tags {
                 this.isSubscriber = this.parseBool(value);
                 break;
             case "sent-ts":
-                console.log("Unknow tag sent-ts received");
+                this.logger.log("Unknow tag sent-ts received");
                 break;
             case "tmi-sent-ts":
                 this.serverReceivedMsgTime = Number.parseInt(value);
@@ -117,7 +114,7 @@ export class Tags {
                 this.userType = this.parseUserType(value);
                 break;
             default:
-                console.error(`Unknown tag: '${name}' = '${value}'`);
+                this.logger.error(`Unknown tag: '${name}' = '${value}'`);
         }
     }
 
@@ -135,7 +132,7 @@ export class Tags {
                 return UserType.Staff;
         }
 
-        console.error("Unknown UserType:", t);
+        this.logger.error("Unknown UserType:", t);
         return UserType.Normal;
     }
 
@@ -143,7 +140,7 @@ export class Tags {
         try {
             return b != "0";
         } catch (ex) {
-            console.error(ex);
+            this.logger.error(ex);
             return false;
         }
     }
@@ -152,7 +149,7 @@ export class Tags {
         try {
             return Number.parseFloat(i);
         } catch (ex) {
-            console.error(ex);
+            this.logger.error(ex);
             return 0;
         }
     }
@@ -310,7 +307,7 @@ export class MessageProcessor {
     private messageReceived(from: string, to: string, message: string, tagsString?: string) {
         let m;
         if (!isNullOrUndefined(tagsString)) {
-            let t = new Tags(tagsString);
+            let t = new Tags(tagsString, this.logger);
             m = new Message({ from: from, channel: to, text: message }, t);
         }
         else {
