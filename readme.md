@@ -26,11 +26,13 @@ Remember to strip the comments before saving it as configuration file.
 	/** The bot limit itself to this number of messages in 30 seconds. (2) */
 	"msgLimitPer30Sec": 20,
 
-	/** log,info,warn,error ... remove a token to avoid being written to log file */
+	/** log,info,warn,error ... remove a token to avoid being written to log file. */
 	"verbosity": "info,warn,error",
 	
-	/** Set to true to create a log file within the working directory. */
-	"logging": false
+	/** Set to true to create a log file within the working directory. Otherwise log
+	 * messages are written to console.
+	 */
+	"createLogFile": false
 }
 ```
 

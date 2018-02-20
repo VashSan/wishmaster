@@ -2,14 +2,14 @@
 
 import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
+import * as moment from 'moment';
 import Nedb = require("nedb");
 import { Database } from "./src/Interfaces";
 import { Loopback } from "./src/Features/Loopback";
 import { Configuration } from "./src/Configuration";
 import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
-
-
+import fs = require("fs");
 
 export class Context {
     public readonly config: Configuration;
@@ -128,9 +128,17 @@ export class Logger {
     private isInfo: boolean;
     private isWarn: boolean;
     private isError: boolean;
+    private logToFile: boolean;
+    private fileName: string;
 
     constructor(config: Configuration) {
         let v = config.verbosity.toLowerCase();
+        this.logToFile = config.createLogFile;
+        this.fileName = `${process.env.localappdata}\\.wishmaster\\logfile.log`;
+        // if (!fs.existsSync(this.fileName)){
+            
+        // }
+        
         this.isLog = v.indexOf("log") > -1;
         this.isInfo = v.indexOf("info") > -1;
         this.isWarn = v.indexOf("warn") > -1;
@@ -139,26 +147,67 @@ export class Logger {
 
     public log(text: any, ...args: any[]) {
         if (this.isLog) {
-            console.log(text, ...args);
+            if (this.logToFile){
+                this.writeLog("log", text, ...args);
+            } else {
+                console.log(text, ...args);
+            }
         }
     }
 
     public info(text: any, ...args: any[]) {
         if (this.isInfo) {
-            console.log(text, ...args);
+            if (this.logToFile){
+                this.writeLog("info", text, ...args);
+            } else {
+                console.info(text, ...args);
+            }
         }
     }
 
     public warn(text: any, ...args: any[]) {
         if (this.isWarn) {
-            console.warn(text, ...args);
+            if (this.logToFile){
+                this.writeLog("warn", text, ...args);
+            } else {
+                console.warn(text, ...args);
+            }
         }
     }
 
     public error(text: any, ...args: any[]) {
         if (this.isError) {
-            console.error(text, ...args);
+            if (this.logToFile){
+                this.writeLog("error", text, ...args);
+            } else {
+                console.error(text, ...args);
+            }
         }
+    }
+
+    private writeLog(kind: string, text: string, ...args: any[]) {
+        let time = moment().format("YYYY-MM-DD hh:mm:ss.SSS Z");
+        let data: string;
+        if(args.length > 0){
+            let argsJoined = args.join("");
+            data = `${time}\t${kind}\t${text}\t${argsJoined}\n`;
+        } else {
+            data = `${time}\t${kind}\t${text}\n`;
+        }
+
+        fs.open(this.fileName, 'a', (err, fd) => {
+            if(err){
+                console.error("failed to open log file");
+                return;
+            }
+            fs.appendFile(fd, data, (err) => {
+                if(err){
+                    console.error("failed to write to log file");
+                }
+            });
+        });
+
+        
     }
 }
 

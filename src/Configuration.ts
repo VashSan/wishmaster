@@ -9,7 +9,9 @@ export class Configuration {
     nickname: string = "";
     password: string = "";
     channel: string = "";
-    verbosity: string = "";
+    msgLimitPer30Sec: number = 20;
+    verbosity: string = "log,info,warn,error";
+    createLogFile: boolean = false;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
