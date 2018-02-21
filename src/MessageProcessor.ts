@@ -243,7 +243,7 @@ export class MessageProcessor {
                 password: this.config.password
             }
         );
-        
+
         this.client.addListener("raw", message => {
             let cmd: string = message.command;
 

@@ -69,16 +69,16 @@ class Startup {
         this.finalInit();
     }
 
-    private static finalInit(){
-        if (this.db.size == this.loadedCollections){
+    private static finalInit() {
+        if (this.db.size == this.loadedCollections) {
             this.logger.info("setting up chat");
             this.setupChat();
-    
+
             this.logger.info("setting up console");
-            this.setupConsole();    
+            this.setupConsole();
         }
-        
-        if (this.erroredCollections > 0 && this.db.size == this.erroredCollections + this.loadedCollections){
+
+        if (this.erroredCollections > 0 && this.db.size == this.erroredCollections + this.loadedCollections) {
             this.logger.error("Can not work without all databases loaded. Terminating.");
             process.exitCode = 1;
         }
@@ -135,10 +135,7 @@ export class Logger {
         let v = config.verbosity.toLowerCase();
         this.logToFile = config.createLogFile;
         this.fileName = `${process.env.localappdata}\\.wishmaster\\logfile.log`;
-        // if (!fs.existsSync(this.fileName)){
-            
-        // }
-        
+
         this.isLog = v.indexOf("log") > -1;
         this.isInfo = v.indexOf("info") > -1;
         this.isWarn = v.indexOf("warn") > -1;
@@ -147,7 +144,7 @@ export class Logger {
 
     public log(text: any, ...args: any[]) {
         if (this.isLog) {
-            if (this.logToFile){
+            if (this.logToFile) {
                 this.writeLog("log", text, ...args);
             } else {
                 console.log(text, ...args);
@@ -157,7 +154,7 @@ export class Logger {
 
     public info(text: any, ...args: any[]) {
         if (this.isInfo) {
-            if (this.logToFile){
+            if (this.logToFile) {
                 this.writeLog("info", text, ...args);
             } else {
                 console.info(text, ...args);
@@ -167,7 +164,7 @@ export class Logger {
 
     public warn(text: any, ...args: any[]) {
         if (this.isWarn) {
-            if (this.logToFile){
+            if (this.logToFile) {
                 this.writeLog("warn", text, ...args);
             } else {
                 console.warn(text, ...args);
@@ -177,7 +174,7 @@ export class Logger {
 
     public error(text: any, ...args: any[]) {
         if (this.isError) {
-            if (this.logToFile){
+            if (this.logToFile) {
                 this.writeLog("error", text, ...args);
             } else {
                 console.error(text, ...args);
@@ -188,7 +185,7 @@ export class Logger {
     private writeLog(kind: string, text: string, ...args: any[]) {
         let time = moment().format("YYYY-MM-DD hh:mm:ss.SSS Z");
         let data: string;
-        if(args.length > 0){
+        if (args.length > 0) {
             let argsJoined = args.join("");
             data = `${time}\t${kind}\t${text}\t${argsJoined}\n`;
         } else {
@@ -196,18 +193,16 @@ export class Logger {
         }
 
         fs.open(this.fileName, 'a', (err, fd) => {
-            if(err){
+            if (err) {
                 console.error("failed to open log file");
                 return;
             }
             fs.appendFile(fd, data, (err) => {
-                if(err){
+                if (err) {
                     console.error("failed to write to log file");
                 }
             });
         });
-
-        
     }
 }
 
