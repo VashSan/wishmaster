@@ -229,6 +229,8 @@ export class MessageProcessor {
     private context: Context;
     private config: Configuration;
     private logger: Logger;
+    private delayedMessages: IFeatureResponse[] = [];
+    private messageCount30Sec = 0;
 
     constructor(context: Context) {
         this.context = context;
@@ -272,9 +274,43 @@ export class MessageProcessor {
         });
 
         this.client.connect(0, () => {
+            setInterval(this.resetMessageCount.bind(this), 1000 * 30);
+            setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
+
+            this.messageCount30Sec = 1;
             this.client.send("CAP REQ", "twitch.tv/tags");
             this.client.join(this.config.channel);
         });
+    }
+
+    private resetMessageCount() {
+        this.messageCount30Sec = 0;
+    }
+
+    private processDelayedMessages() {
+        if (this.delayedMessages.length > this.config.msgLimitPer30Sec) {
+            console.warn("There are too many responses queued! I will be busy for a while...");
+        }
+
+        let count = 0;
+        while (this.delayedMessages.length > 0) {
+
+            if (!this.isUnderMessageLimit()) {
+                return;
+            }
+
+            let msg = this.delayedMessages.shift();
+            if (msg != undefined) {
+                this.processResponse(null, msg);
+            }
+
+            count += 1;
+            if (count > this.config.msgLimitPer30Sec / 3) {
+                // we check every 10 seconds, so we can split our responses in 3 batches.
+                // TODO Think about having a response timeout, so unimportant stuff can be removed from the queue in a safe manner.
+                return;
+            }
+        }
     }
 
     private taggedMessageReceived(payload: string, tags: string) {
@@ -376,14 +412,58 @@ export class MessageProcessor {
         }
     }
 
-    private processResponse(err: string, r: IFeatureResponse) {
+    private processResponse(err: string | null, r: IFeatureResponse) {
+        if (err != null) {
+            this.logger.error("processResponse Error", err);
+        }
+
         if (r == null) {
             return;
         }
 
         if (!isNullOrUndefined(r.message) && r.message.text != "" && r.message.channel != "") {
-            this.client.say(r.message.channel, r.message.text);
+            if (this.isUnderMessageLimit()) {
+                this.messageCount30Sec += 1;
+                this.client.say(r.message.channel, r.message.text);
+            } else {
+                this.deferResponse(r);
+            }
         }
+    }
+
+    private isUnderMessageLimit(): boolean {
+        return this.messageCount30Sec + 1 <= this.config.msgLimitPer30Sec;
+    }
+
+    private deferResponse(msg: IFeatureResponse) {
+        for (const m of this.delayedMessages) {
+            if (this.responseEquals(m, msg)) {
+                return;
+            }
+        }
+
+        this.delayedMessages.push(msg);
+    }
+
+    private responseEquals(m1: IFeatureResponse, m2: IFeatureResponse): boolean {
+        if (m1 == m2) {
+            return true;
+        }
+
+        let compares = [
+            [m1.message.channel, m2.message.channel],
+            [m1.message.from, m2.message.from],
+            [m1.message.tags, m2.message.tags],
+            [m1.message.text, m2.message.text]
+        ];
+
+        for (const comp of compares) {
+            if (comp[0] != comp[1]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
