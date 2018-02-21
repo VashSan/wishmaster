@@ -33,9 +33,14 @@ class Startup {
     private static erroredCollections = 0;
 
     public static main(): number {
-
         this.config = new Configuration();
         this.logger = new Logger(this.config);
+
+        this.logger.info("Wishmaster at your serivce.");
+        this.logger.info("https://github.com/VashSan/wishmaster");
+        if (process.platform != "win32") {
+            this.logger.warn("This program likely contains bugs in other OS than Windows. Please report bugs.");
+        }
 
         this.logger.info("setting up db");
         this.setupDb();
@@ -130,11 +135,13 @@ export class Logger {
     private isError: boolean;
     private logToFile: boolean;
     private fileName: string;
+    private newLine: string;
 
     constructor(config: Configuration) {
         let v = config.verbosity.toLowerCase();
         this.logToFile = config.createLogFile;
         this.fileName = `${process.env.localappdata}\\.wishmaster\\logfile.log`;
+        this.newLine = process.env.platform == "win32" ? "\r\n" : "\n";
 
         this.isLog = v.indexOf("log") > -1;
         this.isInfo = v.indexOf("info") > -1;
@@ -185,11 +192,12 @@ export class Logger {
     private writeLog(kind: string, text: string, ...args: any[]) {
         let time = moment().format("YYYY-MM-DD hh:mm:ss.SSS Z");
         let data: string;
+
         if (args.length > 0) {
             let argsJoined = args.join("");
-            data = `${time}\t${kind}\t${text}\t${argsJoined}\n`;
+            data = `${time}\t${kind}\t${text}\t${argsJoined}${this.newLine}`;
         } else {
-            data = `${time}\t${kind}\t${text}\n`;
+            data = `${time}\t${kind}\t${text}${this.newLine}`;
         }
 
         fs.open(this.fileName, 'a', (err, fd) => {
