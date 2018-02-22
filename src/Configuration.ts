@@ -12,6 +12,7 @@ export class Configuration {
     msgLimitPer30Sec: number = 20;
     verbosity: string = "log,info,warn,error";
     createLogFile: boolean = false;
+    urlWhiteList: string[] = [];
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;

@@ -10,6 +10,7 @@ import { Configuration } from "./src/Configuration";
 import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
 import fs = require("fs");
+import { UrlFilter } from "./src/Features/UrlFilter";
 
 export class Context {
     public readonly config: Configuration;
@@ -96,7 +97,8 @@ class Startup {
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            new Harvest(context)
+            new Harvest(context),
+            new UrlFilter(context)
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(context);
