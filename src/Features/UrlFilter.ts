@@ -4,7 +4,7 @@ import { Logger, Context } from "../../app";
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter implements MP.IFeature {
     readonly trigger: string = "";
-    private urlRegex = /​(?:http[s]?:\/\/)?((?:[a-z0-9]+\.)*[a-z0-9]+\.[a-z]{2,6})(?:\/[a-z0-9]+(?:\?+\S*))*(?=\s)/gi;
+    private urlRegex = /(?:http[s]?:\/\/)?((?:[a-z0-9]+\.)*[a-z0-9]+\.[a-z]{2,6})(?:\/[a-z0-9]+)*(?=\s)?/gi;
     private logger: Logger;
     private whiteList: string[];
     private timeoutedUsers: string[] = [];
