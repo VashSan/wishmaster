@@ -3,6 +3,11 @@ import { isNullOrUndefined } from "util";
 
 type CollectionMap = Map<string, Nedb>;
 
+export interface IStaticAnswer {
+    trigger: string;
+    answer: string;
+}
+
 export class Database {
     private map: CollectionMap;
 

@@ -1,4 +1,5 @@
 import fs = require("fs");
+import {IStaticAnswer} from "./Interfaces";
 
 export class Configuration {
     private configDir: string;
@@ -13,6 +14,7 @@ export class Configuration {
     verbosity: string = "log,info,warn,error";
     createLogFile: boolean = false;
     urlWhiteList: string[] = [];
+    staticAnswers: IStaticAnswer[] = [];
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
