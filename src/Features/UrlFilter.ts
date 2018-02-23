@@ -4,7 +4,7 @@ import { Logger, Context } from "../../app";
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter implements MP.IFeature {
     readonly trigger: string = "";
-    private urlRegex: RegExp = new RegExp(/http[s]?:\/\/[\S]+/g);
+    private urlRegex = /​(?:http[s]?:\/\/)?((?:[a-z0-9]+\.)*[a-z0-9]+\.[a-z]{2,6})(?:\/[a-z0-9]+(?:\?+\S*))*(?=\s)/gi;
     private logger: Logger;
     private whiteList: string[];
     private timeoutedUsers: string[] = [];
@@ -16,25 +16,13 @@ export class UrlFilter implements MP.IFeature {
 
     /** Return the message we just received */
     public act(msg: MP.Message, callback: MP.ResponseCallback): void {
-        let match = this.urlRegex.exec(msg.text);
-        if (match != null) {
-            for (const m of match) {
-                // TODO 
-                // ... this does not work as expected... first twitch links all "xxxx.xx" strings... meh
-                // ... second that regex somehow is not doing as well as expected and not returning some matches ... sigh
-                let start = m.indexOf("://");
-                let end = m.indexOf("/", start + 3);
+        let result;
+        while ((result = this.urlRegex.exec(msg.text)) != null) {
+            if (result != null && result.length > 1) {
+                let domain = result[1];
 
-                let checkString: string;
-                if (end == -1) {
-                    checkString = m.substring(start + 3)
-                } else {
-                    checkString = m.substring(start + 3, end);
-                }
-
-                if (!this.isWhitelistedDomain(checkString)) {
-                    this.logger.info("Found domain worth to be timeouted.");
-                    this.takeAction(msg, callback);
+                if (!this.isWhitelistedDomain(domain)) {
+                    this.takeAction(msg, domain, callback);
                     return;
                 }
             }
@@ -50,18 +38,17 @@ export class UrlFilter implements MP.IFeature {
         return true;
     }
 
-    private takeAction(msg: MP.Message, callback: MP.ResponseCallback) {
+    private takeAction(msg: MP.Message, domain: string, callback: MP.ResponseCallback) {
         this.timeoutedUsers.push(msg.from); // thats dirty... but they get timedout ... 
 
         let timeoutCount = this.timeoutedUsers.filter((x) => { return x == msg.from; }).length;
         let timeoutTime = timeoutCount * timeoutCount; // at least 1 sec but gets bad real quick ... 
 
+        this.logger.info(`Found '${domain}'. User ${msg.from} is timeouted for ${timeoutTime}s.`);
+
         let timeoutCommand = `/timeout ${msg.from} ${timeoutTime}`;
-
         let m = new MP.Message({ channel: msg.channel, text: timeoutCommand });
-
         let response = { message: m };
-
         callback(null, response);
     }
 }
