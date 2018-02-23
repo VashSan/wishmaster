@@ -11,6 +11,7 @@ import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
 import fs = require("fs");
 import { UrlFilter } from "./src/Features/UrlFilter";
+import { StaticAnswers } from "./src/Features/StaticAnswers";
 
 export class Context {
     public readonly config: Configuration;
@@ -98,6 +99,7 @@ class Startup {
             // new Loopback(""),
             // new Loopback("test"),
             new Harvest(context),
+            new StaticAnswers(context),
             new UrlFilter(context)
         ]);
 
