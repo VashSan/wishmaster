@@ -12,6 +12,7 @@ import { isNullOrUndefined } from "util";
 import fs = require("fs");
 import { UrlFilter } from "./src/Features/UrlFilter";
 import { StaticAnswers } from "./src/Features/StaticAnswers";
+import { Stomt } from "./src/Features/Stomt";
 
 export class Context {
     public readonly config: Configuration;
@@ -100,7 +101,8 @@ class Startup {
             // new Loopback("test"),
             new Harvest(context),
             new StaticAnswers(context),
-            new UrlFilter(context)
+            new UrlFilter(context),
+            new Stomt(context)
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(context);

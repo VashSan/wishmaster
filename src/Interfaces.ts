@@ -8,6 +8,11 @@ export interface IStaticAnswer {
     answer: string;
 }
 
+export interface IStomtConfig {
+    applicationId: string;
+    baseUrl: string;
+}
+
 export class Database {
     private map: CollectionMap;
 

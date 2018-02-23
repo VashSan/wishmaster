@@ -1,5 +1,5 @@
 import fs = require("fs");
-import {IStaticAnswer} from "./Interfaces";
+import {IStaticAnswer, IStomtConfig} from "./Interfaces";
 
 export class Configuration {
     private configDir: string;
@@ -15,6 +15,7 @@ export class Configuration {
     createLogFile: boolean = false;
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
+    stomt: IStomtConfig | null = null;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
