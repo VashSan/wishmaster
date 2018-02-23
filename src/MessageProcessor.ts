@@ -224,7 +224,7 @@ export class Message {
 }
 
 export class MessageProcessor {
-    private plugins = new Map<string, Set<IFeature>>();
+    private featureMap = new Map<string, Set<IFeature>>();
     private client: IRC.Client;
     private context: Context;
     private config: Configuration;
@@ -362,17 +362,17 @@ export class MessageProcessor {
 
         let trigger = plugin.trigger.toLowerCase().trim();
 
-        let pluginSet = this.plugins.get(trigger);
-        if (isNullOrUndefined(pluginSet)) {
-            pluginSet = new Set<IFeature>();
-            this.plugins.set(trigger, pluginSet);
+        let featureList = this.featureMap.get(trigger);
+        if (isNullOrUndefined(featureList)) {
+            featureList = new Set<IFeature>();
+            this.featureMap.set(trigger, featureList);
         }
 
-        pluginSet.add(plugin);
+        featureList.add(plugin);
     }
 
     public process(message: Message) {
-        let alwaysTriggered = this.plugins.get("");
+        let alwaysTriggered = this.featureMap.get("");
         this.invokePlugins(message, alwaysTriggered);
 
         let trigger = this.getTrigger(message);
@@ -380,7 +380,7 @@ export class MessageProcessor {
             return;
         }
 
-        let thisTimeTriggered = this.plugins.get(trigger);
+        let thisTimeTriggered = this.featureMap.get(trigger);
         this.invokePlugins(message, thisTimeTriggered);
     }
 
