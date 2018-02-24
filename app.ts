@@ -140,19 +140,32 @@ export class Logger {
     private isWarn: boolean;
     private isError: boolean;
     private logToFile: boolean;
-    private fileName: string;
+    private fileName: string = "";
     private newLine: string;
+    private initDate: moment.Moment;
 
     constructor(config: Configuration) {
+        this.initDate = moment();
+
         let v = config.verbosity.toLowerCase();
         this.logToFile = config.createLogFile;
-        this.fileName = `${process.env.localappdata}\\.wishmaster\\logfile.log`;
-        this.newLine = process.env.platform == "win32" ? "\r\n" : "\n";
+
+        this.updateFileName(this.initDate);
+
+        this.newLine = process.platform == "win32" ? "\r\n" : "\n";
 
         this.isLog = v.indexOf("log") > -1;
         this.isInfo = v.indexOf("info") > -1;
         this.isWarn = v.indexOf("warn") > -1;
         this.isError = v.indexOf("error") > -1;
+    }
+
+    private updateFileName(now: moment.Moment) {
+        if (now.day() != this.initDate.day() || this.fileName.length == 0) {
+            this.initDate = now;
+            let date = now.format("YYYY-MM-DD");
+            this.fileName = `${process.env.localappdata}\\.wishmaster\\${date}.log`;
+        }
     }
 
     public log(text: any, ...args: any[]) {
@@ -196,9 +209,11 @@ export class Logger {
     }
 
     private writeLog(kind: string, text: string, ...args: any[]) {
-        let time = moment().format("YYYY-MM-DD hh:mm:ss.SSS Z");
-        let data: string;
+        let now = moment();
+        this.updateFileName(now);
 
+        let time = now.format("YYYY-MM-DD hh:mm:ss.SSS Z");
+        let data: string;
         if (args.length > 0) {
             let argsJoined = args.join("");
             data = `${time}\t${kind}\t${text}\t${argsJoined}${this.newLine}`;
