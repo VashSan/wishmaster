@@ -1,6 +1,7 @@
 import * as mp from "../MessageProcessor";
 import * as request from "request";
-import { Context, Logger } from "../../app";
+import { Context } from "../../app";
+import { Logger } from "../Logger";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Stomt implements mp.IFeature {

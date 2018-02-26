@@ -1,6 +1,7 @@
 import * as mp from "../MessageProcessor";
 import { Context } from "../../app";
 import { IStaticAnswer } from "../Interfaces";
+import { Logger } from "../Logger";
 
 /** When a command the answer command listens to is found, a text message is replied. */
 export class StaticAnswers implements mp.IFeature {

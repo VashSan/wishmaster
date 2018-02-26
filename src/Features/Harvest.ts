@@ -1,7 +1,8 @@
 import * as mp from "../MessageProcessor";
 import { Configuration } from "../Configuration";
 import { Database } from "../Interfaces";
-import { Context, Logger } from "../../app";
+import { Context } from "../../app";
+import { Logger } from "../Logger";
 import { isNullOrUndefined } from "util";
 
 /** Pushes information into the database */

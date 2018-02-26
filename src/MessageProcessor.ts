@@ -1,6 +1,7 @@
 import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
-import { Context, Logger } from "../app";
+import { Context } from "../app";
+import { Logger } from "./Logger";
 import { Configuration } from "./Configuration";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;

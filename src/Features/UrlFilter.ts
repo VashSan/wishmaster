@@ -1,5 +1,6 @@
 import * as MP from "../MessageProcessor";
-import { Logger, Context } from "../../app";
+import { Context } from "../../app";
+import { Logger } from "../Logger";
 
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter implements MP.IFeature {
