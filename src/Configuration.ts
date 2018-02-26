@@ -16,6 +16,7 @@ export class Configuration {
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
     stomt: IStomtConfig | null = null;
+    maxLogAgeDays = 10;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;

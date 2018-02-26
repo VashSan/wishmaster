@@ -33,6 +33,9 @@ Remember to strip the comments before saving it as configuration file.
 	 * messages are written to console.
 	 */
 	"createLogFile": false
+
+	/** Logger automatically deletes old log files */
+	"maxLogAgeDays": 10,
 }
 ```
 
