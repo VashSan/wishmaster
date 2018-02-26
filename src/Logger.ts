@@ -18,18 +18,18 @@ class ConsoleTarget implements ILogTarget {
     log(level: LogLevel, text: string, ...args: any[]) {
         switch (level) {
             case LogLevel.Debug:
-                console.log(text, args);
+                console.log(text, ...args);
                 break;
             case LogLevel.Info:
-                console.info(text, args);
+                console.info(text, ...args);
                 break;
             case LogLevel.Warn:
-                console.warn(text, args);
+                console.warn(text, ...args);
                 break;
             default:
             // all undefined levels are handled as error
             case LogLevel.Error:
-                console.error(text, args);
+                console.error(text, ...args);
         }
     }
 }
@@ -94,7 +94,7 @@ class FileTarget implements ILogTarget {
 
     private cleanupOldFiles() {
         let that = this;
-        let threshold = moment().subtract(that.maxLogAgeInDays);
+        let threshold = moment().subtract(that.maxLogAgeInDays, "days");
 
         fs.readdir(this.logPath, (err, listOfFiles) => {
             if (!isNullOrUndefined(err)) {
@@ -148,33 +148,33 @@ export class Logger {
         }
     }
 
-    private writeTarget(level: LogLevel, text: string, ...args: any[]) {
-        for (const target of this.logTargets) {
-            target.log(level, text, args);
-        }
-    }
-
     public log(text: any, ...args: any[]) {
         if (this.isDebug) {
-            this.writeTarget(LogLevel.Debug, text, args);
+            this.writeTarget(LogLevel.Debug, text, ...args);
         }
     }
 
     public info(text: any, ...args: any[]) {
         if (this.isInfo) {
-            this.writeTarget(LogLevel.Info, text, args);
+            this.writeTarget(LogLevel.Info, text, ...args);
         }
     }
 
     public warn(text: any, ...args: any[]) {
         if (this.isWarn) {
-            this.writeTarget(LogLevel.Warn, text, args);
+            this.writeTarget(LogLevel.Warn, text, ...args);
         }
     }
 
     public error(text: any, ...args: any[]) {
         if (this.isError) {
-            this.writeTarget(LogLevel.Error, text, args);
+            this.writeTarget(LogLevel.Error, text, ...args);
+        }
+    }
+
+    private writeTarget(level: LogLevel, text: string, ...args: any[]) {
+        for (const target of this.logTargets) {
+            target.log(level, text, ...args);
         }
     }
 }
