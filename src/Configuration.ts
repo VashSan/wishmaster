@@ -11,8 +11,9 @@ export class Configuration {
     password: string = "";
     channel: string = "";
     msgLimitPer30Sec: number = 20;
-    verbosity: string = "log,info,warn,error";
+    verbosity: string = "debug,info,warn,error";
     createLogFile: boolean = false;
+    createLogConsole: boolean = true;
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
     stomt: IStomtConfig | null = null;

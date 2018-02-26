@@ -29,12 +29,13 @@ Remember to strip the comments before saving it as configuration file.
 	/** log,info,warn,error ... remove a token to avoid being written to log file. */
 	"verbosity": "info,warn,error",
 	
-	/** Set to true to create a log file within the working directory. Otherwise log
-	 * messages are written to console.
-	 */
-	"createLogFile": false
+	/** Set to true to create a log file within .wishmaster directory. */
+	"createLogFile": false,
 
-	/** Logger automatically deletes old log files */
+	/** Set to true to write log messages to console. */
+	"createLogConsole": true,
+
+	/** Logger automatically deletes old log files. */
 	"maxLogAgeDays": 10,
 }
 ```
