@@ -13,6 +13,7 @@ import { isNullOrUndefined } from "util";
 import { UrlFilter } from "./src/Features/UrlFilter";
 import { StaticAnswers } from "./src/Features/StaticAnswers";
 import { Stomt } from "./src/Features/Stomt";
+import { SongRequest } from "./src/Features/SongRequest";
 
 export class Context {
     public readonly config: Configuration;
@@ -102,7 +103,8 @@ class Startup {
             new Harvest(context),
             new StaticAnswers(context),
             new UrlFilter(context),
-            new Stomt(context)
+            new Stomt(context),
+            new SongRequest(context)
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(context);

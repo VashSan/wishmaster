@@ -1,5 +1,5 @@
 import fs = require("fs");
-import {IStaticAnswer, IStomtConfig} from "./Interfaces";
+import {IStaticAnswer, IStomtConfig, ISongRequestConfig} from "./Interfaces";
 
 export class Configuration {
     private configDir: string;
@@ -17,6 +17,7 @@ export class Configuration {
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
     stomt: IStomtConfig | null = null;
+    songRequest: ISongRequestConfig | null = null;
     maxLogAgeDays = 10;
 
     constructor() {

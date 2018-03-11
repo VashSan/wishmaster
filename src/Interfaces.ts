@@ -13,6 +13,18 @@ export interface IStomtConfig {
     baseUrl: string;
 }
 
+export interface ISongRequestConfig {
+    spotify: ISpotifyConfig;
+}
+
+export interface ISpotifyConfig {
+    listenPort: number;
+    secretKey: string;
+    clientId: string;
+    scopes: string[];
+    redirectUri: string;
+}
+
 export class Database {
     private map: CollectionMap;
 
