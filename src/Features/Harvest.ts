@@ -16,7 +16,7 @@ export class Harvest implements mp.IFeature {
         this.logger = context.logger;
     }
 
-    /** Return the message we just received */
+    /** Evaluates the message to update user table, and add message log */
     public act(msg: mp.Message, callback: (error: string, response: mp.IFeatureResponse) => void): void {
         this.updateUser(msg);
         this.updateLog(msg);
@@ -38,6 +38,7 @@ export class Harvest implements mp.IFeature {
             });
         });
 
+        // TODO New Tags? flags, badge-info
         let log = {
             from: msg.from,
             channel: msg.channel,
@@ -91,6 +92,7 @@ export class Harvest implements mp.IFeature {
                 messageCount = doc.messageCount + 1;
             }
             
+            // TODO New Tags? flags, badge-info
             let user = {
                 _id: msg.tags.userId,
                 name: msg.tags.displayName,
