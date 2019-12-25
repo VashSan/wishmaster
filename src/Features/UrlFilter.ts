@@ -32,24 +32,41 @@ export class UrlFilter implements MP.IFeature {
 
     private isWhitelistedDomain(host: string): boolean {
         for (const fineDomain of this.whiteList) {
-            if (!host.endsWith(fineDomain)) {
-                return false;
+            if (host.endsWith(fineDomain)) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private takeAction(msg: MP.Message, domain: string, callback: MP.ResponseCallback) {
         this.timeoutedUsers.push(msg.from); // thats dirty... but they get timedout ... 
 
+        const maxTimeOut = 600;
         let timeoutCount = this.timeoutedUsers.filter((x) => { return x == msg.from; }).length;
         let timeoutTime = timeoutCount * timeoutCount; // at least 1 sec but gets bad real quick ... 
+        if (timeoutTime > maxTimeOut) {
+            timeoutTime = maxTimeOut;
+        }
 
         this.logger.info(`Found '${domain}'. User ${msg.from} is timeouted for ${timeoutTime}s.`);
 
         let timeoutCommand = `/timeout ${msg.from} ${timeoutTime}`;
-        let m = new MP.Message({ channel: msg.channel, text: timeoutCommand });
+
+        this.respond(msg, timeoutCommand, callback);
+
+        let whiteDomains = this.getWhitelistedDomainsAsString();
+        this.respond(msg, `Please do not post links, except ${whiteDomains}`, callback);
+    }
+
+    private getWhitelistedDomainsAsString(): string {
+        return this.whiteList.join(", ");
+    }
+
+    private respond(originalMsg: MP.Message, text: string, callback: MP.ResponseCallback){
+        let m = new MP.Message({ channel: originalMsg.channel, text: text });
         let response = { message: m };
         callback(null, response);
+
     }
 }
