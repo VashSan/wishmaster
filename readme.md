@@ -37,6 +37,28 @@ Remember to strip the comments before saving it as configuration file.
 
 	/** Logger automatically deletes old log files. */
 	"maxLogAgeDays": 10,
+
+	/** Email setup (to scan for follower email) */
+	"email": {
+		"address": "",  // someone@company.test
+		"host": "",     // email server address 
+		"port": 0,      // email server port number
+		"login": "",    // account logon name
+		"password": ""  // password
+	},
+
+	/** URLs that are allowed in chat */
+	"urlWhiteList": [
+		"youtube.com" // example
+	],
+
+	/** any nymber of replies connected with a command */
+	"staticAnswers": [
+		{"trigger": "!discord", "answer": "My discord URL: ..."}
+	],
+
+	// experimental stomt config not documented yet 
+	// experimental song request config not documented yet 
 }
 ```
 
