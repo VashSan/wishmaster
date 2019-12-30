@@ -1,14 +1,14 @@
 import * as mp from "../MessageProcessor";
 import * as request from "request";
 import { Context } from "../../app";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Stomt implements mp.IFeature {
     trigger = "i";
     appId: string = "";
     url: string = "";
-    logger: Logger;
+    logger: ILogger;
     isInitialized: boolean = false;
     sendResponse: mp.ResponseCallback | null = null;
 

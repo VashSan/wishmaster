@@ -1,7 +1,7 @@
 import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 import { Context } from "../app";
-import { Logger } from "./Logger";
+import { ILogger } from "psst-log";
 import { Configuration } from "./Configuration";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
@@ -32,7 +32,7 @@ export class Emote {
 
 
 export class Tags {
-    private logger: Logger;
+    private logger: ILogger;
     public color: string = "";
     public displayName: string = "";
     public isEmoteOnly: boolean = false;
@@ -48,7 +48,7 @@ export class Tags {
     public bits: number = 0;
     public badgeList: string[] = [];
 
-    constructor(tags: string, logger: Logger) {
+    constructor(tags: string, logger: ILogger) {
         this.logger = logger;
         if (!tags.startsWith("@")) {
             logger.error("does not seem to be valid tag", tags);
@@ -230,7 +230,7 @@ export class MessageProcessor {
     private client: IRC.Client;
     private context: Context;
     private config: Configuration;
-    private logger: Logger;
+    private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCount30Sec = 0;
 

@@ -26,9 +26,15 @@ export class Configuration {
 
     // runtime options
     rootPath: string;
+    logDir: string;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
+        Configuration.createDirIfNecessary(this.configDir);
+
+        this.logDir = path.resolve(this.configDir, "log");
+        Configuration.createDirIfNecessary(this.logDir);
+
         this.configFilePath = `${this.configDir}\\${this.configFile}`;
 
         if (!fs.existsSync(this.configDir)) {
@@ -45,6 +51,12 @@ export class Configuration {
         (<any>Object).assign(this, configObj);
 
         this.rootPath = path.dirname(process.argv[1]);
+    }
+
+    private static createDirIfNecessary(path: string) : void {
+        if(!fs.existsSync(path)){
+            fs.mkdirSync(path);
+        }
     }
 
     public getConfigDir(): string {

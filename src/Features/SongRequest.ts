@@ -1,6 +1,6 @@
 import * as mp from "../MessageProcessor";
 import { Context } from "../../app";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 
 
 //var express = require('express'); // Express web server framework
@@ -24,7 +24,7 @@ export class SongRequest implements mp.IFeature {
     
     private spotifyConfig: ISpotifyConfig;
     private spotify: SpotifyState = new SpotifyState();
-    private logger: Logger;
+    private logger: ILogger;
     private app: express.Express;
     private sendResponse: mp.ResponseCallback | null = null;
 

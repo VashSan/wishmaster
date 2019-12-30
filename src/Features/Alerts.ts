@@ -3,7 +3,7 @@ import * as IMAP from "imap-simple";
 import * as MP from "../MessageProcessor";
 import { Context } from "../../app";
 import { Configuration } from "../Configuration";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 import { IEmailAccess } from "../Interfaces";
 import path = require("path");
 
@@ -12,7 +12,7 @@ export class Alerts implements MP.IFeature {
     public trigger: string = "alert";
     private sendResponse: MP.ResponseCallback | null = null;
     private config: Configuration;
-    private logger: Logger;
+    private logger: ILogger;
     private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
 

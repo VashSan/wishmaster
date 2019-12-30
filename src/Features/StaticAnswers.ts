@@ -1,14 +1,14 @@
 import * as mp from "../MessageProcessor";
 import { Context } from "../../app";
 import { IStaticAnswer } from "../Interfaces";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 
 /** When a command the answer command listens to is found, a text message is replied. */
 export class StaticAnswers implements mp.IFeature {
     readonly trigger: string = "";
     private answers: IStaticAnswer[];
     private sendResponse: mp.ResponseCallback | null = null;
-    private logger: Logger;
+    private logger: ILogger;
 
     constructor(context: Context) {
         this.answers = context.config.staticAnswers;

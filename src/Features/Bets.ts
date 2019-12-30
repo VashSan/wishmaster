@@ -1,6 +1,6 @@
 import * as mp from "../MessageProcessor";
 import { Context } from "../../app";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 import { Configuration } from "../Configuration";
 
 enum State {
@@ -19,7 +19,7 @@ interface IAnswer {
  */
 export class Bets implements mp.IFeature {
     public trigger: string = "bet";
-    private logger: Logger;
+    private logger: ILogger;
     private state: State;
     private config: Configuration;
     private answers: IAnswer[] = [];

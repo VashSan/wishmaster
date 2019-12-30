@@ -16,6 +16,7 @@
     "irc": "^0.5.2",
     "moment": "^2.20.1",
     "nedb": "^1.8.0",
+    "psst-log": "0.0.4",
     "querystring": "^0.2.0",
     "request": "^2.88.0",
     "typescript": "^2.7.1",

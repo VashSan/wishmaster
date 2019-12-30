@@ -2,11 +2,11 @@
 
 import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
+import * as Log from "psst-log";
 
 import Nedb = require("nedb");
 import { Database } from "./src/Interfaces";
 import { Loopback } from "./src/Features/Loopback";
-import { Logger } from "./src/Logger";
 import { Configuration } from "./src/Configuration";
 import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
@@ -19,10 +19,10 @@ import { Bets } from "./src/Features/Bets";
 
 export class Context {
     public readonly config: Configuration;
-    public readonly logger: Logger;
+    public readonly logger: Log.ILogger;
     public readonly db: Database;
 
-    constructor(config: Configuration, logger: Logger, db: Database) {
+    constructor(config: Configuration, logger: Log.ILogger, db: Database) {
         this.config = config;
         this.logger = logger;
         this.db = db;
@@ -31,7 +31,7 @@ export class Context {
 
 class Startup {
     private static config: Configuration;
-    private static logger: Logger;
+    private static logger: Log.ILogger;
     private static msgProcessor: MP.MessageProcessor;
     private static db: Database;
 
@@ -40,7 +40,15 @@ class Startup {
 
     public static main(): number {
         this.config = new Configuration();
-        this.logger = new Logger(this.config);
+        
+        this.logger = Log.LogManager.getLogger();
+        if (this.config.createLogConsole) {
+            Log.LogManager.addConsoleTarget();
+        }
+        
+        if (this.config.createLogFile) {
+            Log.LogManager.addFileTarget(this.config.logDir, this.config.maxLogAgeDays);
+        }
 
         this.logger.info("Wishmaster at your serivce.");
         this.logger.info("https://github.com/VashSan/wishmaster");

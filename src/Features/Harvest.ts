@@ -2,14 +2,14 @@ import * as mp from "../MessageProcessor";
 import { Configuration } from "../Configuration";
 import { Database } from "../Interfaces";
 import { Context } from "../../app";
-import { Logger } from "../Logger";
+import { ILogger } from "psst-log";
 import { isNullOrUndefined } from "util";
 
 /** Pushes information into the database */
 export class Harvest implements mp.IFeature {
     readonly trigger: string = "";
     private db: Database;
-    private logger: Logger;
+    private logger: ILogger;
     private sendResponse: mp.ResponseCallback | null = null;
 
     constructor(context: Context) {
