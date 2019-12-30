@@ -10,6 +10,7 @@ export class Stomt implements mp.IFeature {
     url: string = "";
     logger: Logger;
     isInitialized: boolean = false;
+    sendResponse: mp.ResponseCallback | null = null;
 
 
     constructor(context: Context) {
@@ -24,8 +25,11 @@ export class Stomt implements mp.IFeature {
         this.isInitialized = true;
     }
 
-    /** Return the message we just received */
-    public act(msg: mp.Message, callback: mp.ResponseCallback): void {
+    public setup(sendRepsonse: mp.ResponseCallback): void {
+        this.sendResponse = sendRepsonse;
+    }
+
+    public act(msg: mp.Message): void {
         if (!this.isInitialized) {
             return;
         }

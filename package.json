@@ -6,11 +6,13 @@
   "dependencies": {
     "@types/cookie-parser": "^1.4.1",
     "@types/express": "^4.11.1",
+    "@types/imap-simple": "^4.2.2",
     "@types/nedb": "^1.8.5",
     "@types/node": "^9.4.5",
     "@types/request": "^2.47.0",
     "cookie-parser": "^1.4.3",
     "express": "^4.16.2",
+    "imap-simple": "^4.3.0",
     "irc": "^0.5.2",
     "moment": "^2.20.1",
     "nedb": "^1.8.0",

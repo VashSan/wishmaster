@@ -26,6 +26,7 @@ export class SongRequest implements mp.IFeature {
     private spotify: SpotifyState = new SpotifyState();
     private logger: Logger;
     private app: express.Express;
+    private sendResponse: mp.ResponseCallback | null = null;
 
     private get isSpotifyEnabled() : boolean {
         return this.spotifyConfig.listenPort > 0
@@ -53,9 +54,18 @@ export class SongRequest implements mp.IFeature {
         }
     }
 
+    public setup(sendResponse: mp.ResponseCallback): void {
+        this.sendResponse = sendResponse;
+    }
+
     /** Enqueue the requested song to the playlist */
-    public act(msg: mp.Message, callback: mp.ResponseCallback): void {
+    public act(msg: mp.Message): void {
         if (!this.isSpotifyEnabled) {
+            return;
+        }
+
+        if(this.sendResponse == null) {
+            this.logger.error("sendResponse callback not set up for message: " + msg.toString());
             return;
         }
 
@@ -68,7 +78,7 @@ export class SongRequest implements mp.IFeature {
         });
 
         let response = { message: answer };
-        callback(null, response);
+        this.sendResponse(null, response);
     }
 
     private initServer() {

@@ -12,6 +12,7 @@ import { Harvest } from "./src/Features/Harvest";
 import { isNullOrUndefined } from "util";
 import { UrlFilter } from "./src/Features/UrlFilter";
 import { StaticAnswers } from "./src/Features/StaticAnswers";
+import { Alerts } from "./src/Features/Alerts";
 import { Stomt } from "./src/Features/Stomt";
 import { SongRequest } from "./src/Features/SongRequest";
 import { Bets } from "./src/Features/Bets";
@@ -101,9 +102,10 @@ class Startup {
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            // new Harvest(context),
-            // new StaticAnswers(context),
-            // new UrlFilter(context),
+            new Alerts(context),
+            new Harvest(context),
+            new StaticAnswers(context),
+            new UrlFilter(context),
             // new Stomt(context),
             // new SongRequest(context),
             new Bets(context)

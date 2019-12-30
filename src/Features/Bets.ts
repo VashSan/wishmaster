@@ -23,15 +23,24 @@ export class Bets implements mp.IFeature {
     private state: State;
     private config: Configuration;
     private answers: IAnswer[] = [];
+    private sendResponse: mp.ResponseCallback;
 
     constructor(context: Context) {
         this.logger = context.logger;
         this.state = State.Idle;
         this.config = context.config;
+
+        let that = this;
+        this.sendResponse = function() {
+            that.logger.error("Response callback missing");
+        };
     }
 
-    /** Return the message we just received */
-    public act(msg: mp.Message, callback: mp.ResponseCallback): void {
+    public setup(sendResponse: mp.ResponseCallback): void {
+        this.sendResponse = sendResponse;
+    }
+
+    public act(msg: mp.Message): void {
         let answerText: string = "";
 
 
@@ -99,7 +108,7 @@ export class Bets implements mp.IFeature {
             });
     
             let response = { message: answer };
-            callback(null, response);
+            this.sendResponse(null, response);
         }
     }
 }

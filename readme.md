@@ -38,13 +38,20 @@ Remember to strip the comments before saving it as configuration file.
 	/** Logger automatically deletes old log files. */
 	"maxLogAgeDays": 10,
 
+	/** For custom sounds configure a media player. */
+	"mediaPlayer": "C:\Program Files\Windows Media Player\wmplayer.exe",
+	
+	/** The media players command line options, Each argument is an array item. {0} is replaced by the sound file. */
+	"mediaPlayerArgs": ["{0}"],
+
 	/** Email setup (to scan for follower email) */
 	"email": {
 		"address": "",  // someone@company.test
 		"host": "",     // email server address 
 		"port": 0,      // email server port number
 		"login": "",    // account logon name
-		"password": ""  // password
+		"password": "", // password
+		"tls": true     // `true` enables mail transport scramble
 	},
 
 	/** URLs that are allowed in chat */

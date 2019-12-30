@@ -16,7 +16,8 @@ export enum UserType {
 
 export interface IFeature {
     readonly trigger: string;
-    act(message: Message, callback: ResponseCallback): void;
+    setup(callback: ResponseCallback): void;
+    act(message: Message): void;
 }
 
 export interface IFeatureResponse {
@@ -357,7 +358,10 @@ export class MessageProcessor {
     }
 
     public registerFeature(plugin: IFeature) {
+        plugin.setup(this.processResponse.bind(this));
+
         if (plugin.trigger == null) {
+            this.logger.warn("A plugin without a trigger was registered: " + plugin.constructor.name);
             return;
         }
 
@@ -408,7 +412,7 @@ export class MessageProcessor {
     private invokePlugins(msg: Message, plugins: Set<IFeature> | undefined) {
         if (!isNullOrUndefined(plugins)) {
             for (let p of plugins) {
-                p.act(msg, this.processResponse.bind(this));
+                p.act(msg);
             }
         }
     }

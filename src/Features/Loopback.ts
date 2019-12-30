@@ -2,7 +2,8 @@ import * as mp from "../MessageProcessor";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Loopback implements mp.IFeature {
-    trigger: string;
+    readonly trigger: string;
+    private sendResponse: mp.ResponseCallback | null = null;
 
     /** 
      * You can specify a trigger or send en empty string to be triggered always. 
@@ -12,8 +13,16 @@ export class Loopback implements mp.IFeature {
         this.trigger = trigger;
     }
 
+    public setup(sendResponse: mp.ResponseCallback): void {
+        this.sendResponse = sendResponse;
+    }
+
     /** Return the message we just received */
-    public act(msg: mp.Message, callback: mp.ResponseCallback): void {
+    public act(msg: mp.Message): void {
+        if (this.sendResponse == null){
+            return;
+        }
+        
         let str: string = msg.toString();
 
         let answer = new mp.Message({
@@ -23,7 +32,7 @@ export class Loopback implements mp.IFeature {
         });
 
         let response = { message: answer };
-        callback(null, response);
+        this.sendResponse(null, response);
     }
 }
 

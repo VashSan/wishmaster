@@ -10,14 +10,19 @@ export class Harvest implements mp.IFeature {
     readonly trigger: string = "";
     private db: Database;
     private logger: Logger;
+    private sendResponse: mp.ResponseCallback | null = null;
 
     constructor(context: Context) {
         this.db = context.db;
         this.logger = context.logger;
     }
 
+    public setup(sendResponse: mp.ResponseCallback): void {
+        this.sendResponse = sendResponse;
+    }
+
     /** Evaluates the message to update user table, and add message log */
-    public act(msg: mp.Message, callback: (error: string, response: mp.IFeatureResponse) => void): void {
+    public act(msg: mp.Message): void {
         this.updateUser(msg);
         this.updateLog(msg);
     }

@@ -1,5 +1,6 @@
 import fs = require("fs");
-import {IStaticAnswer, IStomtConfig, ISongRequestConfig} from "./Interfaces";
+import path = require("path");
+import {IStaticAnswer, IStomtConfig, ISongRequestConfig, IEmailAccess} from "./Interfaces";
 
 export class Configuration {
     private configDir: string;
@@ -14,11 +15,17 @@ export class Configuration {
     verbosity: string = "debug,info,warn,error";
     createLogFile: boolean = false;
     createLogConsole: boolean = true;
+    mediaPlayer: string = "";
+    mediaPlayerArgs: string[] = [];
+    email: IEmailAccess | null = null;
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
     stomt: IStomtConfig | null = null;
     songRequest: ISongRequestConfig | null = null;
     maxLogAgeDays = 10;
+
+    // runtime options
+    rootPath: string;
 
     constructor() {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
@@ -36,6 +43,8 @@ export class Configuration {
         let configObj = JSON.parse(configString);
 
         (<any>Object).assign(this, configObj);
+
+        this.rootPath = path.dirname(process.argv[1]);
     }
 
     public getConfigDir(): string {

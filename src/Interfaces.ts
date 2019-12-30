@@ -3,6 +3,15 @@ import { isNullOrUndefined } from "util";
 
 type CollectionMap = Map<string, Nedb>;
 
+export interface IEmailAccess {
+    address: string;
+    host: string;
+    port: number;
+    tls: boolean;
+    login: string;
+    password: string;
+}
+
 export interface IStaticAnswer {
     trigger: string;
     answer: string;

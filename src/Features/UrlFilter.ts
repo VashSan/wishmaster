@@ -9,21 +9,26 @@ export class UrlFilter implements MP.IFeature {
     private logger: Logger;
     private whiteList: string[];
     private timeoutedUsers: string[] = [];
+    private sendResponse: MP.ResponseCallback | null = null;
 
     constructor(context: Context) {
         this.logger = context.logger;
         this.whiteList = context.config.urlWhiteList;
     }
 
+    public setup(sendResponse: MP.ResponseCallback){
+        this.sendResponse = sendResponse;
+    }
+
     /** Return the message we just received */
-    public act(msg: MP.Message, callback: MP.ResponseCallback): void {
+    public act(msg: MP.Message): void {
         let result;
         while ((result = this.urlRegex.exec(msg.text)) != null) {
             if (result != null && result.length > 1) {
                 let domain = result[1];
 
                 if (!this.isWhitelistedDomain(domain)) {
-                    this.takeAction(msg, domain, callback);
+                    this.takeAction(msg, domain);
                     return;
                 }
             }
@@ -39,7 +44,7 @@ export class UrlFilter implements MP.IFeature {
         return false;
     }
 
-    private takeAction(msg: MP.Message, domain: string, callback: MP.ResponseCallback) {
+    private takeAction(msg: MP.Message, domain: string) {
         this.timeoutedUsers.push(msg.from); // thats dirty... but they get timedout ... 
 
         const maxTimeOut = 600;
@@ -53,20 +58,25 @@ export class UrlFilter implements MP.IFeature {
 
         let timeoutCommand = `/timeout ${msg.from} ${timeoutTime}`;
 
-        this.respond(msg, timeoutCommand, callback);
+        this.respond(msg, timeoutCommand);
 
         let whiteDomains = this.getWhitelistedDomainsAsString();
-        this.respond(msg, `Please do not post links, except ${whiteDomains}`, callback);
+        this.respond(msg, `Please do not post links, except ${whiteDomains}`);
     }
 
     private getWhitelistedDomainsAsString(): string {
         return this.whiteList.join(", ");
     }
 
-    private respond(originalMsg: MP.Message, text: string, callback: MP.ResponseCallback){
+    private respond(originalMsg: MP.Message, text: string){
         let m = new MP.Message({ channel: originalMsg.channel, text: text });
         let response = { message: m };
-        callback(null, response);
 
+        if(this.sendResponse == null) {
+            this.logger.error("response callback missing for message: " + text);
+        }
+        else {
+            this.sendResponse(null, response);
+        }
     }
 }
