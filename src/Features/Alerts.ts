@@ -51,8 +51,6 @@ export class Alerts implements MP.IFeature {
             }
         };
 
-        
-
         function connectionCallback(err: any): void {
             that.logger.error(err);
         }
@@ -76,13 +74,15 @@ export class Alerts implements MP.IFeature {
         if (msg.from.toLowerCase() == this.config.nickname.toLowerCase()) {
             let parts = msg.text.split(" ");
             if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
-                this.performNewFollowerActions(parts[2]);
+                this.performNewFollowerActions(parts[2], true);
             }
         }
     }
 
-    private performNewFollowerActions(newFollower: string) {
-        this.playFollowerSoundAlert();
+    private performNewFollowerActions(newFollower: string, emitAlert: boolean) {
+        if(emitAlert) {
+            this.playFollowerSoundAlert();
+        }
         this.sendFollowerThanksToChat(newFollower);
         this.appendToActions(newFollower, null);
     }
@@ -112,21 +112,17 @@ export class Alerts implements MP.IFeature {
                     })[0].body.subject[0];
                 });
      
-                if (emitAlert){
-                    that.newAlerts(subjects);
-                }
-
+                that.unreadMails(subjects, emitAlert);
             });
         });
     }
 
-    private newAlerts(subjectList:string[]) {
-        
+    private unreadMails(subjectList: string[], emitAlert: boolean) {
         subjectList.forEach(subject => {
-            let regex = /(.*) folgt dir jetzt auf Twitch$/g;
+            let regex = /(.*) folgt dir jetzt auf Twitch$/g; // TODO configurable regex
             let result = regex.exec(subject);
             if (result != null && result.length > 1) {    
-                this.performNewFollowerActions(result[1]);
+                this.performNewFollowerActions(result[1], emitAlert);
             }
         });
     }
