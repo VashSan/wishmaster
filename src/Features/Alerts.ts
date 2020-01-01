@@ -6,16 +6,22 @@ import { Configuration } from "../Configuration";
 import { ILogger } from "psst-log";
 import { IEmailAccess } from "../Interfaces";
 import path = require("path");
+import fs = require("fs");
+import { isNullOrUndefined } from "util";
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {
-    public trigger: string = "alert";
     private sendResponse: MP.ResponseCallback | null = null;
     private config: Configuration;
     private logger: ILogger;
     private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
+    private maxActions: number = 20; // TODO get from config
+                                     // TODO action file horizontal or vertical
+                                     // TODO action file separator for horizontal
+                                     // TODO action file prefix
 
+    public trigger: string = "alert";
 
     constructor(context: Context) {
         this.config = context.config;
@@ -70,11 +76,15 @@ export class Alerts implements MP.IFeature {
         if (msg.from.toLowerCase() == this.config.nickname.toLowerCase()) {
             let parts = msg.text.split(" ");
             if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
-            
-                this.playFollowerAlert(parts[2]);
+                this.performNewFollowerActions(parts[2]);
             }
-            
         }
+    }
+
+    private performNewFollowerActions(newFollower: string) {
+        this.playFollowerSoundAlert();
+        this.sendFollowerThanksToChat(newFollower);
+        this.appendToActions(newFollower, null);
     }
 
     private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{
@@ -115,32 +125,75 @@ export class Alerts implements MP.IFeature {
         subjectList.forEach(subject => {
             let regex = /(.*) folgt dir jetzt auf Twitch$/g;
             let result = regex.exec(subject);
-            if (result != null && result.length > 1) {                
-                this.playFollowerAlert(result[1]);
+            if (result != null && result.length > 1) {    
+                this.performNewFollowerActions(result[1]);
             }
         });
     }
 
-    private playFollowerAlert( newFollower: string ) {
+    private sendFollowerThanksToChat( newFollower: string ) {
         if(this.sendResponse != null) {
             let m = new MP.Message({ channel: this.config.channel, text: "Vielen Dank für Deinen Follow " + newFollower });
             let response = { message: m };
             this.sendResponse(null, response);
-
-            let alertWav = path.resolve(this.soundsPath, "bell.wav");
-
-            let args: string[] = [];
-            this.config.mediaPlayerArgs.forEach(element => {
-                args.push( element.replace("{0}", `${alertWav}`) );    
-            });
-            
-            let that = this;
-            execFile(this.config.mediaPlayer, args, function(err, data) {
-                that.logger.error(`${err}: ${data.toString()}`);
-            });
         }
     }
 
+    private playFollowerSoundAlert() {
+        let alertWav = path.resolve(this.soundsPath, "bell.wav");
+
+        let args: string[] = [];
+        this.config.mediaPlayerArgs.forEach(element => {
+            args.push( element.replace("{0}", `${alertWav}`) );    
+        });
+        
+        let that = this;
+        execFile(this.config.mediaPlayer, args, function(err, data) {
+            that.logger.error(`${err}: ${data.toString()}`);
+        });
+    }
+
+    /** Writes a name to a text file
+     * @param viewerName The name of the stream viewer
+     * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
+     */
+    private appendToActions( viewerName: string, action: string | null ) : void {
+        let configPath = this.config.getConfigDir();
+        let actionFile = path.resolve(configPath, "viewerActions.txt");
+
+        if (!fs.existsSync(actionFile)) {
+            // create file
+            fs.closeSync(fs.openSync(actionFile, 'w'));
+        }
+
+        const encoding = "utf8";
+        const separator = "  ";
+        let that = this;
+        fs.readFile(actionFile, encoding, function read(err, data) {
+            if (err) {
+                that.logger.error("error reading file " + actionFile);
+                return;
+            }
+
+            let list = data.split(separator);
+            if (isNullOrUndefined(action)) {
+                list.unshift(`${viewerName}`);    
+            } else {
+                list.unshift(`${viewerName} (${action})`);
+            }
+            
+            while (list.length > that.maxActions) {
+                list.pop();
+            }
+
+            let newData = list.join(separator);
+            fs.writeFile(actionFile, newData, encoding, err => {
+                if (err != null) {
+                    that.logger.error(`Error writing to file '${actionFile}'. ${err}`);
+                }
+            });
+        });
+    }
 }
 
 export default Alerts;
