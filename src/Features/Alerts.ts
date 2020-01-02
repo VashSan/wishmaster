@@ -30,7 +30,7 @@ export class Alerts implements MP.IFeature {
         this.soundsPath = path.resolve(this.config.rootPath, "sounds");
 
         if(this.config.email == null) {
-            this.logger.error("Email configuratio is null");
+            this.logger.error("Email configuration missing.");
             return;
         }
         let email: IEmailAccess = this.config.email;
@@ -172,14 +172,18 @@ export class Alerts implements MP.IFeature {
             }
 
             let list = data.split(separator);
+            if (list.length == 0) {
+                list.push(""); // empty entry to avoid connecting end & start
+            }
+
             if (isNullOrUndefined(action)) {
-                list.unshift(`${viewerName}`);    
+                list.push(`${viewerName}`);    
             } else {
-                list.unshift(`${viewerName} (${action})`);
+                list.push(`${viewerName} (${action})`);
             }
             
             while (list.length > that.maxActions) {
-                list.pop();
+                list.shift();
             }
 
             let newData = list.join(separator);
