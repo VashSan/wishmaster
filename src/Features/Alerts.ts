@@ -164,6 +164,7 @@ export class Alerts implements MP.IFeature {
 
         const encoding = "utf8";
         const separator = "  ";
+        const endSeparator = "---";
         let that = this;
         fs.readFile(actionFile, encoding, function read(err, data) {
             if (err) {
@@ -173,26 +174,39 @@ export class Alerts implements MP.IFeature {
 
             let list = data.split(separator);
             if (list.length == 0) {
-                list.push(""); // empty entry to avoid connecting end & start
+                list.push( endSeparator ); // empty entry to avoid connecting end & start
             }
 
+            that.removeLastExpectedListEntry("", list);
+            that.removeLastExpectedListEntry(endSeparator, list);
+            
             if (isNullOrUndefined(action)) {
-                list.push(`${viewerName}`);    
+                list.push(viewerName);
             } else {
                 list.push(`${viewerName} (${action})`);
             }
             
-            while (list.length > that.maxActions) {
+            list.push(endSeparator);
+            list.push("");
+            
+            while (list.length > that.maxActions + 2) {
                 list.shift();
             }
 
-            let newData = list.join(separator);
+            let newData = list.join(separator) + separator; // add separator at end
             fs.writeFile(actionFile, newData, encoding, err => {
                 if (err != null) {
                     that.logger.error(`Error writing to file '${actionFile}'. ${err}`);
                 }
             });
         });
+    }
+
+    private removeLastExpectedListEntry(expectedEntry: string, list: string[]): string[] {
+        if (list[list.length - 1] == expectedEntry){
+            list.pop();
+        }
+        return list;
     }
 }
 
