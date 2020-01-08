@@ -38,12 +38,14 @@ class Startup {
     private static loadedCollections = 0;
     private static erroredCollections = 0;
 
-    public static main(): number {
-        this.config = new Configuration();
-        
+    public static main(): number {     
         this.logger = Log.LogManager.getLogger();
-        if (this.config.createLogConsole) {
-            Log.LogManager.addConsoleTarget();
+        Log.LogManager.addConsoleTarget();
+
+        this.config = new Configuration(this.logger);
+
+        if (!this.config.createLogConsole) {
+            Log.LogManager.removeConsoleTarget();
         }
         
         if (this.config.createLogFile) {

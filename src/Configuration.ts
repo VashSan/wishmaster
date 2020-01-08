@@ -1,5 +1,6 @@
 import fs = require("fs");
 import path = require("path");
+import logger = require("psst-log")
 import {IStaticAnswer, IStomtConfig, ISongRequestConfig, IEmailAccess} from "./Interfaces";
 
 export class Configuration {
@@ -28,7 +29,7 @@ export class Configuration {
     rootPath: string;
     logDir: string;
 
-    constructor() {
+    constructor(log: logger.ILogger) {
         this.configDir = `${process.env.localappdata}\\.wishmaster`;
         Configuration.createDirIfNecessary(this.configDir);
 
@@ -37,8 +38,8 @@ export class Configuration {
 
         this.configFilePath = `${this.configDir}\\${this.configFile}`;
 
-        if (!fs.existsSync(this.configDir)) {
-            fs.mkdirSync(this.configDir);
+        if (!fs.existsSync(this.configFilePath)) {
+            log.warn("The configuration does not exist. Will create a basic file but you need to create a setup and restart the bot.");
 
             fs.writeFileSync(this.configFilePath,
                 `{"server": "", "nickname": "", "password": "", "channel": ""}`);
