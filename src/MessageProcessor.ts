@@ -1,8 +1,7 @@
 import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
-import { Context } from "./shared/Context";
 import { ILogger } from "psst-log";
-import { Configuration } from "./shared/Configuration";
+import { Configuration, Context } from "./shared";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 

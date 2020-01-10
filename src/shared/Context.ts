@@ -1,6 +1,5 @@
 import { ILogger } from "psst-log";
-import { Configuration } from "./Configuration";
-import { Database } from "../Interfaces";
+import { Configuration, Database  } from "./";
 
 export class Context {
     public readonly config: Configuration;

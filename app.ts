@@ -6,11 +6,9 @@ import * as Log from "psst-log";
 import { isNullOrUndefined } from "util";
 
 import Nedb = require("nedb");
+import { Configuration, Context, Database } from "./src/shared";
 import { Alerts } from "./src/Features/Alerts";
 import { Bets } from "./src/Features/Bets";
-import { Configuration } from "./src/shared/Configuration";
-import { Context } from "./src/shared/Context";
-import { Database } from "./src/Interfaces";
 import { Harvest } from "./src/Features/Harvest";
 import { Loopback } from "./src/Features/Loopback";
 import { StaticAnswers } from "./src/Features/StaticAnswers";
