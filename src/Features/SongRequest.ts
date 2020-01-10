@@ -1,16 +1,11 @@
-import * as mp from "../MessageProcessor";
-import { Context } from "../../app";
-import { ILogger } from "psst-log";
-
-
-//var express = require('express'); // Express web server framework
 import * as express from "express";
 import * as request from "request";
-//var request = require('request'); // "Request" library
-// var querystring = require('querystring');
-import * as querystring from "querystring";
-//var cookieParser = require('cookie-parser');
 import * as cookieParser from "cookie-parser";
+import * as querystring from "querystring";
+import { ILogger } from "psst-log";
+
+import * as mp from "../MessageProcessor";
+import { Context } from "../../app";
 import { ISongRequestConfig, ISpotifyConfig } from "../Interfaces";
 
 class SpotifyState {

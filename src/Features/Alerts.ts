@@ -1,13 +1,14 @@
-import { execFile } from "child_process"
 import * as IMAP from "imap-simple";
+import * as path from "path"
+import * as fs  from "fs";
+import { isNullOrUndefined } from "util";
+import { execFile } from "child_process"
+
 import * as MP from "../MessageProcessor";
 import { Context } from "../../app";
 import { Configuration } from "../Configuration";
 import { ILogger } from "psst-log";
 import { IEmailAccess } from "../Interfaces";
-import path = require("path");
-import fs = require("fs");
-import { isNullOrUndefined } from "util";
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {

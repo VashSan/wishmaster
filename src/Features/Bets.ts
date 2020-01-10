@@ -1,6 +1,7 @@
+import { ILogger } from "psst-log";
+
 import * as mp from "../MessageProcessor";
 import { Context } from "../../app";
-import { ILogger } from "psst-log";
 import { Configuration } from "../Configuration";
 
 enum State {
