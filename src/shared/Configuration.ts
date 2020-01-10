@@ -1,7 +1,7 @@
 import fs = require("fs");
 import path = require("path");
 import logger = require("psst-log")
-import {IStaticAnswer, IStomtConfig, ISongRequestConfig, IEmailAccess} from "./Interfaces";
+import {IStaticAnswer, IStomtConfig, ISongRequestConfig, IEmailAccess} from "../Interfaces";
 
 export class Configuration {
     private configDir: string;

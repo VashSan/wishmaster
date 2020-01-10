@@ -2,9 +2,8 @@ import { ILogger } from "psst-log";
 import { isNullOrUndefined } from "util";
 
 import * as mp from "../MessageProcessor";
-import { Configuration } from "../Configuration";
+import { Context, Configuration } from "../shared";
 import { Database } from "../Interfaces";
-import { Context } from "../../app";
 
 /** Pushes information into the database */
 export class Harvest implements mp.IFeature {

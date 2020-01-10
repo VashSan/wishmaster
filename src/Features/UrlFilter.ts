@@ -1,7 +1,7 @@
 import { ILogger } from "psst-log";
 
 import * as MP from "../MessageProcessor";
-import { Context } from "../../app";
+import { Context } from "../shared";
 
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter implements MP.IFeature {

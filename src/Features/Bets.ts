@@ -1,8 +1,7 @@
 import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
-import { Context } from "../../app";
-import { Configuration } from "../Configuration";
+import { Configuration, Context } from "../shared";
 
 enum State {
     Idle,

@@ -1,7 +1,7 @@
 import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
-import { Context } from "../../app";
+import { Context } from "../shared";
 import { IStaticAnswer } from "../Interfaces";
 
 /** When a command the answer command listens to is found, a text message is replied. */

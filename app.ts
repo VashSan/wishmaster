@@ -3,31 +3,22 @@
 import * as MP from "./src/MessageProcessor";
 import * as IRC from "irc";
 import * as Log from "psst-log";
+import { isNullOrUndefined } from "util";
 
 import Nedb = require("nedb");
-import { Database } from "./src/Interfaces";
-import { Loopback } from "./src/Features/Loopback";
-import { Configuration } from "./src/Configuration";
-import { Harvest } from "./src/Features/Harvest";
-import { isNullOrUndefined } from "util";
-import { UrlFilter } from "./src/Features/UrlFilter";
-import { StaticAnswers } from "./src/Features/StaticAnswers";
 import { Alerts } from "./src/Features/Alerts";
+import { Bets } from "./src/Features/Bets";
+import { Configuration } from "./src/shared/Configuration";
+import { Context } from "./src/shared/Context";
+import { Database } from "./src/Interfaces";
+import { Harvest } from "./src/Features/Harvest";
+import { Loopback } from "./src/Features/Loopback";
+import { StaticAnswers } from "./src/Features/StaticAnswers";
 import { Stomt } from "./src/Features/Stomt";
 import { SongRequest } from "./src/Features/SongRequest";
-import { Bets } from "./src/Features/Bets";
+import { UrlFilter } from "./src/Features/UrlFilter";
 
-export class Context {
-    public readonly config: Configuration;
-    public readonly logger: Log.ILogger;
-    public readonly db: Database;
 
-    constructor(config: Configuration, logger: Log.ILogger, db: Database) {
-        this.config = config;
-        this.logger = logger;
-        this.db = db;
-    }
-}
 
 class Startup {
     private static config: Configuration;

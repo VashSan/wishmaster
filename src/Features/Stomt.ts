@@ -2,7 +2,7 @@ import * as request from "request";
 import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
-import { Context } from "../../app";
+import { Context } from "../shared";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Stomt implements mp.IFeature {

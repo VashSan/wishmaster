@@ -1,13 +1,13 @@
 import * as IMAP from "imap-simple";
 import * as path from "path"
 import * as fs  from "fs";
-import { isNullOrUndefined } from "util";
 import { execFile } from "child_process"
+import { ILogger } from "psst-log";
+import { isNullOrUndefined } from "util";
+
 
 import * as MP from "../MessageProcessor";
-import { Context } from "../../app";
-import { Configuration } from "../Configuration";
-import { ILogger } from "psst-log";
+import { Configuration, Context } from "../shared";
 import { IEmailAccess } from "../Interfaces";
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
