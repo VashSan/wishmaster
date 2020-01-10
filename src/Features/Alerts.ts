@@ -7,8 +7,7 @@ import { isNullOrUndefined } from "util";
 
 
 import * as MP from "../MessageProcessor";
-import { Configuration, Context } from "../shared";
-import { IEmailAccess } from "../Interfaces";
+import { Configuration, Context, IEmailAccess } from "../shared";
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {

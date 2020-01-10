@@ -5,8 +5,7 @@ import * as querystring from "querystring";
 import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
-import { Context } from "../shared";
-import { ISongRequestConfig, ISpotifyConfig } from "../Interfaces";
+import { Context, ISongRequestConfig, ISpotifyConfig } from "../shared";
 
 class SpotifyState {
     accessToken: string = "";
