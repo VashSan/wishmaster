@@ -54,6 +54,13 @@ Remember to strip the comments before saving it as configuration file.
 		"tls": true     // `true` enables mail transport scramble
 	},
 
+	/** OBS Websocket JS configuration, port and password see: Tools->WebSocket Server Settings */
+	"obs": {
+		"address": "localhost",  // host name where OBS runs
+		"port": 4444,            // port name of OBS Websocket instance
+		"password": ""           // passphare to connect to OBS Websocket
+	},
+
 	/** URLs that are allowed in chat */
 	"urlWhiteList": [
 		"youtube.com" // example

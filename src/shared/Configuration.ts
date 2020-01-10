@@ -12,6 +12,12 @@ export interface IEmailAccess {
     password: string;
 }
 
+export interface IObsConfig {
+    address: string;
+    port: number;
+    password: string;
+}
+
 export interface IStaticAnswer {
     trigger: string;
     answer: string;
@@ -50,6 +56,7 @@ export class Configuration {
     mediaPlayer: string = "";
     mediaPlayerArgs: string[] = [];
     email: IEmailAccess | null = null;
+    obs: IObsConfig | null = null;
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];
     stomt: IStomtConfig | null = null;

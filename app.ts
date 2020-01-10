@@ -6,7 +6,7 @@ import * as Log from "psst-log";
 import { isNullOrUndefined } from "util";
 
 import Nedb = require("nedb");
-import { Configuration, Context, Database } from "./src/shared";
+import { Configuration, Context, Database, ObsController } from "./src/shared";
 import { Alerts } from "./src/Features/Alerts";
 import { Bets } from "./src/Features/Bets";
 import { Harvest } from "./src/Features/Harvest";
@@ -23,6 +23,7 @@ class Startup {
     private static logger: Log.ILogger;
     private static msgProcessor: MP.MessageProcessor;
     private static db: Database;
+    private static obsController: ObsController;
 
     private static loadedCollections = 0;
     private static erroredCollections = 0;
@@ -49,8 +50,11 @@ class Startup {
 
         this.logger.info("setting up db");
         this.setupDb();
-
+        this.setupObs();
         return 0;
+    }
+    static setupObs() {
+        this.obsController = new ObsController(this.config.obs, this.logger);
     }
 
     private static setupDb() {

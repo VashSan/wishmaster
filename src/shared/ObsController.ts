@@ -1,16 +1,28 @@
 import * as OBSWebSocket from "obs-websocket-js";
 import { Context } from ".";
+import { Configuration, IObsConfig } from "./Configuration";
+import { ILogger } from "psst-log";
 
 export class ObsController {
-    obs: OBSWebSocket;
+    config: IObsConfig | null;
+    obs: OBSWebSocket = new OBSWebSocket();
     isConnected: boolean = false;
+    log: ILogger;
 
-    constructor(contex: Context) {
-        this.obs = new OBSWebSocket();
-        // this.obs.connect({ address: address, password: password })
-        //     .then(() => {
+    constructor(obsConfig: IObsConfig | null, logger: ILogger) {
+        this.config = obsConfig;
+        this.log = logger;
+        if (this.config == null) {
+            this.log.warn("OBS connection skipped due to missing config.");
+            return;
+        }
 
-        //         this.isConnected = true;
-        //     });
+        this.obs.connect({
+            address: `${this.config.address}:${this.config.port}`,
+            password: this.config.password
+        }).then(() => {
+            this.log.info("Connected to OBS.");
+            this.isConnected = true;
+        });
     }
 }
