@@ -84,7 +84,7 @@ export class Alerts implements MP.IFeature {
             this.playFollowerSoundAlert();
         }
         this.sendFollowerThanksToChat(newFollower);
-        this.appendToActions(newFollower, null);
+        this.appendToViewerActionsHistory(newFollower, null);
     }
 
     private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{
@@ -153,7 +153,7 @@ export class Alerts implements MP.IFeature {
      * @param viewerName The name of the stream viewer
      * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
      */
-    private appendToActions( viewerName: string, action: string | null ) : void {
+    private appendToViewerActionsHistory( viewerName: string, action: string | null ) : void {
         let configPath = this.config.getConfigDir();
         let actionFile = path.resolve(configPath, "viewerActions.txt");
 
