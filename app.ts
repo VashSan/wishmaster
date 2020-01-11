@@ -28,7 +28,7 @@ class Startup {
     private static loadedCollections = 0;
     private static erroredCollections = 0;
 
-    public static main(): number {     
+    public static main(): number {
         this.logger = Log.LogManager.getLogger();
         Log.LogManager.addConsoleTarget();
 
@@ -37,7 +37,7 @@ class Startup {
         if (!this.config.createLogConsole) {
             Log.LogManager.removeConsoleTarget();
         }
-        
+
         if (this.config.createLogFile) {
             Log.LogManager.addFileTarget(this.config.logDir, this.config.maxLogAgeDays);
         }
@@ -100,7 +100,7 @@ class Startup {
 
     private static setupChat() {
 
-        let context = new Context(this.config, this.logger, this.db);
+        let context = new Context(this.config, this.logger, this.db, this.obsController);
 
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
