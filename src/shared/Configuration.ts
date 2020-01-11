@@ -1,18 +1,27 @@
 import fs = require("fs");
 import path = require("path");
-import logger = require("psst-log")
+import logger = require("psst-log");
 
 export enum AlertTrigger {
+    ChatMessage = "ChatMessage",
     NewFollower = "NewFollower",
     NewSubscriber = "NewSubscriber",
     Donation = "Donation",
     BitDonation = "BitDonation"
 }
 
+export enum AlertAction {
+    ToggleSceneItem = "ToggleSceneItem",
+    PlaySoundFile = "PlaySoundFile",
+    WriteTextMessage = "WriteTextMessage"
+}
+
 export interface IAlert {
     trigger: AlertTrigger;
-    toggleSceneItem: string;
+    action: AlertAction;
+    parameter: string;
     durationInMilliseconds: Number;
+    timeoutInMilliseconds: Number;
 }
 
 export interface IEmailAccess {

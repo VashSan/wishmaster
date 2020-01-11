@@ -44,6 +44,16 @@ Remember to strip the comments before saving it as configuration file.
 	/** The media players command line options, Each argument is an array item. {0} is replaced by the sound file. */
 	"mediaPlayerArgs": ["{0}"],
 
+	/** Configure alerts for new followers etc. */
+	"alerts": [
+		{
+			"trigger": "NewFollower",       // "NewSubscriber", ... TODO complete list and add doc
+			"action": "ToggleSceneItem",    // "PlaySoundFile", "WriteTextMessage"
+			"parameter": "",                // the scene item name, sound file name, text message
+			"durationInSeconds": 3000,      // time span the scene item shall be visible and minimum time between other alerts
+			"timeoutInSeconds": 0           // this alert can be triggered again after this timespan, if occurring in between it is dropped
+		}
+	], 
 	/** Email setup (to scan for follower email) */
 	"email": {
 		"address": "",  // someone@company.test
