@@ -2,6 +2,18 @@ import fs = require("fs");
 import path = require("path");
 import logger = require("psst-log")
 
+export enum AlertTrigger {
+    NewFollower = "NewFollower",
+    NewSubscriber = "NewSubscriber",
+    Donation = "Donation",
+    BitDonation = "BitDonation"
+}
+
+export interface IAlert {
+    trigger: AlertTrigger;
+    toggleSceneItem: string;
+    durationInMilliseconds: Number;
+}
 
 export interface IEmailAccess {
     address: string;
@@ -55,6 +67,7 @@ export class Configuration {
     createLogConsole: boolean = true;
     mediaPlayer: string = "";
     mediaPlayerArgs: string[] = [];
+    alerts: IAlert[] = [];
     email: IEmailAccess | null = null;
     obs: IObsConfig | null = null;
     urlWhiteList: string[] = [];
