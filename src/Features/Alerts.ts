@@ -7,7 +7,7 @@ import { isNullOrUndefined } from "util";
 
 
 import * as MP from "../MessageProcessor";
-import { Configuration, Context, IEmailAccess } from "../shared";
+import { Configuration, Context, IEmailAccess, ObsController, IAlert } from "../shared";
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {
@@ -16,6 +16,8 @@ export class Alerts implements MP.IFeature {
     private logger: ILogger;
     private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
+    private obs: ObsController;
+    private alertConfig: IAlert;
     private maxActions: number = 20; // TODO get from config
                                      // TODO action file horizontal or vertical
                                      // TODO action file separator for horizontal
@@ -23,9 +25,11 @@ export class Alerts implements MP.IFeature {
 
     public trigger: string = "alert";
 
-    constructor(context: Context) {
+    constructor(context: Context, alertConfig: IAlert) {
         this.config = context.config;
-        this.logger = context.logger;    
+        this.logger = context.logger;   
+        this.obs = context.obs;
+        this.alertConfig = alertConfig;
 
         this.soundsPath = path.resolve(this.config.rootPath, "sounds");
 
@@ -80,11 +84,14 @@ export class Alerts implements MP.IFeature {
     }
 
     private performNewFollowerActions(newFollower: string, emitAlert: boolean) {
+        // TODO evaluate timeout, 
+        // TODO enqueue if duration action currently playing
         if(emitAlert) {
             this.playFollowerSoundAlert();
         }
         this.sendFollowerThanksToChat(newFollower);
         this.appendToViewerActionsHistory(newFollower, null);
+        this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
     }
 
     private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{

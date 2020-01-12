@@ -20,8 +20,8 @@ export interface IAlert {
     trigger: AlertTrigger;
     action: AlertAction;
     parameter: string;
-    durationInMilliseconds: Number;
-    timeoutInMilliseconds: Number;
+    durationInSeconds: number;
+    timeoutInSeconds: number;
 }
 
 export interface IEmailAccess {

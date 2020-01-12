@@ -105,7 +105,7 @@ class Startup {
         let featureList = new Set<MP.IFeature>([
             // new Loopback(""),
             // new Loopback("test"),
-            new Alerts(context),
+            new Alerts(context, this.config.alerts[0]), // TODO add all alerts
             new Harvest(context),
             new StaticAnswers(context),
             new UrlFilter(context),
