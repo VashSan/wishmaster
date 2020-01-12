@@ -59,14 +59,16 @@ class Startup {
 
     private static setupDb() {
         this.db = new Database();
+        let configDir = this.config.getConfigDir();
+        let channel = this.config.channel;
 
         this.db.createCollection("log", {
-            filename: `${this.config.getConfigDir()}\\log.db`,
+            filename: `${configDir}\\log-${channel}.db`,
             timestampData: true
         }, this.loadDatabaseCallback.bind(this));
 
         this.db.createCollection("users", {
-            filename: `${this.config.getConfigDir()}\\user.db`,
+            filename: `${configDir}\\user-${channel}.db`,
             timestampData: true
         }, this.loadDatabaseCallback.bind(this));
     }
