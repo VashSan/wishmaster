@@ -48,7 +48,7 @@ export class ObsController {
         }
     }
 
-    public toggleSource(sourceName: string, timeoutInSeconds: number = 0) {
+    public toggleSource(sourceName: string, durationInSeconds: number = 0) {
         if (!this.isConnected) {
             return;
         }
@@ -58,8 +58,8 @@ export class ObsController {
                 let x = ObsController.Get_SetSceneItemProperties(sourceName, !props.visible);
                 return this.obs.send('SetSceneItemProperties', x);
             }).then(() => {
-                if (timeoutInSeconds != 0) {
-                    let timeout = 1000 * timeoutInSeconds;
+                if (durationInSeconds != 0) {
+                    let timeout = 1000 * durationInSeconds;
                     let that = this;
                     setTimeout(function () {
                         that.toggleSource(sourceName);
