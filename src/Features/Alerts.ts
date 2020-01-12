@@ -9,6 +9,13 @@ import { isNullOrUndefined } from "util";
 import * as MP from "../MessageProcessor";
 import { Configuration, Context, IEmailAccess, ObsController, IAlert } from "../shared";
 
+class AlertConst {
+    /** Placeholder in config pattern entries */
+    public static readonly ViewerPlaceholder = "{Viewer}";
+    /** Default encoding for file actions */
+    public static readonly Encoding = "utf8";
+}
+
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {
     private sendResponse: MP.ResponseCallback | null = null;
@@ -89,9 +96,18 @@ export class Alerts implements MP.IFeature {
         if(emitAlert) {
             this.playFollowerSoundAlert();
         }
+        this.writeLastActionFile(newFollower);
         this.sendFollowerThanksToChat(newFollower);
         this.appendToViewerActionsHistory(newFollower, null);
         this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
+    }
+    
+    private writeLastActionFile(newFollower: string) {
+        let lastActionFile = this.getFilePathInConfigDir("lastViewerAction.txt");
+        this.createFileIfNotExistsSync(lastActionFile);
+        
+        let text = this.alertConfig.lastActionFilePattern.replace(AlertConst.ViewerPlaceholder, newFollower);
+        fs.writeFileSync(lastActionFile, text, AlertConst.Encoding);
     }
 
     private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{
@@ -136,7 +152,8 @@ export class Alerts implements MP.IFeature {
 
     private sendFollowerThanksToChat( newFollower: string ) {
         if(this.sendResponse != null) {
-            let m = new MP.Message({ channel: this.config.channel, text: "Vielen Dank für Deinen Follow " + newFollower });
+            let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
+            let m = new MP.Message({ channel: this.config.channel, text: text });
             let response = { message: m };
             this.sendResponse(null, response);
         }
@@ -156,24 +173,31 @@ export class Alerts implements MP.IFeature {
         });
     }
 
+    private createFileIfNotExistsSync(filePath:string){
+        if (!fs.existsSync(filePath)) {
+            // create file
+            fs.closeSync(fs.openSync(filePath, 'w'));
+        }
+    }
+
+    private getFilePathInConfigDir(fileName: string){
+        let configPath = this.config.getConfigDir();
+        return path.resolve(configPath, fileName);
+    }
+
     /** Writes a name to a text file
      * @param viewerName The name of the stream viewer
      * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
      */
     private appendToViewerActionsHistory( viewerName: string, action: string | null ) : void {
-        let configPath = this.config.getConfigDir();
-        let actionFile = path.resolve(configPath, "viewerActions.txt");
+       
+        let actionFile = this.getFilePathInConfigDir("viewerActions.txt");
+        this.createFileIfNotExistsSync(actionFile);
 
-        if (!fs.existsSync(actionFile)) {
-            // create file
-            fs.closeSync(fs.openSync(actionFile, 'w'));
-        }
-
-        const encoding = "utf8";
         const separator = "  ";
         const endSeparator = "---";
         let that = this;
-        fs.readFile(actionFile, encoding, function read(err, data) {
+        fs.readFile(actionFile, AlertConst.Encoding, function read(err, data) {
             if (err) {
                 that.logger.error("error reading file " + actionFile);
                 return;
@@ -201,7 +225,7 @@ export class Alerts implements MP.IFeature {
             }
 
             let newData = list.join(separator) + separator; // add separator at end
-            fs.writeFile(actionFile, newData, encoding, err => {
+            fs.writeFile(actionFile, newData, AlertConst.Encoding, err => {
                 if (err != null) {
                     that.logger.error(`Error writing to file '${actionFile}'. ${err}`);
                 }
