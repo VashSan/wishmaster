@@ -232,6 +232,7 @@ export class MessageProcessor {
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCount30Sec = 0;
+    private messageOfTheDay: string = "";
 
     constructor(context: Context) {
         this.context = context;
@@ -261,13 +262,55 @@ export class MessageProcessor {
             }
 
             if (cmd.toUpperCase() != "PRIVMSG") {
-                this.logger.log("raw: ", message);
-            }
+                switch(message.rawCommand.toLowerCase()){
+                    case "001": //"rpl_welcome"
+                    case "002": //"rpl_yourhost"
+                    case "003": //"rpl_created"
+                    case "004": //"rpl_myinfo"
+                    case "353": //"rpl_namreply" ... wehn joining a channel this is sent automatically
+                    case "366": //"rpl_endofnames"
+                    case "cap": // capabilities ... if we want to track different feature we shoudl save this
+                    case "ping":
+                    case "pong": // sent by twitch every ~15 secs
+                        let text = `${message.command}: ${message.args.join(" ")}`;
+                        this.logger.log("cmd: ", text);
+                        break;
 
+                    
+                    case "372":
+                        this.messageOfTheDay += message.args.join(" ") + "\n";
+                        break;
+
+                    case "375":
+                        // ignore message of the day start
+                        break;
+
+                    case "376":
+                        this.logger.log("message of the day: ", this.messageOfTheDay);
+                        break;
+
+                    case "421": // err_unknowncommand
+                        let errorText = `${message.command}: ${message.args.join(" ")}`;
+                        this.logger.error("cmd: ", errorText);
+                        break;
+
+                    case "join":
+                        let join = `Channel: ${message.args[0]}, Host: ${message.host}, Nick:${message.nick}, User: ${message.user}`;
+                        this.logger.log("join: ", join);
+                        break;
+
+                    default:
+                        this.logger.log("raw: ", message);
+                        break;
+                }
+            }
         });
 
         this.client.addListener("error", message => {
-            this.logger.error("IRC client error: ", message);
+            // client sends whois, we will ignore all these
+            if (message.args.length > 0 && message.args[1].toLowerCase() != "whois") {
+                this.logger.error("IRC client error: ", message);
+            }
         });
 
         this.client.addListener("message", (from, to, message) => {
