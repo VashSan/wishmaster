@@ -7,7 +7,7 @@ import { isNullOrUndefined } from "util";
 
 
 import * as MP from "../MessageProcessor";
-import { Configuration, Context, IEmailAccess, ObsController, IAlert } from "../shared";
+import { Configuration, Context, Database, IAlert, IEmailAccess, ObsController } from "../shared";
 
 class AlertConst {
     /** Placeholder in config pattern entries */
@@ -18,6 +18,7 @@ class AlertConst {
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts implements MP.IFeature {
+    private db: Database;
     private sendResponse: MP.ResponseCallback | null = null;
     private config: Configuration;
     private logger: ILogger;
@@ -33,6 +34,7 @@ export class Alerts implements MP.IFeature {
     public trigger: string = "alert";
 
     constructor(context: Context, alertConfig: IAlert) {
+        this.db = context.db;
         this.config = context.config;
         this.logger = context.logger;   
         this.obs = context.obs;
@@ -96,10 +98,15 @@ export class Alerts implements MP.IFeature {
         // if(emitAlert) {
         //     this.playFollowerSoundAlert();
         // }
+        this.updateUserDatabase(newFollower);
         this.setObsNewFollowerText(newFollower);
         this.appendToViewerActionsHistory(newFollower, null);
         this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
         this.sendFollowerThanksToChat(newFollower);
+    }
+
+    private updateUserDatabase(newFollower: string) {
+        this.db.users.update({ name: newFollower }, { $set: { followDate: new Date() } }, { upsert: true });
     }
     
     private setObsNewFollowerText(newFollower: string) {

@@ -76,7 +76,7 @@ export class Harvest implements mp.IFeature {
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
-        this.db.users.findOne({ _id: msg.tags.userId }, function (err: Error, doc: any) {
+        this.db.users.findOne({ $or:[ { twitchid: msg.tags.userId }, { name: msg.tags.displayName } ] }, function (err: Error, doc: any) {
             if (err != null) {
                 that.logger.error(err);
                 return;
@@ -95,11 +95,16 @@ export class Harvest implements mp.IFeature {
                 emoteOnlyCount = doc.emoteOnlyCount + msg.tags.isEmoteOnly ? 1 : 0;
                 messageCount = doc.messageCount + 1;
             }
+            let followDate = new Date(0);
+            if (doc.followDate != undefined){
+                followDate = doc.followDate;
+            }
             
             // TODO New Tags? flags, badge-info
             let user = {
-                _id: msg.tags.userId,
+                twitchid: msg.tags.userId,
                 name: msg.tags.displayName,
+                followDate: followDate,
                 color: msg.tags.color,
                 badges: msg.tags.badgeList,
                 emoteOnlyCount: emoteOnlyCount,
@@ -120,7 +125,7 @@ export class Harvest implements mp.IFeature {
 
     private upsertUser(id: number, user: object) {
         let that = this;
-        this.db.users.update({ _id: id }, user, { upsert: true }, function (err, numReplaced, upsert) {
+        this.db.users.update({ twitchid: id }, user, { upsert: true }, function (err, numReplaced, upsert) {
             // numReplaced = 1, upsert = { _id: 'id5', planet: 'Pluton', inhabited: false }
             // A new document { _id: 'id5', planet: 'Pluton', inhabited: false } has been added to the collection
 
