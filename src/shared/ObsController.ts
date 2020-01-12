@@ -55,13 +55,13 @@ export class ObsController {
 
         this.obs.send('GetSceneItemProperties', { item: sourceName })
             .then(props => {
-                let x = ObsController.GetSetSceneItemProperties(sourceName, !props.visible);
+                let x = ObsController.Get_SetSceneItemProperties(sourceName, !props.visible);
                 return this.obs.send('SetSceneItemProperties', x);
             }).then(() => {
                 if (timeoutInSeconds != 0) {
                     let timeout = 1000 * timeoutInSeconds;
                     let that = this;
-                    setTimeout(function(){
+                    setTimeout(function () {
                         that.toggleSource(sourceName);
                     }, timeout);
                 }
@@ -70,7 +70,22 @@ export class ObsController {
             });
     }
 
-    private static GetSetSceneItemProperties(sceneItemName: string, visible: boolean) {
+    public setText(textSourceName: string, text: string) {
+        let textProps = ObsController.Get_SetTextGDIPlusProperties(textSourceName, text);
+        this.obs.send('SetTextGDIPlusProperties', textProps)
+            .catch(err => {
+                this.log.error("Error toggling source: " + err);
+            });
+    }
+
+    private static Get_SetTextGDIPlusProperties(sourceName: string, text: string) {
+        return {
+            "source": sourceName,
+            text: text
+        };
+    }
+
+    private static Get_SetSceneItemProperties(sceneItemName: string, visible: boolean) {
         return {
             "scene-name": undefined,
             rotation: undefined,
