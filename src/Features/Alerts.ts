@@ -7,13 +7,23 @@ import { isNullOrUndefined } from "util";
 
 
 import * as MP from "../MessageProcessor";
-import { Configuration, Context, Database, IAlert, IEmailAccess, ObsController } from "../shared";
+import { Configuration, Context, Database, IAlert, IEmailAccess, ObsController, AlertAction } from "../shared";
 
 class AlertConst {
     /** Placeholder in config pattern entries */
     public static readonly ViewerPlaceholder = "{Viewer}";
     /** Default encoding for file actions */
     public static readonly Encoding = "utf8";
+}
+
+class PendingAlert {
+    public readonly viewer: string;
+    public readonly action: Function;
+
+    constructor(viewer: string, action: Function) {
+        this.viewer = viewer;
+        this.action = action;
+    }
 }
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
@@ -26,6 +36,8 @@ export class Alerts implements MP.IFeature {
     private connection: IMAP.ImapSimple | null = null;
     private obs: ObsController;
     private alertConfig: IAlert;
+    private pendingAlerts: PendingAlert[] = [];
+    private timer: NodeJS.Timer | null = null;
     private maxActions: number = 20; // TODO get from config
                                      // TODO action file horizontal or vertical
                                      // TODO action file separator for horizontal
@@ -87,22 +99,37 @@ export class Alerts implements MP.IFeature {
         if (msg.from.toLowerCase() == this.config.nickname.toLowerCase()) {
             let parts = msg.text.split(" ");
             if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
-                this.performNewFollowerActions(parts[2], true);
+                this.performNewFollowerActions(parts[2]);
             }
         }
     }
 
-    private performNewFollowerActions(newFollower: string, emitAlert: boolean) {
-        // TODO evaluate timeout, 
-        // TODO enqueue if duration action currently playing
-        // if(emitAlert) {
-        //     this.playFollowerSoundAlert();
-        // }
-        this.updateUserDatabase(newFollower);
-        this.setObsNewFollowerText(newFollower);
-        this.appendToViewerActionsHistory(newFollower, null);
-        this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
-        this.sendFollowerThanksToChat(newFollower);
+    private performNewFollowerActions(newFollower: string) {
+        
+        let newFollowerAlert = new PendingAlert(newFollower, ()=>{
+            this.updateUserDatabase(newFollower);
+            this.setObsNewFollowerText(newFollower);
+            this.appendToViewerActionsHistory(newFollower, null);
+            this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
+            this.sendFollowerThanksToChat(newFollower);
+        });
+
+        this.pendingAlerts.push( newFollowerAlert );
+
+        if(this.timer == null){
+            this.timer = setInterval(()=>{
+                let alert = this.pendingAlerts.shift();
+                if (alert == undefined) {
+                    if (this.timer != null) {
+                        let t = this.timer;
+                        this.timer = null;
+                        clearInterval(t);
+                    }
+                } else {
+                    alert.action();
+                }
+            }, (this.alertConfig.durationInSeconds + this.alertConfig.timeoutInSeconds) * 1000 + 1000); //1s if all is 0 is minimum
+        }
     }
 
     private updateUserDatabase(newFollower: string) {
@@ -139,17 +166,17 @@ export class Alerts implements MP.IFeature {
                     })[0].body.subject[0];
                 });
      
-                that.unreadMails(subjects, emitAlert);
+                that.unreadMails(subjects);
             });
         });
     }
 
-    private unreadMails(subjectList: string[], emitAlert: boolean) {
+    private unreadMails(subjectList: string[]) {
         subjectList.forEach(subject => {
             let regex = /(.*) folgt dir jetzt auf Twitch$/g; // TODO configurable regex
             let result = regex.exec(subject);
             if (result != null && result.length > 1) {    
-                this.performNewFollowerActions(result[1], emitAlert);
+                this.performNewFollowerActions(result[1]);
             }
         });
     }
