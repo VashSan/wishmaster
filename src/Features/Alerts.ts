@@ -221,47 +221,22 @@ export class Alerts implements MP.IFeature {
      * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
      */
     private appendToViewerActionsHistory( viewerName: string, action: string | null ) : void {
-       
-        let actionFile = this.getFilePathInConfigDir("viewerActions.txt");
-        this.createFileIfNotExistsSync(actionFile);
-
         const separator = "  ";
         const endSeparator = "---";
-        let that = this;
-        fs.readFile(actionFile, AlertConst.Encoding, function read(err, data) {
-            if (err) {
-                that.logger.error("error reading file " + actionFile);
-                return;
-            }
 
-            let list = data.split(separator);
-            if (list.length == 0) {
-                list.push( endSeparator ); // empty entry to avoid connecting end & start
-            }
+        this.db.users.find({}, {name: 1})
+            .sort({ followDate: -1 })
+            .limit(this.maxActions)
+            .exec((err, docs) => {
+                let bannerText = "";
+                docs.forEach(element => {
+                    let name = this.alertConfig.bannerTextPattern.replace(AlertConst.ViewerPlaceholder, element.name.toString());
+                    bannerText += name + separator;
+                });
+                bannerText += endSeparator + separator;
 
-            that.removeLastExpectedListEntry("", list);
-            that.removeLastExpectedListEntry(endSeparator, list);
-            
-            if (isNullOrUndefined(action)) {
-                list.push(viewerName);
-            } else {
-                list.push(`${viewerName} (${action})`);
-            }
-            
-            list.push(endSeparator);
-            list.push("");
-            
-            while (list.length > that.maxActions + 2) {
-                list.shift();
-            }
-
-            let newData = list.join(separator) + separator; // add separator at end
-            fs.writeFile(actionFile, newData, AlertConst.Encoding, err => {
-                if (err != null) {
-                    that.logger.error(`Error writing to file '${actionFile}'. ${err}`);
-                }
+                this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
             });
-        });
     }
 
     private removeLastExpectedListEntry(expectedEntry: string, list: string[]): string[] {

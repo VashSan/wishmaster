@@ -22,6 +22,8 @@ export interface IAlert {
     parameter: string;
     sceneTextSource: string;
     sceneTextPattern: string;
+    bannerTextSource: string;
+    bannerTextPattern: string;
     chatPattern: string;
     durationInSeconds: number;
     timeoutInSeconds: number;

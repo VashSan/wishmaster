@@ -52,6 +52,8 @@ Remember to strip the comments before saving it as configuration file.
 			"parameter": "FollowerAlert",   // the scene item name in OBS, sound file name, text message depending on action
 			"sceneTextSource": "",          // The OBS text source holding for new follower text
 			"sceneTextPattern": "New:\n{Viewer}", // text pattern, where {Viewer} is replaced, for OBS text source
+			"bannerTextSource": "",         // The OBS text source holding a static banner text for alert history
+			"bannerTextPattern": "{Viewer}",// text pattern, where {Viewer} is replaced, for OBS banner text source
 			"chatPattern": "Thanks {Viewer}",     // text pattern for chat reply
 			"durationInSeconds": 3000,      // time span the scene item shall be visible and minimum time between other alerts
 			"timeoutInSeconds": 0           // this alert can be triggered again after this timespan, if occurring in between it is dropped
