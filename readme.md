@@ -50,7 +50,9 @@ Remember to strip the comments before saving it as configuration file.
 			"trigger": "NewFollower",       // "NewSubscriber", ... TODO complete list and add doc
 			"action": "ToggleSceneItem",    // planned: "PlaySoundFile", "WriteTextMessage"
 			"parameter": "FollowerAlert",   // the scene item name in OBS, sound file name, text message depending on action
-			"pattern": "New Follower\n{Viewer}", // text pattern, where {Viewer} is replaced by the corresponding viewer name
+			"sceneTextSource": "",          // The OBS text source holding for new follower text
+			"sceneTextPattern": "New:\n{Viewer}", // text pattern, where {Viewer} is replaced, for OBS text source
+			"chatPattern": "Thanks {Viewer}",     // text pattern for chat reply
 			"durationInSeconds": 3000,      // time span the scene item shall be visible and minimum time between other alerts
 			"timeoutInSeconds": 0           // this alert can be triggered again after this timespan, if occurring in between it is dropped
 		}

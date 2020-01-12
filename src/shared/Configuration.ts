@@ -20,7 +20,8 @@ export interface IAlert {
     trigger: AlertTrigger;
     action: AlertAction;
     parameter: string;
-    lastActionFilePattern: string;
+    sceneTextSource: string;
+    sceneTextPattern: string;
     chatPattern: string;
     durationInSeconds: number;
     timeoutInSeconds: number;

@@ -93,21 +93,18 @@ export class Alerts implements MP.IFeature {
     private performNewFollowerActions(newFollower: string, emitAlert: boolean) {
         // TODO evaluate timeout, 
         // TODO enqueue if duration action currently playing
-        if(emitAlert) {
-            this.playFollowerSoundAlert();
-        }
-        this.writeLastActionFile(newFollower);
-        this.sendFollowerThanksToChat(newFollower);
+        // if(emitAlert) {
+        //     this.playFollowerSoundAlert();
+        // }
+        this.setObsNewFollowerText(newFollower);
         this.appendToViewerActionsHistory(newFollower, null);
         this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
+        this.sendFollowerThanksToChat(newFollower);
     }
     
-    private writeLastActionFile(newFollower: string) {
-        let lastActionFile = this.getFilePathInConfigDir("lastViewerAction.txt");
-        this.createFileIfNotExistsSync(lastActionFile);
-        
-        let text = this.alertConfig.lastActionFilePattern.replace(AlertConst.ViewerPlaceholder, newFollower);
-        fs.writeFileSync(lastActionFile, text, AlertConst.Encoding);
+    private setObsNewFollowerText(newFollower: string) {
+        let text = this.alertConfig.sceneTextPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
+        this.obs.setText(this.alertConfig.sceneTextSource, text);
     }
 
     private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{
