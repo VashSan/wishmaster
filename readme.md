@@ -48,8 +48,9 @@ Remember to strip the comments before saving it as configuration file.
 	"alerts": [
 		{
 			"trigger": "NewFollower",       // "NewSubscriber", ... TODO complete list and add doc
-			"action": "ToggleSceneItem",    // "PlaySoundFile", "WriteTextMessage"
-			"parameter": "",                // the scene item name, sound file name, text message
+			"action": "ToggleSceneItem",    // planned: "PlaySoundFile", "WriteTextMessage"
+			"parameter": "FollowerAlert",   // the scene item name in OBS, sound file name, text message depending on action
+			"pattern": "New Follower\n{Viewer}", // text pattern, where {Viewer} is replaced by the corresponding viewer name
 			"durationInSeconds": 3000,      // time span the scene item shall be visible and minimum time between other alerts
 			"timeoutInSeconds": 0           // this alert can be triggered again after this timespan, if occurring in between it is dropped
 		}

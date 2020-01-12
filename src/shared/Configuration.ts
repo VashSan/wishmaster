@@ -20,6 +20,8 @@ export interface IAlert {
     trigger: AlertTrigger;
     action: AlertAction;
     parameter: string;
+    lastActionFilePattern: string;
+    chatPattern: string;
     durationInSeconds: number;
     timeoutInSeconds: number;
 }
