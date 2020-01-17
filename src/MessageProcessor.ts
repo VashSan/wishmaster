@@ -206,6 +206,7 @@ export class Tags {
 export class Message {
     text: string = "";
     from: string = "";
+    /** Channel starts with # otherwise it is a whisper or system notice I guess */
     channel: string = "";
     tags: Tags | null;
 
@@ -251,7 +252,8 @@ export class MessageProcessor {
         this.client.addListener("raw", message => {
             let cmd: string = message.command;
 
-            if (cmd.startsWith("@")) { // thats a twitch chat tagged message something our lib does not recongnize 
+            // thats a twitch chat tagged message something our lib does not recongnize 
+            if (cmd.startsWith("@")) {
                 let payload: string = message.args[0];
 
                 let x: string[] = payload.split(" ", 2); // need to check command
@@ -261,49 +263,15 @@ export class MessageProcessor {
                 }
             }
 
-            if (cmd.toUpperCase() != "PRIVMSG") {
-                switch(message.rawCommand.toLowerCase()){
-                    case "001": //"rpl_welcome"
-                    case "002": //"rpl_yourhost"
-                    case "003": //"rpl_created"
-                    case "004": //"rpl_myinfo"
-                    case "353": //"rpl_namreply" ... wehn joining a channel this is sent automatically
-                    case "366": //"rpl_endofnames"
-                    case "cap": // capabilities ... if we want to track different feature we shoudl save this
-                    case "ping":
-                    case "pong": // sent by twitch every ~15 secs
-                        let text = `${message.command}: ${message.args.join(" ")}`;
-                        this.logger.log("cmd: ", text);
-                        break;
-
-                    
-                    case "372":
-                        this.messageOfTheDay += message.args.join(" ") + "\n";
-                        break;
-
-                    case "375":
-                        // ignore message of the day start
-                        break;
-
-                    case "376":
-                        this.logger.log("message of the day: ", this.messageOfTheDay);
-                        break;
-
-                    case "421": // err_unknowncommand
-                        let errorText = `${message.command}: ${message.args.join(" ")}`;
-                        this.logger.error("cmd: ", errorText);
-                        break;
-
-                    case "join":
-                        let join = `Channel: ${message.args[0]}, Host: ${message.host}, Nick:${message.nick}, User: ${message.user}`;
-                        this.logger.log("join: ", join);
-                        break;
-
-                    default:
-                        this.logger.log("raw: ", message);
-                        break;
+            // this is a regular message or command
+            if (cmd.toUpperCase() == "PRIVMSG") {
+                if (message.args.length == 2) {
+                    this.messageReceived(message.user, message.args[0], message.args[1]);
+                    return;
                 }
             }
+
+            this.messageTrap(message);
         });
 
         this.client.addListener("error", message => {
@@ -322,9 +290,53 @@ export class MessageProcessor {
             setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
 
             this.messageCount30Sec = 1;
-            this.client.send("CAP REQ", "twitch.tv/tags");
+            this.client.send("CAP REQ", "twitch.tv/tags twitch.tv/commands");
             this.client.join(this.config.channel);
         });
+    }
+
+    private messageTrap(message: any) {
+        switch (message.rawCommand.toLowerCase()) {
+            case "001": //"rpl_welcome"
+            case "002": //"rpl_yourhost"
+            case "003": //"rpl_created"
+            case "004": //"rpl_myinfo"
+            case "353": //"rpl_namreply" ... wehn joining a channel this is sent automatically
+            case "366": //"rpl_endofnames"
+            case "cap": // capabilities ... if we want to track different feature we shoudl save this
+            case "ping":
+            case "pong": // sent by twitch every ~15 secs
+                let text = `${message.command}: ${message.args.join(" ")}`;
+                this.logger.log("cmd: ", text);
+                break;
+
+
+            case "372":
+                this.messageOfTheDay += message.args.join(" ") + "\n";
+                break;
+
+            case "375":
+                // ignore message of the day start
+                break;
+
+            case "376":
+                this.logger.log("message of the day: ", this.messageOfTheDay);
+                break;
+
+            case "421": // err_unknowncommand
+                let errorText = `${message.command}: ${message.args.join(" ")}`;
+                this.logger.error("cmd: ", errorText);
+                break;
+
+            case "join":
+                let join = `Channel: ${message.args[0]}, Host: ${message.host}, Nick:${message.nick}, User: ${message.user}`;
+                this.logger.log("join: ", join);
+                break;
+
+            default:
+                this.logger.log("raw: ", message);
+                break;
+        }
     }
 
     private resetMessageCount() {
