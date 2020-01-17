@@ -204,18 +204,6 @@ export class Alerts implements MP.IFeature {
         });
     }
 
-    private createFileIfNotExistsSync(filePath:string){
-        if (!fs.existsSync(filePath)) {
-            // create file
-            fs.closeSync(fs.openSync(filePath, 'w'));
-        }
-    }
-
-    private getFilePathInConfigDir(fileName: string){
-        let configPath = this.config.getConfigDir();
-        return path.resolve(configPath, fileName);
-    }
-
     /** Writes a name to a text file
      * @param viewerName The name of the stream viewer
      * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
@@ -237,13 +225,6 @@ export class Alerts implements MP.IFeature {
 
                 this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
             });
-    }
-
-    private removeLastExpectedListEntry(expectedEntry: string, list: string[]): string[] {
-        if (list[list.length - 1] == expectedEntry){
-            list.pop();
-        }
-        return list;
     }
 }
 
