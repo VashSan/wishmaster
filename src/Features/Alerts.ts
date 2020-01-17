@@ -38,39 +38,39 @@ export class Alerts implements MP.IFeature {
     private pendingAlerts: PendingAlert[] = [];
     private timer: NodeJS.Timer | null = null;
     private maxActions: number = 20; // TODO get from config
-                                     // TODO action file horizontal or vertical
-                                     // TODO action file separator for horizontal
-                                     // TODO action file prefix
+    // TODO action file horizontal or vertical
+    // TODO action file separator for horizontal
+    // TODO action file prefix
 
     public trigger: string = "";
 
     constructor(context: Context, alertConfig: IAlert) {
         this.db = context.db;
         this.config = context.config;
-        this.logger = context.logger;   
+        this.logger = context.logger;
         this.obs = context.obs;
         this.alertConfig = alertConfig;
 
         this.soundsPath = path.resolve(this.config.rootPath, "sounds");
 
-        if(this.config.email == null) {
+        if (this.config.email == null) {
             this.logger.error("Email configuration missing.");
             return;
         }
         let email: IEmailAccess = this.config.email;
-        
+
         let that = this;
 
         let config = {
             imap: {
-                user:     email.login,
+                user: email.login,
                 password: email.password,
-                host:     email.host,
-                port:     email.port,
-                tls:      email.tls,
+                host: email.host,
+                port: email.port,
+                tls: email.tls,
                 authTimeout: 3000
             },
-            onmail: function(numNewMail: number){
+            onmail: function (numNewMail: number) {
                 that.newMail(true);
             }
         };
@@ -79,14 +79,14 @@ export class Alerts implements MP.IFeature {
             that.logger.error(err);
         }
 
-        IMAP.connect(config).then(function(connection: IMAP.ImapSimple): Promise<void|IMAP.ImapSimple>{
+        IMAP.connect(config).then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
             that.logger.info("Connected to IMAP");
 
             that.connection = connection;
 
             return that.newMail(false);
         }, connectionCallback);
-        
+
     }
 
     public setup(sendResponse: MP.ResponseCallback): void {
@@ -101,7 +101,7 @@ export class Alerts implements MP.IFeature {
         }
 
         // I think bots will not get the notification of being hosted via a whisper?
-        if (msg.from.toLowerCase() == "jtv" ) {
+        if (msg.from.toLowerCase() == "jtv") {
             this.handleTwitchCommands(msg);
         }
     }
@@ -114,8 +114,8 @@ export class Alerts implements MP.IFeature {
         }
     }
     private performNewHostActions(hostFrom: string) {
-                
-        let newFollowerAlert = new PendingAlert(hostFrom, ()=>{
+
+        let newFollowerAlert = new PendingAlert(hostFrom, () => {
             this.updateUserDatabase(hostFrom, "host");
             this.playFollowerSoundAlert();
             //this.setObsNewHostText(hostFrom);
@@ -124,11 +124,11 @@ export class Alerts implements MP.IFeature {
             this.sendHostThanksToChat(hostFrom);
         });
 
-        this.notifyNewAlert( newFollowerAlert );
+        this.notifyNewAlert(newFollowerAlert);
     }
 
     private sendHostThanksToChat(hostFrom: string) {
-        if(this.sendResponse != null) {
+        if (this.sendResponse != null) {
             // let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, hostFrom);
             let text = "Danke für Deinen Host {Viewer}!".replace(AlertConst.ViewerPlaceholder, hostFrom);
             let m = new MP.Message({ channel: this.config.channel, text: text });
@@ -145,8 +145,8 @@ export class Alerts implements MP.IFeature {
     }
 
     private performNewFollowerActions(newFollower: string) {
-        
-        let newFollowerAlert = new PendingAlert(newFollower, ()=>{
+
+        let newFollowerAlert = new PendingAlert(newFollower, () => {
             this.updateUserDatabase(newFollower, "follow");
             this.setObsNewFollowerText(newFollower);
             this.appendToViewerActionsHistory(newFollower, null);
@@ -154,14 +154,14 @@ export class Alerts implements MP.IFeature {
             this.sendFollowerThanksToChat(newFollower);
         });
 
-        this.notifyNewAlert( newFollowerAlert );
+        this.notifyNewAlert(newFollowerAlert);
     }
 
-    private notifyNewAlert( newAlert: PendingAlert ) {
-        this.pendingAlerts.push( newAlert );
+    private notifyNewAlert(newAlert: PendingAlert) {
+        this.pendingAlerts.push(newAlert);
 
-        if(this.timer == null){
-            this.timer = setInterval(()=>{
+        if (this.timer == null) {
+            this.timer = setInterval(() => {
                 let alert = this.pendingAlerts.shift();
                 if (alert == undefined) {
                     if (this.timer != null) {
@@ -180,28 +180,28 @@ export class Alerts implements MP.IFeature {
     private updateUserDatabase(newFollower: string, action: string) {
         let now = new Date();
         let nedbUpdate = null;
-        switch(action){
+        switch (action) {
             case "host":
-                nedbUpdate = { 
-                    $inc: { hostCount: 1 }, 
+                nedbUpdate = {
+                    $inc: { hostCount: 1 },
                     $set: { lastHostDate: now, lastAction: "host", lastActionDate: now },
                 };
                 break;
             case "follow":
-                nedbUpdate = { $set: { followDate: now, lastAction: "follow", lastActionDate: now  } };
+                nedbUpdate = { $set: { followDate: now, lastAction: "follow", lastActionDate: now } };
                 break;
 
         }
 
         this.db.users.update({ name: newFollower }, nedbUpdate, { upsert: true });
     }
-    
+
     private setObsNewFollowerText(newFollower: string) {
         let text = this.alertConfig.sceneTextPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
         this.obs.setText(this.alertConfig.sceneTextSource, text);
     }
 
-    private newMail(emitAlert: boolean): Promise<void|IMAP.ImapSimple>{
+    private newMail(emitAlert: boolean): Promise<void | IMAP.ImapSimple> {
         if (this.connection == null) {
             return Promise.reject("connection is not set up");
         }
@@ -213,19 +213,19 @@ export class Alerts implements MP.IFeature {
             var searchCriteria = [
                 'UNSEEN'
             ];
-     
+
             var fetchOptions = {
                 bodies: ['HEADER', 'TEXT'],
                 markSeen: true
             };
-     
+
             return connection.search(searchCriteria, fetchOptions).then(function (results) {
                 var subjects = results.map(function (res) {
                     return res.parts.filter(function (part) {
                         return part.which === 'HEADER';
                     })[0].body.subject[0];
                 });
-     
+
                 that.unreadMails(subjects);
             });
         });
@@ -235,14 +235,14 @@ export class Alerts implements MP.IFeature {
         subjectList.forEach(subject => {
             let regex = /(.*) folgt dir jetzt auf Twitch$/g; // TODO configurable regex
             let result = regex.exec(subject);
-            if (result != null && result.length > 1) {    
+            if (result != null && result.length > 1) {
                 this.performNewFollowerActions(result[1]);
             }
         });
     }
 
-    private sendFollowerThanksToChat( newFollower: string ) {
-        if(this.sendResponse != null) {
+    private sendFollowerThanksToChat(newFollower: string) {
+        if (this.sendResponse != null) {
             let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
             let m = new MP.Message({ channel: this.config.channel, text: text });
             let response = { message: m };
@@ -255,11 +255,11 @@ export class Alerts implements MP.IFeature {
 
         let args: string[] = [];
         this.config.mediaPlayerArgs.forEach(element => {
-            args.push( element.replace("{0}", `${alertWav}`) );    
+            args.push(element.replace("{0}", `${alertWav}`));
         });
-        
+
         let that = this;
-        execFile(this.config.mediaPlayer, args, function(err, data) {
+        execFile(this.config.mediaPlayer, args, function (err, data) {
             that.logger.error(`${err}: ${data.toString()}`);
         });
     }
@@ -268,11 +268,11 @@ export class Alerts implements MP.IFeature {
      * @param viewerName The name of the stream viewer
      * @param action Pass an action to be displayed next to the viewer name or null to leave it out 
      */
-    private appendToViewerActionsHistory( viewerName: string, action: string | null ) : void {
+    private appendToViewerActionsHistory(viewerName: string, action: string | null): void {
         const separator = "  ";
         const endSeparator = "---";
 
-        this.db.users.find({}, {name: 1, lastAction: 1})
+        this.db.users.find({}, { name: 1, lastAction: 1 })
             .sort({ lastActionDate: -1 })
             .limit(this.maxActions)
             .exec((err, docs) => {
