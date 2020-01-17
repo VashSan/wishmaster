@@ -1,9 +1,8 @@
 import * as IMAP from "imap-simple";
 import * as path from "path"
-import * as fs  from "fs";
 import { execFile } from "child_process"
 import { ILogger } from "psst-log";
-import { isNullOrUndefined } from "util";
+
 
 
 import * as MP from "../MessageProcessor";
@@ -43,7 +42,7 @@ export class Alerts implements MP.IFeature {
                                      // TODO action file separator for horizontal
                                      // TODO action file prefix
 
-    public trigger: string = "alert";
+    public trigger: string = "";
 
     constructor(context: Context, alertConfig: IAlert) {
         this.db = context.db;
@@ -96,25 +95,70 @@ export class Alerts implements MP.IFeature {
 
     /** just check whether an alert was triggered manually */
     public act(msg: MP.Message): void {
-        if (msg.from.toLowerCase() == this.config.nickname.toLowerCase()) {
-            let parts = msg.text.split(" ");
-            if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
-                this.performNewFollowerActions(parts[2]);
-            }
+        if (msg.from.toLowerCase() == this.config.nickname.toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
+            this.handleUserToBotCommand(msg);
+            return;
+        }
+
+        // I think bots will not get the notification of being hosted via a whisper?
+        if (msg.from.toLowerCase() == "jtv" ) {
+            this.handleTwitchCommands(msg);
+        }
+    }
+    private handleTwitchCommands(msg: MP.Message): void {
+        // radiodefiant is now hosting you.
+        const regex = /(\w+) is now hosting you\./;
+        let match = regex.exec(msg.text);
+        if (match != null && match.length > 0) {
+            this.performNewHostActions(match[1]);
+        }
+    }
+    private performNewHostActions(hostFrom: string) {
+                
+        let newFollowerAlert = new PendingAlert(hostFrom, ()=>{
+            this.updateUserDatabase(hostFrom, "host");
+            this.playFollowerSoundAlert();
+            //this.setObsNewHostText(hostFrom);
+            this.appendToViewerActionsHistory(hostFrom, "Host");
+            //this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
+            this.sendHostThanksToChat(hostFrom);
+        });
+
+        this.notifyNewAlert( newFollowerAlert );
+    }
+
+    private sendHostThanksToChat(hostFrom: string) {
+        if(this.sendResponse != null) {
+            // let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, hostFrom);
+            let text = "Danke für Deinen Host {Viewer}!".replace(AlertConst.ViewerPlaceholder, hostFrom);
+            let m = new MP.Message({ channel: this.config.channel, text: text });
+            let response = { message: m };
+            this.sendResponse(null, response);
+        }
+    }
+
+    private handleUserToBotCommand(msg: MP.Message): void {
+        let parts = msg.text.split(" ");
+        if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
+            this.performNewFollowerActions(parts[2]);
         }
     }
 
     private performNewFollowerActions(newFollower: string) {
         
         let newFollowerAlert = new PendingAlert(newFollower, ()=>{
-            this.updateUserDatabase(newFollower);
+            this.updateUserDatabase(newFollower, "follow");
             this.setObsNewFollowerText(newFollower);
             this.appendToViewerActionsHistory(newFollower, null);
             this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
             this.sendFollowerThanksToChat(newFollower);
         });
 
-        this.pendingAlerts.push( newFollowerAlert );
+        this.notifyNewAlert( newFollowerAlert );
+    }
+
+    private notifyNewAlert( newAlert: PendingAlert ) {
+        this.pendingAlerts.push( newAlert );
 
         if(this.timer == null){
             this.timer = setInterval(()=>{
@@ -132,8 +176,24 @@ export class Alerts implements MP.IFeature {
         }
     }
 
-    private updateUserDatabase(newFollower: string) {
-        this.db.users.update({ name: newFollower }, { $set: { followDate: new Date() } }, { upsert: true });
+    // TODO make action an enum
+    private updateUserDatabase(newFollower: string, action: string) {
+        let now = new Date();
+        let nedbUpdate = null;
+        switch(action){
+            case "host":
+                nedbUpdate = { 
+                    $inc: { hostCount: 1 }, 
+                    $set: { lastHostDate: now, lastAction: "host", lastActionDate: now },
+                };
+                break;
+            case "follow":
+                nedbUpdate = { $set: { followDate: now, lastAction: "follow", lastActionDate: now  } };
+                break;
+
+        }
+
+        this.db.users.update({ name: newFollower }, nedbUpdate, { upsert: true });
     }
     
     private setObsNewFollowerText(newFollower: string) {
@@ -212,8 +272,8 @@ export class Alerts implements MP.IFeature {
         const separator = "  ";
         const endSeparator = "---";
 
-        this.db.users.find({}, {name: 1})
-            .sort({ followDate: -1 })
+        this.db.users.find({}, {name: 1, lastAction: 1})
+            .sort({ lastActionDate: -1 })
             .limit(this.maxActions)
             .exec((err, docs) => {
                 let bannerText = "";
