@@ -1,5 +1,8 @@
 language: node_js
 node_js:
     - 10
+env: CODECOV_TOKEN="0ef30114-d5f1-4ca5-927e-686b393db88e"
 before_install:
   - npm install -g node-gyp
+after_success:
+  - codecov

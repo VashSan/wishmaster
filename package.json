@@ -25,6 +25,7 @@
     "@types/nedb": "^1.8.9",
     "@types/node": "^9.6.55",
     "@types/request": "^2.48.4",
+    "codecov": "^3.6.1",
     "jest": "^24.9.0",
     "ts-jest": "^24.3.0",
     "tslint": "^5.20.1",

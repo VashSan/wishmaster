@@ -1,5 +1,6 @@
 # Node libraries
 node_modules
+/coverage
 
 # Javascript transpiled files
 *.js
