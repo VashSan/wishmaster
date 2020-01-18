@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.com/VashSan/wishmaster.svg?branch=master)](https://travis-ci.com/VashSan/wishmaster)
 
-# Wishmaster
+# Wishmaster [![Build Status](https://travis-ci.com/VashSan/wishmaster.svg?branch=master)](https://travis-ci.com/VashSan/wishmaster) [![codecov](https://codecov.io/gh/VashSan/wishmaster/branch/master/graph/badge.svg)](https://codecov.io/gh/VashSan/wishmaster)
+
 An IRC bot for Twitch streamers. This is a rapid protoyping project I use to learn TypeScript & NEDB.
 
 ## Working directory
