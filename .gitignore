@@ -1,3 +1,9 @@
+# Node libraries
 node_modules
+
+# Javascript transpiled files
 *.js
 *.js.map
+
+# ... except Jest configuration (our test framework config)
+!jest.config.js 
