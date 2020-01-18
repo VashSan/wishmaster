@@ -1,5 +1,7 @@
+[![Build Status](https://travis-ci.com/VashSan/wishmaster.svg?branch=master)](https://travis-ci.com/VashSan/wishmaster)
+
 # Wishmaster
-I am learning TypeScript / NEDB with this project.
+An IRC bot for Twitch streamers. This is a rapid protoyping project I use to learn TypeScript & NEDB.
 
 ## Working directory
 All files are stored in the folder ```%localappdata%\.wishmaster```. 
