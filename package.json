@@ -1,7 +1,7 @@
 {
   "name": "wishmaster",
   "version": "0.0.1",
-  "description": "IRC Bot",
+  "description": "Twitch IRC Bot with OBS integration for streamers",
   "main": "app.js",
   "dependencies": {
     "bufferutil": "^4.0.1",
@@ -27,6 +27,7 @@
     "@types/request": "^2.48.4",
     "codecov": "^3.6.1",
     "jest": "^24.9.0",
+    "jest-mock-extended": "^1.0.7",
     "ts-jest": "^24.3.0",
     "tslint": "^5.20.1",
     "typescript": "^3.7.4"
