@@ -1,8 +1,10 @@
 import * as IRC from "irc";
 import { mock } from "jest-mock-extended"
-import { ChatClient, IChatClient } from "./ChatClient";
+import { ChatClient, IChatClient, IMessage } from "./ChatClient";
 
-//jest.mock("irc");
+interface IWithArgs {
+    args: any[];
+};
 
 function createIrcMock() {
     return mock<IRC.Client>();
@@ -49,4 +51,60 @@ test('connection callback invoked', () => {
 
     // Assert
     expect(onConnectInvoked).toBe(true);
+});
+
+test('error callback set and invoked', () => {
+    // Arrange
+    let ircMock = createIrcMock();
+    let errorCallback: (arg: IWithArgs) => void;
+    ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
+        if (name == "error") { errorCallback = cb; }
+        return ircMock;
+    });
+    ircMock.connect.mockImplementation((retryCount, cb) => {
+        errorCallback({ args: ["1", "2"] });
+    });
+    let client = createMockedClient(ircMock);
+
+    // Act
+    let onErrorInvoked = false;
+    let errorMessage: string = "";
+    client.onError((message: string) => {
+        errorMessage = message;
+        onErrorInvoked = true
+    });
+    client.connect("#channel");
+
+    // Assert
+    expect(onErrorInvoked).toBe(true);
+    expect(errorMessage).toBe("1 2");
+});
+
+test('message callback set and invoked', () => {
+    // Arrange
+    let ircMock = createIrcMock();
+    let messageCallback: (...arg: any[]) => void;
+    ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
+        if (name == "message") { messageCallback = cb; }
+        return ircMock;
+    });
+    ircMock.connect.mockImplementation((retryCount, cb) => {
+        messageCallback("me", "#you", "1 2");
+    });
+    let client = createMockedClient(ircMock);
+
+    // Act
+    let onMessageInvoked = false;
+    let theMessage: IMessage = { from: "", channel: "", text: "", tags: null };
+    client.onMessage((message: IMessage) => {
+        theMessage = message;
+        onMessageInvoked = true;
+    });
+    client.connect("#channel");
+
+    // Assert
+    expect(onMessageInvoked).toBe(true);
+    expect(theMessage.text).toBe("1 2");
+    expect(theMessage.from).toBe("me");
+    expect(theMessage.channel).toBe("#you");
 });

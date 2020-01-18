@@ -25,6 +25,7 @@ export class ChatClient implements IChatClient {
     private client: IRC.Client;
     private connectListener: Array<() => void> = [];
     private errorListener: Array<(text: string) => void> = [];
+    private messageListener: Array<(message: IMessage) => void> = [];
 
     constructor(server: string, login: string, password: string, ircClient?: IRC.Client) {
         if (ircClient == undefined) {
@@ -37,13 +38,39 @@ export class ChatClient implements IChatClient {
         }
     }
 
-    private invokeAll<T>(listenerList: Array<() => void>) {
+    private invokeAll(listenerList: Array<() => void>) {
+
         listenerList.forEach(listener => {
             listener();
         });
     }
 
+    private invokeAll1<T>(listenerList: Array<(p: T) => void>, param: T) {
+
+        listenerList.forEach(listener => {
+            listener(param);
+        });
+    }
+
     connect(channel: string): void {
+        this.client.addListener("error", message => {
+            let errorMessage = "Unknown error";
+            if (message.args.length > 0) {
+                errorMessage = message.args.join(" ");
+            }
+            this.invokeAll1(this.errorListener, errorMessage);
+        });
+
+        this.client.addListener("message", (from, to, text) => {
+            let message: IMessage = {
+                from: from,
+                channel: to,
+                text: text,
+                tags: null
+            };
+            this.invokeAll1(this.messageListener, message);
+        });
+
         this.client.connect(0, () => {
             //this.client.send("CAP REQ", "twitch.tv/tags twitch.tv/commands");
             this.client.join(channel);
@@ -56,11 +83,11 @@ export class ChatClient implements IChatClient {
     }
 
     onError(callback: (errorMessage: string) => void): void {
-        throw new Error("Method not implemented.");
+        this.errorListener.push(callback);
     }
 
     onMessage(callback: (message: IMessage) => void): void {
-        throw new Error("Method not implemented.");
+        this.messageListener.push(callback);
     }
 
     send(text: string, to: string): void {
