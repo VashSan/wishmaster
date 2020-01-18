@@ -34,7 +34,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node app.js",
-    "test": "jest"
+    "test": "jest",
+    "build-test": "npm run build && npm run test"
   },
   "repository": {
     "type": "git",
