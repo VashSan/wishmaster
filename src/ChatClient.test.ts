@@ -36,6 +36,34 @@ test('connection', () => {
     expect(ircMock.connect).toBeCalledTimes(1);
 });
 
+test('send', () => {
+    // Arrange
+    let ircMock = createIrcMock();
+    let client = createMockedClient(ircMock);
+
+    // Act
+    client.connect("#channel");
+    client.send("#channel", "hi");
+
+    // Assert
+    expect(ircMock.say).toBeCalledTimes(1);
+    expect(ircMock.send).toBeCalledTimes(0);
+});
+
+test('send command', () => {
+    // Arrange
+    let ircMock = createIrcMock();
+    let client = createMockedClient(ircMock);
+
+    // Act
+    client.connect("#channel");
+    client.send("PING", "1", true);
+
+    // Assert
+    expect(ircMock.say).toBeCalledTimes(0);
+    expect(ircMock.send).toBeCalledTimes(1);
+});
+
 test('connection callback invoked', () => {
     // Arrange
     let ircMock = createIrcMock();

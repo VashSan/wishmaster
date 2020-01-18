@@ -17,7 +17,7 @@ export interface IChatClient {
     onConnect(callback: () => void): void;
     onError(callback: (errorMessage: string) => void): void;
     onMessage(callback: (message: IMessage) => void): void;
-    send(text: string, to: string): void;
+    send(to: string, text: string, isCommand?: boolean): void;
 }
 
 /** this should be imported by MessageProcessor only */
@@ -90,8 +90,12 @@ export class ChatClient implements IChatClient {
         this.messageListener.push(callback);
     }
 
-    send(text: string, to: string): void {
-        throw new Error("Method not implemented.");
+    send(to: string, text: string, isCommand?: boolean): void {
+        if (isCommand) {
+            this.client.send(to, text);
+        } else {
+            this.client.say(to, text);
+        }
     }
 }
 
