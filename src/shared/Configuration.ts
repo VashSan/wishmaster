@@ -29,7 +29,7 @@ export interface IAlert {
     timeoutInSeconds: number;
 }
 
-export interface IEmailAccess {
+export interface IEmailConfig {
     address: string;
     host: string;
     port: number;
@@ -82,7 +82,7 @@ export class Configuration {
     mediaPlayer: string = "";
     mediaPlayerArgs: string[] = [];
     alerts: IAlert[] = [];
-    email: IEmailAccess | null = null;
+    email: IEmailConfig | null = null;
     obs: IObsConfig | null = null;
     urlWhiteList: string[] = [];
     staticAnswers: IStaticAnswer[] = [];

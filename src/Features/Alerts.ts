@@ -6,7 +6,7 @@ import { ILogger } from "psst-log";
 
 
 import * as MP from "../MessageProcessor";
-import { Configuration, Context, Database, IAlert, IEmailAccess, ObsController, AlertAction } from "../shared";
+import { Configuration, Context, Database, IAlert, IEmailConfig, ObsController, AlertAction } from "../shared";
 
 class AlertConst {
     /** Placeholder in config pattern entries */
@@ -57,7 +57,7 @@ export class Alerts implements MP.IFeature {
             this.logger.error("Email configuration missing.");
             return;
         }
-        let email: IEmailAccess = this.config.email;
+        let email: IEmailConfig = this.config.email;
 
         let that = this;
 
