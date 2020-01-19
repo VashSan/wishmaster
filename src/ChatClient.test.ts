@@ -249,5 +249,5 @@ test('tagged message parsing', () => {
     expect(theMessage.channel).toBe('#vash1080');
     expect(theMessage.text).toBe('hi');
     expect(theMessage.tags).not.toBe(null);
-    expect(theMessage.tags?.getTagValue('display-name')).toBe('Vash1080');
+    expect(theMessage.tags?.get('display-name')).toBe('Vash1080');
 });

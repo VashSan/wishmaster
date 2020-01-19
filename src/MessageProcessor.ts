@@ -60,7 +60,6 @@ export class MessageProcessor {
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCount30Sec = 0;
-    private messageOfTheDay: string = "";
 
     constructor(context: Context, chatClient?: IChatClient) {
         this.context = context;
