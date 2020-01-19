@@ -165,7 +165,7 @@ test('message callback set and invoked', () => {
 
 test('unhandled messages are stored', () => {
     // Arrange
-    let rawMessage = {command: "PING", rawCommand: "PING", commandType: "reply", args: ["1", "2"]};
+    let rawMessage = { command: "PING", rawCommand: "PING", commandType: "reply", args: ["1", "2"] };
     let ircMock = createIrcMock();
     let unhandledMessageCallback: (...arg: any[]) => void;
     ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
@@ -184,4 +184,30 @@ test('unhandled messages are stored', () => {
     let tClient = client as TwitchChatClient;
     expect(tClient).not.toBeNull();
     expect(tClient.unhandledMessages.length).toBe(1);
+    expect(tClient.unhandledMessages[0]).toEqual(expect.stringMatching(/[0-9]+ PING: 1 2/));
+});
+
+test('unhandled messages store is limited', () => {
+    // Arrange
+    let rawMessage = { command: "PING", rawCommand: "PING", commandType: "reply", args: ["1", "2"] };
+    let ircMock = createIrcMock();
+    let unhandledMessageCallback: (...arg: any[]) => void;
+    ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
+        if (name == "raw") { unhandledMessageCallback = cb; }
+        return ircMock;
+    });
+    ircMock.connect.mockImplementation((retryCount, cb) => {
+        for (let i = 0; i < tClient.maxUnhandledMessages + 1; i++) {
+            unhandledMessageCallback(rawMessage);
+        }
+    });
+    let client = createMockedClient(ircMock);
+    let tClient = client as TwitchChatClient;
+
+    // Act
+    client.connect("#channel");
+
+    // Assert
+    expect(tClient).not.toBeNull();
+    expect(tClient.unhandledMessages.length).toBe(tClient.minUnhandledMessages);
 });

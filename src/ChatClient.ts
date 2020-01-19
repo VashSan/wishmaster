@@ -373,7 +373,7 @@ export class TwitchChatClient implements IChatClient {
             case "join": // on joining channel
             case "ping":
             case "pong": // sent by twitch every ~15 secs
-                let text = `${Date.now()} ${message.command}: ${message.args.join(" ")}`;
+                let text: string = `${Date.now()} ${message.command}: ${message.args.join(" ")}`;
                 this.unhandledMessages.push(text);
                 if (this.unhandledMessages.length > this.maxUnhandledMessages) {
                     while(this.unhandledMessages.length > this.minUnhandledMessages) {
