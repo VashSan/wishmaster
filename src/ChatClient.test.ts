@@ -1,5 +1,6 @@
 import * as IRC from "irc";
 import { mock } from "jest-mock-extended"
+import { ILogger } from "psst-log";
 import { TwitchChatClient, IChatClient, IMessage } from "./ChatClient";
 
 interface IWithArgs {
@@ -12,7 +13,7 @@ function createIrcMock() {
 
 
 function createMockedClient(client: IRC.Client): IChatClient {
-    return new TwitchChatClient("server", "loing", "password", client);
+    return new TwitchChatClient("server", "loing", "password", client, mock<ILogger>());
 }
 
 test('construction', () => {
@@ -210,4 +211,43 @@ test('unhandled messages store is limited', () => {
     // Assert
     expect(tClient).not.toBeNull();
     expect(tClient.unhandledMessages.length).toBe(tClient.minUnhandledMessages);
+});
+
+test('tagged message parsing', () => {
+    let rawMsg = {
+        args: ["vash1080!vash1080@vash1080.tmi.twitch.tv PRIVMSG #vash1080 :hi"],
+        command: "@badge-info=;badges=broadcaster/1;color=#AF8008;display-name=Vash1080;emotes=;flags=;id=a4631c5e-dfa5-40f0-b877-3fbe9543c27f;mod=0;room-id=87693901;subscriber=0;tmi-sent-ts=1579460682839;turbo=0;user-id=87693901;user-type=",
+        rawCommand: "@badge-info=;badges=broadcaster/1;color=#AF8008;display-name=Vash1080;emotes=;flags=;id=a4631c5e-dfa5-40f0-b877-3fbe9543c27f;mod=0;room-id=87693901;subscriber=0;tmi-sent-ts=1579460682839;turbo=0;user-id=87693901;user-type=",
+        commandType: "normal"
+    };
+
+    let ircMock = createIrcMock();
+    let unhandledMessageCallback: (...arg: any[]) => void;
+    ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
+        if (name == "raw") { unhandledMessageCallback = cb; }
+        return ircMock;
+    });
+    ircMock.connect.mockImplementation((retryCount, cb) => {
+        unhandledMessageCallback(rawMsg);
+    });
+    let client = createMockedClient(ircMock);
+
+    // Act
+    let onMessageInvoked = false;
+    let theMessage: IMessage = { from: "", channel: "", text: "", tags: null };
+    client.onMessage((message: IMessage) => {
+        theMessage = message;
+        onMessageInvoked = true;
+    });
+    client.connect("#vash1080");
+
+    // Assert
+    expect(onMessageInvoked).toBe(true);
+    expect(theMessage).not.toBeNull();
+    expect(theMessage).not.toBeUndefined();
+    expect(theMessage.from).toBe('vash1080');
+    expect(theMessage.channel).toBe('#vash1080');
+    expect(theMessage.text).toBe('hi');
+    expect(theMessage.tags).not.toBe(null);
+    expect(theMessage.tags?.getTagValue('display-name')).toBe('Vash1080');
 });

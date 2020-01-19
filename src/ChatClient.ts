@@ -4,7 +4,8 @@ import { ILogger, LogManager } from "psst-log";
 
 
 export interface ITags {
-
+    getAvailableTags(): IterableIterator<string>;
+    getTagValue(name: string): string;
 }
 
 export interface IMessage {
@@ -39,8 +40,10 @@ export class Emote {
 }
 
 
-export class Tags {
-    private logger: ILogger;
+export class Tags implements ITags {
+    private readonly logger: ILogger;
+    private readonly tagMap: Map<string, string> = new Map<string, string>();
+
     public color: string = "";
     public displayName: string = "";
     public isEmoteOnly: boolean = false;
@@ -78,146 +81,158 @@ export class Tags {
     }
 
     private assignTag(name: string, value: string): void {
-        switch (name.toLowerCase()) {
-            case "color":
-                this.color = value;
-                break;
-            case "bits":
-                this.bits = this.parseInt(value);
-            case "badges":
-                this.badgeList = this.parseBadges(value);
-                break;
-            case "display-name":
-                this.displayName = value;
-                break;
-            case "emote-only":
-                this.isEmoteOnly = this.parseBool(value);
-                break;
-            case "emotes":
-                this.parseEmotes(value);
-                break;
-            case "id":
-                this.messageId = value;
-                break;
-            case "mod":
-                this.isMod = this.parseBool(value);
-                break;
-            case "room-id":
-                this.roomId = this.parseInt(value);
-                break;
-            case "subscriber":
-                this.isSubscriber = this.parseBool(value);
-                break;
-            case "sent-ts":
-                this.logger.log("Unknow tag sent-ts received");
-                break;
-            case "tmi-sent-ts":
-                this.serverReceivedMsgTime = Number.parseInt(value);
-                break;
-            case "turbo":
-                this.isTurbo = this.parseBool(value);
-                break;
-            case "user-id":
-                this.userId = this.parseInt(value);
-                break;
-            case "user-type":
-                this.userType = this.parseUserType(value);
-                break;
-            default:
-                this.logger.error(`Unknown tag: '${name}' = '${value}'`);
-        }
+        
+        let tagName = name.toLowerCase();
+        this.tagMap.set(tagName, value);
+
+        // switch (name.toLowerCase()) {
+        //     case "color":
+        //         this.color = value;
+        //         break;
+        //     case "bits":
+        //         this.bits = this.parseInt(value);
+        //     case "badges":
+        //         this.badgeList = this.parseBadges(value);
+        //         break;
+        //     case "display-name":
+        //         this.displayName = value;
+        //         break;
+        //     case "emote-only":
+        //         this.isEmoteOnly = this.parseBool(value);
+        //         break;
+        //     case "emotes":
+        //         this.parseEmotes(value);
+        //         break;
+        //     case "id":
+        //         this.messageId = value;
+        //         break;
+        //     case "mod":
+        //         this.isMod = this.parseBool(value);
+        //         break;
+        //     case "room-id":
+        //         this.roomId = this.parseInt(value);
+        //         break;
+        //     case "subscriber":
+        //         this.isSubscriber = this.parseBool(value);
+        //         break;
+        //     case "sent-ts":
+        //         this.logger.log("Unknow tag sent-ts received");
+        //         break;
+        //     case "tmi-sent-ts":
+        //         this.serverReceivedMsgTime = Number.parseInt(value);
+        //         break;
+        //     case "turbo":
+        //         this.isTurbo = this.parseBool(value);
+        //         break;
+        //     case "user-id":
+        //         this.userId = this.parseInt(value);
+        //         break;
+        //     case "user-type":
+        //         this.userType = this.parseUserType(value);
+        //         break;
+        //     default:
+        //         this.logger.error(`Unknown tag: '${name}' = '${value}'`);
+        // }
     }
 
-    private parseUserType(t: string): UserType {
-        switch (t.toLowerCase()) {
-            case "":
-                return UserType.Normal;
-            case "mod":
-                return UserType.Moderator;
-            case "global_mod":
-                return UserType.GlobalMod;
-            case "admin":
-                return UserType.Admin;
-            case "staff":
-                return UserType.Staff;
-        }
-
-        this.logger.error("Unknown UserType:", t);
-        return UserType.Normal;
+    getAvailableTags(): IterableIterator<string> {
+        return this.tagMap.keys();
     }
 
-    private parseBool(b: string): boolean {
-        try {
-            return b != "0";
-        } catch (ex) {
-            this.logger.error(ex);
-            return false;
-        }
+    getTagValue(name: string): string {
+        return this.tagMap.get(name) || "";
     }
 
-    private parseInt(i: string): number {
-        try {
-            return Number.parseFloat(i);
-        } catch (ex) {
-            this.logger.error(ex);
-            return 0;
-        }
-    }
+    // private parseUserType(t: string): UserType {
+    //     switch (t.toLowerCase()) {
+    //         case "":
+    //             return UserType.Normal;
+    //         case "mod":
+    //             return UserType.Moderator;
+    //         case "global_mod":
+    //             return UserType.GlobalMod;
+    //         case "admin":
+    //             return UserType.Admin;
+    //         case "staff":
+    //             return UserType.Staff;
+    //     }
 
-    private parseBadges(badgesString: string): string[] {
-        let bList = badgesString.split(",");
-        let result: string[] = [];
+    //     this.logger.error("Unknown UserType:", t);
+    //     return UserType.Normal;
+    // }
 
-        for (const badge of bList) {
-            let b = badge.split("/");
+    // private parseBool(b: string): boolean {
+    //     try {
+    //         return b != "0";
+    //     } catch (ex) {
+    //         this.logger.error(ex);
+    //         return false;
+    //     }
+    // }
 
-            if (b[0].length > 0) {
-                result.push(b[0]);
-            }
-        }
+    // private parseInt(i: string): number {
+    //     try {
+    //         return Number.parseFloat(i);
+    //     } catch (ex) {
+    //         this.logger.error(ex);
+    //         return 0;
+    //     }
+    // }
 
-        return result;
-    }
+    // private parseBadges(badgesString: string): string[] {
+    //     let bList = badgesString.split(",");
+    //     let result: string[] = [];
 
-    private parseEmotes(value: string) {
-        if (value == "") {
-            return;
-        }
-        // emoteDefintion[/emoteDefintion]...
-        let emotes = value.split("/");
+    //     for (const badge of bList) {
+    //         let b = badge.split("/");
 
-        for (const emoteString of emotes) {
-            // emoteDefintion = emoteId:emotePositionList
-            let separatorPos = emoteString.indexOf(":");
-            let emoteName = emoteString.substring(0, separatorPos);
-            let emoteId = this.parseInt(emoteName);
-            let emotePositionString = emoteString.substring(separatorPos + 1);
+    //         if (b[0].length > 0) {
+    //             result.push(b[0]);
+    //         }
+    //     }
 
-            // emotePositionList = position[,position]
-            let emotePositionList = emotePositionString.split(",");
-            for (const position of emotePositionList) {
-                // position = start-end
-                let positionTuple = position.split("-");
-                let start: number = this.parseInt(positionTuple[0]);
-                let end: number = this.parseInt(positionTuple[1]);
+    //     return result;
+    // }
 
-                let emote = new Emote();
-                emote.id = emoteId;
-                emote.start = start;
-                emote.end = end;
+    // private parseEmotes(value: string) {
+    //     if (value == "") {
+    //         return;
+    //     }
+    //     // emoteDefintion[/emoteDefintion]...
+    //     let emotes = value.split("/");
 
-                this.emoteList.add(emote);
-            }
-        }
-    }
+    //     for (const emoteString of emotes) {
+    //         // emoteDefintion = emoteId:emotePositionList
+    //         let separatorPos = emoteString.indexOf(":");
+    //         let emoteName = emoteString.substring(0, separatorPos);
+    //         let emoteId = this.parseInt(emoteName);
+    //         let emotePositionString = emoteString.substring(separatorPos + 1);
+
+    //         // emotePositionList = position[,position]
+    //         let emotePositionList = emotePositionString.split(",");
+    //         for (const position of emotePositionList) {
+    //             // position = start-end
+    //             let positionTuple = position.split("-");
+    //             let start: number = this.parseInt(positionTuple[0]);
+    //             let end: number = this.parseInt(positionTuple[1]);
+
+    //             let emote = new Emote();
+    //             emote.id = emoteId;
+    //             emote.start = start;
+    //             emote.end = end;
+
+    //             this.emoteList.add(emote);
+    //         }
+    //     }
+    // }
 }
 
 
 /** IRChat client that supports Twitch features
  *  Note: this should be imported by MessageProcessor only */
 export class TwitchChatClient implements IChatClient {
-    private logger: ILogger;
-    private client: IRC.Client;
+    private readonly logger: ILogger;
+    private readonly client: IRC.Client;
 
     private connectListener: Array<() => void> = [];
     private errorListener: Array<(text: string) => void> = [];
@@ -393,7 +408,6 @@ export class TwitchChatClient implements IChatClient {
 
             default:
                 this.logger.error(`Recieved unhandled message type: ${message.command}`);
-                this.logger.log(message);
                 break;
         }
     }
