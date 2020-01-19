@@ -1,5 +1,5 @@
 import { ILogger } from "psst-log";
-import { Configuration, Database, ObsController  } from "./";
+import { Configuration, Database, ObsController } from "./";
 
 export class Context {
     public readonly config: Configuration;
@@ -12,5 +12,10 @@ export class Context {
         this.logger = logger;
         this.db = db;
         this.obs = obs;
+    }
+
+    public isDeveloper(): boolean {
+        var env = process.env.NODE_ENV || 'dev';
+        return env.toLowerCase() == 'dev';
     }
 }
