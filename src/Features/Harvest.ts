@@ -32,40 +32,40 @@ export class Harvest implements mp.IFeature {
             return;
         }
 
-        let emotes: object[] = [];
+        //let emotes: object[] = [];
 
-        msg.tags.emoteList.forEach(e => {
-            emotes.push({
-                id: e.id,
-                start: e.start,
-                end: e.end
-            });
-        });
+        // msg.tags.emoteList.forEach(e => {
+        //     emotes.push({
+        //         id: e.id,
+        //         start: e.start,
+        //         end: e.end
+        //     });
+        // });
 
         // TODO New Tags? flags, badge-info
-        let log = {
-            from: msg.from,
-            channel: msg.channel,
-            text: msg.text,
-            bits: msg.tags.bits,
-            color: msg.tags.color,
-            emoteList: emotes,
-            isEmoteOnly: msg.tags.isEmoteOnly,
-            isMod: msg.tags.isMod,
-            isSub: msg.tags.isSubscriber,
-            isTurbo: msg.tags.isTurbo,
-            msgId: msg.tags.messageId,
-            userId: msg.tags.userId,
-            msgReceivedTime: msg.tags.serverReceivedMsgTime,
-            m: msg.tags.roomId
-        };
+        // let log = {
+        //     from: msg.from,
+        //     channel: msg.channel,
+        //     text: msg.text,
+        //     bits: msg.tags.bits,
+        //     color: msg.tags.color,
+        //     emoteList: emotes,
+        //     isEmoteOnly: msg.tags.isEmoteOnly,
+        //     isMod: msg.tags.isMod,
+        //     isSub: msg.tags.isSubscriber,
+        //     isTurbo: msg.tags.isTurbo,
+        //     msgId: msg.tags.messageId,
+        //     userId: msg.tags.userId,
+        //     msgReceivedTime: msg.tags.serverReceivedMsgTime,
+        //     m: msg.tags.roomId
+        // };
 
-        let that = this;
-        this.db.log.insert(log, (err, newDoc) => {
-            if (err != null) {
-                that.logger.error("Error when inserting message:", err);
-            }
-        });
+        // let that = this;
+        // this.db.log.insert(log, (err, newDoc) => {
+        //     if (err != null) {
+        //         that.logger.error("Error when inserting message:", err);
+        //     }
+        // });
     }
 
     private updateUser(msg: mp.Message) {
@@ -76,50 +76,50 @@ export class Harvest implements mp.IFeature {
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
-        this.db.users.findOne({ $or:[ { twitchid: msg.tags.userId }, { name: msg.tags.displayName } ] }, function (err: Error, doc: any) {
-            if (err != null) {
-                that.logger.error(err);
-                return;
-            }
+        // this.db.users.findOne({ $or:[ { twitchid: msg.tags.userId }, { name: msg.tags.displayName } ] }, function (err: Error, doc: any) {
+        //     if (err != null) {
+        //         that.logger.error(err);
+        //         return;
+        //     }
 
-            if (msg.tags == null) {
-                that.logger.warn("If tags are not set we cannot update user");
-                return;
-            }
+        //     if (msg.tags == null) {
+        //         that.logger.warn("If tags are not set we cannot update user");
+        //         return;
+        //     }
 
-            let totalBits = 0;
-            let emoteOnlyCount = 0;
-            let messageCount = 0;
-            if (doc != null) {
-                totalBits = doc.totalBits + msg.tags.bits;
-                emoteOnlyCount = doc.emoteOnlyCount + msg.tags.isEmoteOnly ? 1 : 0;
-                messageCount = doc.messageCount + 1;
-            }
-            let followDate = new Date(0);
-            if (doc.followDate != undefined){
-                followDate = doc.followDate;
-            }
+        //     let totalBits = 0;
+        //     let emoteOnlyCount = 0;
+        //     let messageCount = 0;
+        //     if (doc != null) {
+        //         totalBits = doc.totalBits + msg.tags.bits;
+        //         emoteOnlyCount = doc.emoteOnlyCount + msg.tags.isEmoteOnly ? 1 : 0;
+        //         messageCount = doc.messageCount + 1;
+        //     }
+        //     let followDate = new Date(0);
+        //     if (doc.followDate != undefined){
+        //         followDate = doc.followDate;
+        //     }
             
-            // TODO New Tags? flags, badge-info
-            let user = {
-                twitchid: msg.tags.userId,
-                name: msg.tags.displayName,
-                followDate: followDate,
-                color: msg.tags.color,
-                badges: msg.tags.badgeList,
-                emoteOnlyCount: emoteOnlyCount,
-                messageCount: messageCount,
-                totalBits: totalBits,
-                isMod: msg.tags.isMod,
-                isSubscriber: msg.tags.isSubscriber,
-                isTurbo: msg.tags.isTurbo,
-                lastRoomSeen: msg.tags.roomId,
-                lastTimeSeen: msg.tags.serverReceivedMsgTime,
-                type: msg.tags.userType
-            };
+        //     // TODO New Tags? flags, badge-info
+        //     let user = {
+        //         twitchid: msg.tags.userId,
+        //         name: msg.tags.displayName,
+        //         followDate: followDate,
+        //         color: msg.tags.color,
+        //         badges: msg.tags.badgeList,
+        //         emoteOnlyCount: emoteOnlyCount,
+        //         messageCount: messageCount,
+        //         totalBits: totalBits,
+        //         isMod: msg.tags.isMod,
+        //         isSubscriber: msg.tags.isSubscriber,
+        //         isTurbo: msg.tags.isTurbo,
+        //         lastRoomSeen: msg.tags.roomId,
+        //         lastTimeSeen: msg.tags.serverReceivedMsgTime,
+        //         type: msg.tags.userType
+        //     };
 
-            that.upsertUser(msg.tags.userId, user);
-        });
+        //     that.upsertUser(msg.tags.userId, user);
+        // });
 
     }
 
