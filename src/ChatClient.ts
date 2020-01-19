@@ -39,18 +39,6 @@ export class TwitchChatClient implements IChatClient {
         }
     }
 
-    private invokeAll(listenerList: Array<() => void>) {
-        listenerList.forEach(listener => {
-            listener();
-        });
-    }
-
-    private invokeAll1<T>(listenerList: Array<(p: T) => void>, param: T) {
-        listenerList.forEach(listener => {
-            listener(param);
-        });
-    }
-
     connect(channel: string): void {
         this.client.addListener("error", this.handleErrors());
 
@@ -63,41 +51,6 @@ export class TwitchChatClient implements IChatClient {
             this.client.join(channel);
             this.invokeAll(this.connectListener);
         });
-    }
-
-    private handleMessages(): (...args: any[]) => void {
-        return (from, to, text) => {
-            let message: IMessage = {
-                from: from,
-                channel: to,
-                text: text,
-                tags: null
-            };
-            this.invokeAll1(this.messageListener, message);
-        };
-    }
-    
-    private handleRawMessage(): (...args: any[]) => void {
-        return (r) => {
-            let raw = `:${r.prefix} ${r.rawCommand} :${r.args.join(" ")}`;
-            console.log(r);
-        };
-    }
-
-    private handleErrors(): (...args: any[]) => void {
-        return message => {
-            function shouldIgnoreError(message: any): boolean {
-                // client sends whois autmatically, we will ignore the first
-                return message.args.length > 0 && message.args[1].toLowerCase() == "whois";
-            }
-            if (!shouldIgnoreError(message)) {
-                let errorMessage = "Unknown error";
-                if (message.args.length > 0) {
-                    errorMessage = message.args.join(" ");
-                }
-                this.invokeAll1(this.errorListener, errorMessage);
-            }
-        };
     }
 
     onConnect(callback: () => void): void {
@@ -118,6 +71,73 @@ export class TwitchChatClient implements IChatClient {
         } else {
             this.client.say(to, text);
         }
+    }
+
+    private invokeAll(listenerList: Array<() => void>) {
+        listenerList.forEach(listener => {
+            listener();
+        });
+    }
+
+    private invokeAll1<T>(listenerList: Array<(p: T) => void>, param: T) {
+        listenerList.forEach(listener => {
+            listener(param);
+        });
+    }
+
+    private handleMessages(): (...args: any[]) => void {
+        return (from, to, text) => {
+            let message: IMessage = {
+                from: from,
+                channel: to,
+                text: text,
+                tags: null
+            };
+            this.invokeAll1(this.messageListener, message);
+        };
+    }
+
+    private handleRawMessage(): (...args: any[]) => void {
+        return (r) => {
+            // let cmd: string = message.command;
+
+            // // thats a twitch chat tagged message something our lib does not recongnize 
+            // if (cmd.startsWith("@")) {
+            //     let payload: string = message.args[0];
+
+            //     let x: string[] = payload.split(" ", 2); // need to check command
+            //     if (x[1].toUpperCase() == "PRIVMSG") {
+            //         this.taggedMessageReceived(payload, cmd);
+            //         return;
+            //     }
+            // }
+
+            // // this is a regular message or command
+            // if (cmd.toUpperCase() == "PRIVMSG") {
+            //     if (message.args.length == 2) {
+            //         this.messageReceived(message.user, message.args[0], message.args[1]);
+            //         return;
+            //     }
+            // }
+
+            console.log(r);
+        };
+    }
+
+    private handleErrors(): (...args: any[]) => void {
+        return message => {
+            function shouldIgnoreError(message: any): boolean {
+                // client sends whois autmatically, we will ignore the first
+                return message.args.length > 0 && message.args[1].toLowerCase() == "whois";
+            }
+            if (!shouldIgnoreError(message)) {
+                let errorMessage = "Unknown error";
+                if (message.args.length > 0) {
+                    errorMessage = message.args.join(" ");
+                }
+                this.invokeAll1(this.errorListener, errorMessage);
+            }
+        };
     }
 }
 
