@@ -2,7 +2,7 @@ import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 import { ILogger } from "psst-log";
 import { Configuration, Context } from "./shared";
-import TwitchChatClient, { IChatClient } from "./ChatClient";
+import TwitchChatClient, { IChatClient, IMessage } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
@@ -17,11 +17,11 @@ export enum UserType {
 export interface IFeature {
     readonly trigger: string;
     setup(callback: ResponseCallback): void;
-    act(message: Message): void;
+    act(message: IMessage): void;
 }
 
 export interface IFeatureResponse {
-    message: Message;
+    message: IMessage;
 }
 
 export class Emote {
@@ -228,7 +228,7 @@ export class Message {
 
 export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
-    private client: IRC.Client;
+    //private client: IRC.Client;
     private cClient: IChatClient;
     private context: Context;
     private config: Configuration;
@@ -248,105 +248,20 @@ export class MessageProcessor {
             this.cClient = new TwitchChatClient(this.config.server, this.config.nickname, this.config.password);
         }
 
-        this.client = new IRC.Client(
-            this.config.server,
-            this.config.nickname,
-            {
-                autoConnect: false,
-                password: this.config.password
-            }
-        );
-
-        this.client.addListener("raw", message => {
-            let cmd: string = message.command;
-
-            // thats a twitch chat tagged message something our lib does not recongnize 
-            if (cmd.startsWith("@")) {
-                let payload: string = message.args[0];
-
-                let x: string[] = payload.split(" ", 2); // need to check command
-                if (x[1].toUpperCase() == "PRIVMSG") {
-                    this.taggedMessageReceived(payload, cmd);
-                    return;
-                }
-            }
-
-            // this is a regular message or command
-            if (cmd.toUpperCase() == "PRIVMSG") {
-                if (message.args.length == 2) {
-                    this.messageReceived(message.user, message.args[0], message.args[1]);
-                    return;
-                }
-            }
-
-            this.messageTrap(message);
+        this.cClient.onMessage((msg: IMessage): void => {
+            this.process(msg);
         });
 
-        this.client.addListener("error", message => {
-            // client sends whois, we will ignore all these
-            if (message.args.length > 0 && message.args[1].toLowerCase() != "whois") {
-                this.logger.error("IRC client error: ", message);
-            }
-        });
-
-        this.client.addListener("message", (from, to, message) => {
-            this.messageReceived(from, to, message);
+        this.cClient.onError((error: string): void => {
+            this.logger.error(error);
         });
     }
 
     public connect() {
-        this.client.connect(0, () => {
-            setInterval(this.resetMessageCount.bind(this), 1000 * 30);
-            setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
+        setInterval(this.resetMessageCount.bind(this), 1000 * 30);
+        setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
 
-            this.messageCount30Sec = 1;
-            this.client.send("CAP REQ", "twitch.tv/tags twitch.tv/commands");
-            this.client.join(this.config.channel);
-        });
-    }
-
-    private messageTrap(message: any) {
-        switch (message.rawCommand.toLowerCase()) {
-            case "001": //"rpl_welcome"
-            case "002": //"rpl_yourhost"
-            case "003": //"rpl_created"
-            case "004": //"rpl_myinfo"
-            case "353": //"rpl_namreply" ... wehn joining a channel this is sent automatically
-            case "366": //"rpl_endofnames"
-            case "cap": // capabilities ... if we want to track different feature we shoudl save this
-            case "ping":
-            case "pong": // sent by twitch every ~15 secs
-                let text = `${message.command}: ${message.args.join(" ")}`;
-                this.logger.log("cmd: ", text);
-                break;
-
-
-            case "372":
-                this.messageOfTheDay += message.args.join(" ") + "\n";
-                break;
-
-            case "375":
-                // ignore message of the day start
-                break;
-
-            case "376":
-                this.logger.log("message of the day: ", this.messageOfTheDay);
-                break;
-
-            case "421": // err_unknowncommand
-                let errorText = `${message.command}: ${message.args.join(" ")}`;
-                this.logger.error("cmd: ", errorText);
-                break;
-
-            case "join":
-                let join = `Channel: ${message.args[0]}, Host: ${message.host}, Nick:${message.nick}, User: ${message.user}`;
-                this.logger.log("join: ", join);
-                break;
-
-            default:
-                this.logger.log("raw: ", message);
-                break;
-        }
+        this.cClient.connect(this.config.channel);
     }
 
     private resetMessageCount() {
@@ -379,48 +294,6 @@ export class MessageProcessor {
         }
     }
 
-    private taggedMessageReceived(payload: string, tags: string) {
-        let separatorPos = payload.indexOf(":"); // left is meta data, right is message text
-        let metaData = payload.substring(0, separatorPos);
-
-        let metaDataList = metaData.split(" ");
-
-        let fromRaw = metaDataList.shift();
-        if (isNullOrUndefined(fromRaw)) {
-            this.logger.error("Could not parse message tags.");
-        } else {
-            let from = fromRaw.substring(0, fromRaw.indexOf("!"));
-
-            let command = metaDataList.shift();
-            if (isNullOrUndefined(command) || command.toUpperCase() != "PRIVMSG") {
-                throw "Wrong handler was called";
-            }
-
-            let to = metaDataList.shift();
-            if (isNullOrUndefined(to)) {
-                this.logger.error("Could not parse 'to' from meta data");
-            } else {
-                let text = payload.substring(separatorPos + 1);
-                this.messageReceived(from, to, text, tags);
-            }
-        }
-    }
-
-    private messageReceived(from: string, to: string, message: string, tagsString?: string) {
-        let m;
-        if (!isNullOrUndefined(tagsString)) {
-            let t = new Tags(tagsString, this.logger);
-            m = new Message({ from: from, channel: to, text: message }, t);
-        }
-        else {
-            m = new Message({ from: from, channel: to, text: message });
-        }
-
-        this.logger.log(`${to} ${from}: ${message}`);
-
-        this.process(m);
-    }
-
     public registerFeature(plugin: IFeature) {
         plugin.setup(this.processResponse.bind(this));
 
@@ -440,7 +313,7 @@ export class MessageProcessor {
         featureList.add(plugin);
     }
 
-    public process(message: Message) {
+    public process(message: IMessage) {
         let alwaysTriggered = this.featureMap.get("");
         this.invokePlugins(message, alwaysTriggered);
 
@@ -453,7 +326,7 @@ export class MessageProcessor {
         this.invokePlugins(message, thisTimeTriggered);
     }
 
-    private getTrigger(msg: Message): string | null {
+    private getTrigger(msg: IMessage): string | null {
         if (msg.text.length == 0) {
             return null;
         }
@@ -473,7 +346,7 @@ export class MessageProcessor {
         return msg.text.substring(1, spaceIndex).toLowerCase();
     }
 
-    private invokePlugins(msg: Message, plugins: Set<IFeature> | undefined) {
+    private invokePlugins(msg: IMessage, plugins: Set<IFeature> | undefined) {
         if (!isNullOrUndefined(plugins)) {
             for (let p of plugins) {
                 p.act(msg);
@@ -493,7 +366,7 @@ export class MessageProcessor {
         if (!isNullOrUndefined(r.message) && r.message.text != "" && r.message.channel != "") {
             if (this.isUnderMessageLimit()) {
                 this.messageCount30Sec += 1;
-                this.client.say(r.message.channel, r.message.text);
+                this.cClient.send(r.message.channel, r.message.text);
             } else {
                 this.deferResponse(r);
             }

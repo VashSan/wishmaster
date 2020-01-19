@@ -143,7 +143,7 @@ test('message callback set and invoked', () => {
         return ircMock;
     });
     ircMock.connect.mockImplementation((retryCount, cb) => {
-        messageCallback("me", "#you", "1 2");
+        messageCallback("me", "#you", "1 2", null);
     });
     let client = createMockedClient(ircMock);
 

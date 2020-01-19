@@ -7,6 +7,7 @@ import { ILogger } from "psst-log";
 
 import * as MP from "../MessageProcessor";
 import { Configuration, Context, Database, IAlert, IEmailConfig, ObsController, AlertAction } from "../shared";
+import { IMessage } from "../ChatClient";
 
 class AlertConst {
     /** Placeholder in config pattern entries */
@@ -94,7 +95,7 @@ export class Alerts implements MP.IFeature {
     }
 
     /** just check whether an alert was triggered manually */
-    public act(msg: MP.Message): void {
+    public act(msg: IMessage): void {
         if (msg.from.toLowerCase() == this.config.nickname.toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
             this.handleUserToBotCommand(msg);
             return;
@@ -105,7 +106,7 @@ export class Alerts implements MP.IFeature {
             this.handleTwitchCommands(msg);
         }
     }
-    private handleTwitchCommands(msg: MP.Message): void {
+    private handleTwitchCommands(msg: IMessage): void {
         // radiodefiant is now hosting you.
         const regex = /(\w+) is now hosting you\./;
         let match = regex.exec(msg.text);
@@ -137,7 +138,7 @@ export class Alerts implements MP.IFeature {
         }
     }
 
-    private handleUserToBotCommand(msg: MP.Message): void {
+    private handleUserToBotCommand(msg: IMessage): void {
         let parts = msg.text.split(" ");
         if (parts.length >= 2 && parts[0].toLowerCase() == "!alert" && parts[1].toLowerCase() == "follower") {
             this.performNewFollowerActions(parts[2]);
