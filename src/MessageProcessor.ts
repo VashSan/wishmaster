@@ -2,6 +2,7 @@ import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 import { ILogger } from "psst-log";
 import { Configuration, Context } from "./shared";
+import TwitchChatClient, { IChatClient } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
@@ -228,6 +229,7 @@ export class Message {
 export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
     private client: IRC.Client;
+    private cClient: IChatClient;
     private context: Context;
     private config: Configuration;
     private logger: ILogger;
@@ -235,10 +237,16 @@ export class MessageProcessor {
     private messageCount30Sec = 0;
     private messageOfTheDay: string = "";
 
-    constructor(context: Context) {
+    constructor(context: Context, chatClient?: IChatClient) {
         this.context = context;
         this.config = context.config;
         this.logger = context.logger;
+
+        if (chatClient) {
+            this.cClient = chatClient;
+        } else {
+            this.cClient = new TwitchChatClient(this.config.server, this.config.nickname, this.config.password);
+        }
 
         this.client = new IRC.Client(
             this.config.server,
@@ -284,7 +292,9 @@ export class MessageProcessor {
         this.client.addListener("message", (from, to, message) => {
             this.messageReceived(from, to, message);
         });
+    }
 
+    public connect() {
         this.client.connect(0, () => {
             setInterval(this.resetMessageCount.bind(this), 1000 * 30);
             setInterval(this.processDelayedMessages.bind(this), 1000 * 10);

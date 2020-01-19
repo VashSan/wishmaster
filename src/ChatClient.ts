@@ -20,8 +20,9 @@ export interface IChatClient {
     send(to: string, text: string, isCommand?: boolean): void;
 }
 
-/** this should be imported by MessageProcessor only */
-export class ChatClient implements IChatClient {
+/** IRChat client that supports Twitch features
+ *  Note: this should be imported by MessageProcessor only */
+export class TwitchChatClient implements IChatClient {
     private client: IRC.Client;
     private connectListener: Array<() => void> = [];
     private errorListener: Array<(text: string) => void> = [];
@@ -39,14 +40,12 @@ export class ChatClient implements IChatClient {
     }
 
     private invokeAll(listenerList: Array<() => void>) {
-
         listenerList.forEach(listener => {
             listener();
         });
     }
 
     private invokeAll1<T>(listenerList: Array<(p: T) => void>, param: T) {
-
         listenerList.forEach(listener => {
             listener(param);
         });
@@ -99,4 +98,4 @@ export class ChatClient implements IChatClient {
     }
 }
 
-export default ChatClient;
+export default TwitchChatClient;

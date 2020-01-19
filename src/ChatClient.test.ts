@@ -1,6 +1,6 @@
 import * as IRC from "irc";
 import { mock } from "jest-mock-extended"
-import { ChatClient, IChatClient, IMessage } from "./ChatClient";
+import { TwitchChatClient, IChatClient, IMessage } from "./ChatClient";
 
 interface IWithArgs {
     args: any[];
@@ -12,12 +12,12 @@ function createIrcMock() {
 
 
 function createMockedClient(client: IRC.Client): IChatClient {
-    return new ChatClient("server", "loing", "password", client);
+    return new TwitchChatClient("server", "loing", "password", client);
 }
 
 test('construction', () => {
     function createDefaultClient(): IChatClient {
-        return new ChatClient("server", "loing", "password");
+        return new TwitchChatClient("server", "loing", "password");
     }
     expect(createDefaultClient).not.toThrow();
 

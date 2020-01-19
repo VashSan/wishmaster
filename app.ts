@@ -117,6 +117,7 @@ class Startup {
         ]);
 
         this.msgProcessor = new MP.MessageProcessor(context);
+        this.msgProcessor.connect();
         for (const f of featureList) {
             this.msgProcessor.registerFeature(f);
         }
