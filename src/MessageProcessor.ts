@@ -1,4 +1,3 @@
-import * as IRC from "irc";
 import { isNullOrUndefined } from "util";
 import { ILogger } from "psst-log";
 import { Configuration, Context } from "./shared";
@@ -228,7 +227,6 @@ export class Message {
 
 export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
-    //private client: IRC.Client;
     private cClient: IChatClient;
     private context: Context;
     private config: Configuration;

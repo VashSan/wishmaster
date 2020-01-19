@@ -218,9 +218,14 @@ export class Tags {
 export class TwitchChatClient implements IChatClient {
     private logger: ILogger;
     private client: IRC.Client;
+
     private connectListener: Array<() => void> = [];
     private errorListener: Array<(text: string) => void> = [];
     private messageListener: Array<(message: IMessage) => void> = [];
+
+    unhandledMessages: Array<any> = [];
+    readonly maxUnhandledMessages: number = 200;
+    readonly minUnhandledMessages: number = 100;
 
     messageOfTheDay: string = "";
 
@@ -362,34 +367,28 @@ export class TwitchChatClient implements IChatClient {
             case "004": //"rpl_myinfo"
             case "353": //"rpl_namreply" ... wehn joining a channel this is sent automatically
             case "366": //"rpl_endofnames"
+            case "375": // message of the day start
+            case "376": // message of the day end
             case "cap": // capabilities ... if we want to track different feature we should save this
+            case "join": // on joining channel
             case "ping":
             case "pong": // sent by twitch every ~15 secs
-                let text = `${message.command}: ${message.args.join(" ")}`;
-                this.logger.log("cmd: ", text);
+                let text = `${Date.now()} ${message.command}: ${message.args.join(" ")}`;
+                this.unhandledMessages.push(text);
+                if (this.unhandledMessages.length > this.maxUnhandledMessages) {
+                    while(this.unhandledMessages.length > this.minUnhandledMessages) {
+                        this.unhandledMessages.shift();
+                    }
+                }
                 break;
-
 
             case "372":
                 this.messageOfTheDay += message.args.join(" ") + "\n";
                 break;
 
-            case "375":
-                // ignore message of the day start
-                break;
-
-            case "376":
-                this.logger.log("message of the day: ", this.messageOfTheDay);
-                break;
-
             case "421": // err_unknowncommand
                 let errorText = `${message.command}: ${message.args.join(" ")}`;
                 this.logger.error("cmd: ", errorText);
-                break;
-
-            case "join":
-                let join = `Channel: ${message.args[0]}, Host: ${message.host}, Nick:${message.nick}, User: ${message.user}`;
-                this.logger.log("join: ", join);
                 break;
 
             default:
