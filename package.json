@@ -38,6 +38,9 @@
     "test": "jest",
     "build-test": "npm run build && npm run test"
   },
+  "jest": {
+    "testEnvironment": "node"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VashSan/wishmaster.git"

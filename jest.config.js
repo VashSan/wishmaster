@@ -1,7 +1,7 @@
 module.exports = {
-    "roots": [
-        "<rootDir>/src"
-    ],
+    // "roots": [
+    //     "<rootDir>/src"
+    // ],
     "testMatch": [
         // all our tests are in typescript, therefor no JS extension here
         "**/__tests__/**/*.+(ts|tsx)",
@@ -10,5 +10,11 @@ module.exports = {
     "transform": {
         "^.+\\.(ts|tsx)$": "ts-jest"
     },
+    "moduleFileExtensions": [
+        "ts",
+        "js",
+        "json",
+        "node"
+    ],
     "collectCoverage": true
 }
