@@ -108,6 +108,32 @@ test('error callback set and invoked', () => {
     expect(errorMessage).toBe("1 2");
 });
 
+test('whois error is skipped', () => {
+    // Arrange
+    let ircMock = createIrcMock();
+    let errorCallback: (arg: IWithArgs) => void;
+    ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
+        if (name == "error") { errorCallback = cb; }
+        return ircMock;
+    });
+    ircMock.connect.mockImplementation((retryCount, cb) => {
+        errorCallback({ args: ["vash1080", "WHOIS", "Unknown command."] });
+    });
+    let client = createMockedClient(ircMock);
+
+    // Act
+    let onErrorInvoked = false;
+    let errorMessage: string = "";
+    client.onError((message: string) => {
+        errorMessage = message;
+        onErrorInvoked = true
+    });
+    client.connect("#channel");
+
+    // Assert
+    expect(onErrorInvoked).toBe(false);
+});
+
 test('message callback set and invoked', () => {
     // Arrange
     let ircMock = createIrcMock();
