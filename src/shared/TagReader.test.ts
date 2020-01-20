@@ -9,7 +9,7 @@ test('construction', () => {
     expect(() => { new TagReader(new Tags("@id=1")); }).not.toThrow();
 });
 
-test('tag parings', () => {
+test('tag parsings', () => {
     // Arrange
     let logger = mock<ILogger>();
     let tags = mock<ITags>();

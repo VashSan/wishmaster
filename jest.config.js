@@ -1,20 +1,10 @@
 module.exports = {
-    // "roots": [
-    //     "<rootDir>/src"
-    // ],
-    "testMatch": [
-        // all our tests are in typescript, therefor no JS extension here
-        "**/__tests__/**/*.+(ts|tsx)",
-        "**/?(*.)+(spec|test).+(ts|tsx)"
-    ],
-    "transform": {
-        "^.+\\.(ts|tsx)$": "ts-jest"
-    },
-    "moduleFileExtensions": [
-        "ts",
-        "js",
-        "json",
-        "node"
-    ],
-    "collectCoverage": true
-}
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  "testMatch": [
+    // all our tests are in typescript, therefor no JS extension here
+    "**/__tests__/**/*.+(ts|tsx)",
+    "**/?(*.)+(spec|test).+(ts|tsx)"
+  ],
+  // this harms debugging: "collectCoverage": true
+};
