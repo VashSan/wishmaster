@@ -1,7 +1,7 @@
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
 import * as MP from "../MessageProcessor";
-import { Context } from "../shared";
+import { Context, TagReader } from "../shared";
 
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter implements MP.IFeature {
@@ -12,12 +12,17 @@ export class UrlFilter implements MP.IFeature {
     private timeoutedUsers: string[] = [];
     private sendResponse: MP.ResponseCallback | null = null;
 
-    constructor(context: Context) {
-        this.logger = context.logger;
+    constructor(context: Context, logger?: ILogger) {
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
+        
         this.whiteList = context.config.urlWhiteList;
     }
 
-    public setup(sendResponse: MP.ResponseCallback){
+    public setup(sendResponse: MP.ResponseCallback) {
         this.sendResponse = sendResponse;
     }
 
@@ -28,12 +33,22 @@ export class UrlFilter implements MP.IFeature {
             if (result != null && result.length > 1) {
                 let domain = result[1];
 
-                if (!this.isWhitelistedDomain(domain)) {
+                if (this.shallCheckDomain(msg) && !this.isWhitelistedDomain(domain)) {
                     this.takeAction(msg, domain);
                     return;
                 }
             }
         }
+    }
+
+    private shallCheckDomain(msg: MP.Message): boolean {
+        if (msg.tags) {
+            let tagReader = new TagReader(msg.tags);
+            if (tagReader.isMod || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private isWhitelistedDomain(host: string): boolean {
@@ -69,11 +84,11 @@ export class UrlFilter implements MP.IFeature {
         return this.whiteList.join(", ");
     }
 
-    private respond(originalMsg: MP.Message, text: string){
+    private respond(originalMsg: MP.Message, text: string) {
         let m = new MP.Message({ channel: originalMsg.channel, text: text });
         let response = { message: m };
 
-        if(this.sendResponse == null) {
+        if (this.sendResponse == null) {
             this.logger.error("response callback missing for message: " + text);
         }
         else {
