@@ -6,5 +6,5 @@ module.exports = {
     "**/__tests__/**/*.+(ts|tsx)",
     "**/?(*.)+(spec|test).+(ts|tsx)"
   ],
-  "collectCoverage": true
+  // this harms debugging: "collectCoverage": true
 };
