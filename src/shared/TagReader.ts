@@ -196,3 +196,5 @@ export class TagReader {
         }
     }
 }
+
+export default TagReader;
