@@ -45,6 +45,15 @@ export class TagReader {
         this.assignValues();
     }
 
+    public isBroadcaster(): boolean {
+        for (const badge of this.badgeList) {
+            if (badge.toLowerCase() == "broadcaster") {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private assignValues() {
         for (const element of this.tags.getAvailableTags()) {
             let value = this.tags.get(element);
