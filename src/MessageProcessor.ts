@@ -5,14 +5,6 @@ import TwitchChatClient, { IChatClient, IMessage, ITags, Tags } from "./ChatClie
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
-export enum UserType {
-    Normal,
-    Moderator,
-    GlobalMod,
-    Admin,
-    Staff
-}
-
 export interface IFeature {
     readonly trigger: string;
     setup(callback: ResponseCallback): void;
