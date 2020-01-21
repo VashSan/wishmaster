@@ -2,10 +2,19 @@ import { FeatureBase } from "./FeatureBase";
 import { Configuration } from "../shared";
 import { mock } from "jest-mock-extended";
 import { IFeatureResponse } from "../MessageProcessor";
+import { IMessage } from "../ChatClient";
 
 class FeatureBaseImpl extends FeatureBase {
     constructor(config: Configuration) {
         super(config);
+    }
+
+    public getTrigger(): string {
+        throw new Error("Method not implemented.");
+    }
+
+    public act(message: IMessage): void {
+        throw new Error("Method not implemented.");
     }
 
     public invokeCreateResponse(text: string): IFeatureResponse {

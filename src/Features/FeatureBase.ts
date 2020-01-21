@@ -1,14 +1,19 @@
-import { IFeatureResponse, ResponseCallback } from "../MessageProcessor";
+import { IFeatureResponse, ResponseCallback, IFeature } from "../MessageProcessor";
 import { Configuration } from "../shared";
+import { IMessage } from "../ChatClient";
 
-export abstract class FeatureBase {  
+export abstract class FeatureBase implements IFeature {
     private sendResponseCallback: ResponseCallback | null = null;
 
     protected config: Configuration;
 
-    constructor(config: Configuration){
+    constructor(config: Configuration) {
         this.config = config;
     }
+
+    public abstract getTrigger(): string;
+
+    public abstract act(message: IMessage): void;
 
     public setup(callback: ResponseCallback): void {
         this.sendResponseCallback = callback;
@@ -20,7 +25,7 @@ export abstract class FeatureBase {
         return response;
     }
 
-    protected sendResponse(response: IFeatureResponse){
+    protected sendResponse(response: IFeatureResponse) {
         if (this.sendResponseCallback != null) {
             this.sendResponseCallback(null, response);
         }
