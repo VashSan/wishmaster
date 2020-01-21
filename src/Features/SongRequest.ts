@@ -6,6 +6,8 @@ import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
 import { Context, ISongRequestConfig, ISpotifyConfig } from "../shared";
+import { FeatureBase } from "./FeatureBase";
+import { IMessage } from "../ChatClient";
 
 class SpotifyState {
     accessToken: string = "";
@@ -13,16 +15,13 @@ class SpotifyState {
 }
 
 /** Enqueue songs to a playlist */
-export class SongRequest implements mp.IFeature {
-    public trigger: string = "sr";
-    
+export class SongRequest extends FeatureBase implements mp.IFeature {
     private spotifyConfig: ISpotifyConfig;
     private spotify: SpotifyState = new SpotifyState();
     private logger: ILogger;
     private app: express.Express;
-    private sendResponse: mp.ResponseCallback | null = null;
 
-    private get isSpotifyEnabled() : boolean {
+    private get isSpotifyEnabled(): boolean {
         return this.spotifyConfig.listenPort > 0
             && this.spotifyConfig.clientId != ""
             && this.spotifyConfig.redirectUri != ""
@@ -31,6 +30,7 @@ export class SongRequest implements mp.IFeature {
     }
 
     constructor(context: Context) {
+        super(context.config);
         this.logger = context.logger;
 
         this.spotifyConfig = {
@@ -48,31 +48,18 @@ export class SongRequest implements mp.IFeature {
         }
     }
 
-    public setup(sendResponse: mp.ResponseCallback): void {
-        this.sendResponse = sendResponse;
+    public getTrigger(): string {
+        return "bet";
     }
 
     /** Enqueue the requested song to the playlist */
-    public act(msg: mp.Message): void {
+    public act(msg: IMessage): void {
         if (!this.isSpotifyEnabled) {
             return;
         }
 
-        if(this.sendResponse == null) {
-            this.logger.error("sendResponse callback not set up for message: " + msg.toString());
-            return;
-        }
-
-        let str: string = msg.toString();
-
-        let answer = new mp.Message({
-            from: "",
-            channel: msg.channel,
-            text: "Loopback-" + msg.toString()
-        });
-
-        let response = { message: answer };
-        this.sendResponse(null, response);
+        let response = this.createResponse('SongRequest Loopback' + msg.toString());
+        this.sendResponse(response);
     }
 
     private initServer() {

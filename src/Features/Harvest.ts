@@ -1,33 +1,36 @@
 import { ILogger } from "psst-log";
-import { isNullOrUndefined } from "util";
 
-import * as mp from "../MessageProcessor";
-import { Context, Configuration, Database } from "../shared";
+import { Context, Database } from "../shared";
 import { TagReader } from "../shared/TagReader";
+import { FeatureBase } from "./FeatureBase";
+import { IFeature } from "../MessageProcessor";
+import { IMessage, ITaggedMessage, hasTags } from "../ChatClient";
 
 /** Pushes information into the database */
-export class Harvest implements mp.IFeature {
-    readonly trigger: string = "";
+export class Harvest extends FeatureBase implements IFeature {
     private db: Database;
     private logger: ILogger;
-    private sendResponse: mp.ResponseCallback | null = null;
 
     constructor(context: Context) {
+        super(context.config);
         this.db = context.db;
         this.logger = context.logger;
     }
 
-    public setup(sendResponse: mp.ResponseCallback): void {
-        this.sendResponse = sendResponse;
+    public getTrigger(): string {
+        return "";
     }
 
     /** Evaluates the message to update user table, and add message log */
-    public act(msg: mp.Message): void {
+    public act(msg: IMessage): void {
         this.updateUser(msg);
-        this.updateLog(msg);
+        let mt = msg as ITaggedMessage;
+        if (mt != null) {
+            this.updateLog(mt);
+        }
     }
 
-    private updateLog(msg: mp.Message) {
+    private updateLog(msg: ITaggedMessage) {
         if (msg.tags == null) {
             this.logger.warn("If tags are not set we cannot update log");
             return;
@@ -69,16 +72,18 @@ export class Harvest implements mp.IFeature {
         // });
     }
 
-    private updateUser(msg: mp.Message) {
-        if (msg.tags == null) {
+    private updateUser(message: IMessage) {
+        let msg = message as ITaggedMessage;
+        if (msg == null || msg.tags == null) {
             // if tags dont work we wont collect user stats for now
             return;
         }
+
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
         let tr = new TagReader(msg.tags, this.logger);
-        this.db.users.findOne({ $or:[ { twitchid:tr.userId }, { name: tr.displayName } ] }, function (err: Error, doc: any) {
+        this.db.users.findOne({ $or: [{ twitchid: tr.userId }, { name: tr.displayName }] }, function (err: Error, doc: any) {
             if (err != null) {
                 that.logger.error(err);
                 return;
@@ -98,10 +103,10 @@ export class Harvest implements mp.IFeature {
                 messageCount = doc.messageCount + 1;
             }
             let followDate = new Date(0);
-            if (doc.followDate != undefined){
+            if (doc.followDate != undefined) {
                 followDate = doc.followDate;
             }
-            
+
             // TODO New Tags? flags, badge-info
             let tagReader = new TagReader(msg.tags);
             let user = {
@@ -138,7 +143,5 @@ export class Harvest implements mp.IFeature {
         });
     }
 }
-
-
 
 export default Harvest;

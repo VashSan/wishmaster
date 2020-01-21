@@ -1,42 +1,18 @@
 import { isNullOrUndefined } from "util";
 import { ILogger } from "psst-log";
 import { Configuration, Context } from "./shared";
-import TwitchChatClient, { IChatClient, IMessage, ITags, Tags } from "./ChatClient";
+import { TwitchChatClient, IChatClient, IMessage, ITaggedMessage, hasTags } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
 export interface IFeature {
-    readonly trigger: string;
+    getTrigger(): string;
     setup(callback: ResponseCallback): void;
     act(message: IMessage): void;
 }
 
 export interface IFeatureResponse {
     message: IMessage;
-}
-
-
-export class Message implements IMessage {
-    text: string = "";
-    from: string = "";
-    /** Channel starts with # otherwise it is a whisper or system notice I guess */
-    channel: string = "";
-    tags: ITags | null;;
-
-
-    constructor(init: Partial<Message>, tags?: ITags) {
-        (<any>Object).assign(this, init);
-        if (isNullOrUndefined(tags)) {
-            this.tags = null;
-        } else {
-            this.tags = tags;
-        }
-    }
-
-    toString(): string {
-        let result: string = `Message from '${this.from}' to '${this.channel}': ${this.text}`;
-        return result;
-    }
 }
 
 /** Takes care of distributing chat messages to the Feature classes */
@@ -109,12 +85,7 @@ export class MessageProcessor {
     public registerFeature(plugin: IFeature) {
         plugin.setup(this.processResponse.bind(this));
 
-        if (plugin.trigger == null) {
-            this.logger.warn("A plugin without a trigger was registered: " + plugin.constructor.name);
-            return;
-        }
-
-        let trigger = plugin.trigger.toLowerCase().trim();
+        let trigger = plugin.getTrigger().toLowerCase().trim();
 
         let featureList = this.featureMap.get(trigger);
         if (isNullOrUndefined(featureList)) {
@@ -204,12 +175,20 @@ export class MessageProcessor {
             return true;
         }
 
-        let compares = [
-            [m1.message.channel, m2.message.channel],
-            [m1.message.from, m2.message.from],
-            [m1.message.tags, m2.message.tags],
-            [m1.message.text, m2.message.text]
+        const msg1 = m1.message;
+        const msg2 = m2.message;
+
+        let compares: any[][] = [
+            [msg1.channel, msg2.channel],
+            [msg1.from, msg2.from],
+            [msg1.text, msg2.text]
         ];
+
+        if (hasTags(msg1) && hasTags(msg2)) {
+            let msgT1 = (msg1 as ITaggedMessage);
+            let msgT2 = (msg2 as ITaggedMessage);
+            compares.push([msgT1.tags, msgT2.tags]);
+        }
 
         for (const comp of compares) {
             if (comp[0] != comp[1]) {

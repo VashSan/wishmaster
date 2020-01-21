@@ -1,7 +1,7 @@
 import * as IRC from "irc";
 import { mock, MockProxy } from "jest-mock-extended"
 import { ILogger } from "psst-log";
-import { TwitchChatClient, IChatClient, IMessage, Tags } from "./ChatClient";
+import { TwitchChatClient, IChatClient, IMessage, Tags, ITaggedMessage, hasTags, Message } from "./ChatClient";
 
 describe('Tags', () => {
     test('construction', () => {
@@ -178,7 +178,7 @@ describe('TwitchChatClient', () => {
 
         // Act
         let onMessageInvoked = false;
-        let theMessage: IMessage = { from: "", channel: "", text: "", tags: null };
+        let theMessage: IMessage = { from: "", channel: "", text: "" };
         client.onMessage((message: IMessage) => {
             theMessage = message;
             onMessageInvoked = true;
@@ -244,7 +244,7 @@ describe('TwitchChatClient', () => {
 
         // Act
         let onMessageInvoked = false;
-        let theMessage: IMessage = { from: "", channel: "", text: "", tags: null };
+        let theMessage: IMessage = { from: "", channel: "", text: "" };
         client.onMessage((message: IMessage) => {
             theMessage = message;
             onMessageInvoked = true;
@@ -258,8 +258,10 @@ describe('TwitchChatClient', () => {
         expect(theMessage.from).toBe('vash1080');
         expect(theMessage.channel).toBe('#vash1080');
         expect(theMessage.text).toBe('hi');
-        expect(theMessage.tags).not.toBe(null);
-        expect(theMessage.tags?.get('display-name')).toBe('Vash1080');
+
+        let taggedMessage = theMessage as ITaggedMessage;
+        expect(taggedMessage.tags).not.toBe(null);
+        expect(taggedMessage.tags?.get('display-name')).toBe('Vash1080');  
     });
 
     test('Unhandled command is logged as error', () => {

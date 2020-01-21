@@ -3,11 +3,9 @@ import * as path from "path"
 import { execFile } from "child_process"
 import { ILogger } from "psst-log";
 
-
-
-import * as MP from "../MessageProcessor";
-import { Configuration, Context, Database, IAlert, IEmailConfig, ObsController, AlertAction } from "../shared";
+import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction } from "../shared";
 import { IMessage } from "../ChatClient";
+import { FeatureBase } from "./FeatureBase";
 
 class AlertConst {
     /** Placeholder in config pattern entries */
@@ -27,10 +25,8 @@ class PendingAlert {
 }
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
-export class Alerts implements MP.IFeature {
+export class Alerts extends FeatureBase {
     private db: Database;
-    private sendResponse: MP.ResponseCallback | null = null;
-    private config: Configuration;
     private logger: ILogger;
     private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
@@ -43,11 +39,10 @@ export class Alerts implements MP.IFeature {
     // TODO action file separator for horizontal
     // TODO action file prefix
 
-    public trigger: string = "";
-
     constructor(context: Context, alertConfig: IAlert) {
+        super(context.config);
+
         this.db = context.db;
-        this.config = context.config;
         this.logger = context.logger;
         this.obs = context.obs;
         this.alertConfig = alertConfig;
@@ -90,10 +85,6 @@ export class Alerts implements MP.IFeature {
 
     }
 
-    public setup(sendResponse: MP.ResponseCallback): void {
-        this.sendResponse = sendResponse;
-    }
-
     /** just check whether an alert was triggered manually */
     public act(msg: IMessage): void {
         if (msg.from.toLowerCase() == this.config.nickname.toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
@@ -129,13 +120,10 @@ export class Alerts implements MP.IFeature {
     }
 
     private sendHostThanksToChat(hostFrom: string) {
-        if (this.sendResponse != null) {
-            // let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, hostFrom);
-            let text = "Danke für Deinen Host {Viewer}!".replace(AlertConst.ViewerPlaceholder, hostFrom);
-            let m = new MP.Message({ channel: this.config.channel, text: text });
-            let response = { message: m };
-            this.sendResponse(null, response);
-        }
+        // let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, hostFrom);
+        let text = "Danke für Deinen Host {Viewer}!".replace(AlertConst.ViewerPlaceholder, hostFrom);
+        let response = this.createResponse(text);
+        this.sendResponse(response);
     }
 
     private handleUserToBotCommand(msg: IMessage): void {
@@ -243,12 +231,9 @@ export class Alerts implements MP.IFeature {
     }
 
     private sendFollowerThanksToChat(newFollower: string) {
-        if (this.sendResponse != null) {
-            let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
-            let m = new MP.Message({ channel: this.config.channel, text: text });
-            let response = { message: m };
-            this.sendResponse(null, response);
-        }
+        let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
+        let response = this.createResponse(text);
+        this.sendResponse(response);
     }
 
     private playFollowerSoundAlert() {

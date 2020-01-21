@@ -22,7 +22,8 @@ test('mods are not timed out', () => {
     };
     filter.setup(cb.bind(filter));
 
-    filter.act({ text: "http://someweirdsite.com", from: "goodguy", channel: "#channel", tags: new Tags("@mod=1") });
+    let message = { text: "http://someweirdsite.com", from: "goodguy", channel: "#channel", tags: new Tags("@mod=1") };
+    filter.act(message);
 
     expect(timeoutSent).toBe(false);
 });
@@ -36,7 +37,8 @@ test('users are timed out', () => {
     };
     filter.setup(cb.bind(filter));
 
-    filter.act({ text: "http://someweirdsite.com", from: "badguy", channel: "#channel", tags: new Tags("@mod=0") });
+    let message = { text: "http://someweirdsite.com", from: "badguy", channel: "#channel", tags: new Tags("@mod=0") };
+    filter.act(message);
 
     expect(timeoutSent).toBe(true);
 });
@@ -50,7 +52,8 @@ test('Whitelisted domains are ignored', () => {
     };
     filter.setup(cb.bind(filter));
 
-    filter.act({ text: "https://twitch.tv/vash1080", from: "badguy", channel: "#channel", tags: new Tags("@mod=0") });
+    let message = { text: "https://twitch.tv/vash1080", from: "badguy", channel: "#channel", tags: new Tags("@mod=0") };
+    filter.act(message);
 
     expect(timeoutSent).toBe(false);
 });

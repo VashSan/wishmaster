@@ -1,20 +1,19 @@
 import * as request from "request";
 import { ILogger } from "psst-log";
 
-import * as mp from "../MessageProcessor";
 import { Context } from "../shared";
+import { FeatureBase } from "./FeatureBase";
+import { IMessage } from "../ChatClient";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
-export class Stomt implements mp.IFeature {
-    trigger = "i";
+export class Stomt extends FeatureBase {
     appId: string = "";
     url: string = "";
     logger: ILogger;
     isInitialized: boolean = false;
-    sendResponse: mp.ResponseCallback | null = null;
-
 
     constructor(context: Context) {
+        super(context.config);
         this.logger = context.logger;
         
         if (context.config.stomt == null) {
@@ -26,11 +25,11 @@ export class Stomt implements mp.IFeature {
         this.isInitialized = true;
     }
 
-    public setup(sendRepsonse: mp.ResponseCallback): void {
-        this.sendResponse = sendRepsonse;
+    public getTrigger(): string {
+        return "i";
     }
 
-    public act(msg: mp.Message): void {
+    public act(msg: IMessage): void {
         if (!this.isInitialized) {
             return;
         }

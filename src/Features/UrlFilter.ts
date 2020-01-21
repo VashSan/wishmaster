@@ -1,33 +1,29 @@
 import { ILogger, LogManager } from "psst-log";
 
-import * as MP from "../MessageProcessor";
 import { Context, TagReader } from "../shared";
+import { FeatureBase } from "./FeatureBase";
+import { IMessage, ITaggedMessage } from "../ChatClient";
 
 /** clears a users chat when posting a not white listed url */
-export class UrlFilter implements MP.IFeature {
-    readonly trigger: string = "";
+export class UrlFilter extends FeatureBase {
     private urlRegex = /(?:http[s]?:\/\/)?((?:[a-z0-9]+\.)*[a-z0-9]+\.[a-z]{2,6})(?:\/[a-z0-9]+)*(?=\s)?/gi;
     private logger: ILogger;
     private whiteList: string[];
     private timeoutedUsers: string[] = [];
-    private sendResponse: MP.ResponseCallback | null = null;
 
     constructor(context: Context, logger?: ILogger) {
+        super(context.config);
         if (logger) {
             this.logger = logger;
         } else {
             this.logger = LogManager.getLogger();
         }
-        
+
         this.whiteList = context.config.urlWhiteList;
     }
 
-    public setup(sendResponse: MP.ResponseCallback) {
-        this.sendResponse = sendResponse;
-    }
-
     /** Return the message we just received */
-    public act(msg: MP.Message): void {
+    public act(msg: IMessage): void {
         let result;
         while ((result = this.urlRegex.exec(msg.text)) != null) {
             if (result != null && result.length > 1) {
@@ -41,9 +37,10 @@ export class UrlFilter implements MP.IFeature {
         }
     }
 
-    private shallCheckDomain(msg: MP.Message): boolean {
-        if (msg.tags) {
-            let tagReader = new TagReader(msg.tags);
+    private shallCheckDomain(msg: IMessage): boolean {
+        let message = msg as ITaggedMessage;
+        if (message && message.tags) {
+            let tagReader = new TagReader(message.tags);
             if (tagReader.isMod || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
                 return false;
             }
@@ -60,7 +57,7 @@ export class UrlFilter implements MP.IFeature {
         return false;
     }
 
-    private takeAction(msg: MP.Message, domain: string) {
+    private takeAction(msg: IMessage, domain: string) {
         this.timeoutedUsers.push(msg.from); // thats dirty... but they get timedout ... 
 
         const maxTimeOut = 600;
@@ -72,27 +69,15 @@ export class UrlFilter implements MP.IFeature {
 
         this.logger.info(`Found '${domain}'. User ${msg.from} is timeouted for ${timeoutTime}s.`);
 
-        let timeoutCommand = `/timeout ${msg.from} ${timeoutTime}`;
-
-        this.respond(msg, timeoutCommand);
+        let timeoutResponse = this.createResponse(`/timeout ${msg.from} ${timeoutTime}`);
+        this.sendResponse(timeoutResponse);
 
         let whiteDomains = this.getWhitelistedDomainsAsString();
-        this.respond(msg, `Please do not post links, except ${whiteDomains}`);
+        let userResponse = this.createResponse(`@${msg.from} please do not post links, except ${whiteDomains}`);
+        this.sendResponse(userResponse);
     }
 
     private getWhitelistedDomainsAsString(): string {
         return this.whiteList.join(", ");
-    }
-
-    private respond(originalMsg: MP.Message, text: string) {
-        let m = new MP.Message({ channel: originalMsg.channel, text: text });
-        let response = { message: m };
-
-        if (this.sendResponse == null) {
-            this.logger.error("response callback missing for message: " + text);
-        }
-        else {
-            this.sendResponse(null, response);
-        }
     }
 }

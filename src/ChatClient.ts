@@ -12,8 +12,17 @@ export interface IMessage {
     from: string;
     channel: string;
     text: string;
+}
+
+
+export interface ITaggedMessage extends IMessage {
     tags: ITags | null;
 }
+
+export function hasTags(message: IMessage): message is ITaggedMessage {
+    return 'tags' in message;
+}
+
 
 export interface IChatClient {
     connect(channel: string): void;
@@ -23,19 +32,40 @@ export interface IChatClient {
     send(to: string, text: string, isCommand?: boolean): void;
 }
 
+export class Message implements IMessage, ITaggedMessage {
+    text: string = "";
+    from: string = "";
+    /** Channel starts with # otherwise it is a whisper or system notice I guess */
+    channel: string = "";
+    tags: ITags | null;;
 
+
+    constructor(init: Partial<Message>, tags?: ITags) {
+        (<any>Object).assign(this, init);
+        if (isNullOrUndefined(tags)) {
+            this.tags = null;
+        } else {
+            this.tags = tags;
+        }
+    }
+
+    toString(): string {
+        let result: string = `Message from '${this.from}' to '${this.channel}': ${this.text}`;
+        return result;
+    }
+}
 
 export class Tags implements ITags {
     private readonly logger: ILogger;
     private readonly tagMap: Map<string, string> = new Map<string, string>();
 
     constructor(tags: string, logger?: ILogger) {
-        if (logger){
+        if (logger) {
             this.logger = logger;
         } else {
             this.logger = LogManager.getLogger();
         }
-        
+
         if (!tags.startsWith("@")) {
             this.logger.error("does not seem to be valid tag", tags);
             return;
@@ -151,7 +181,7 @@ export class TwitchChatClient implements IChatClient {
 
     private getMessageHandler(): (...args: any[]) => void {
         return (from, to, text, tags) => {
-            let message: IMessage = {
+            let message: IMessage & ITaggedMessage = {
                 from: from,
                 channel: to,
                 text: text,
@@ -233,7 +263,7 @@ export class TwitchChatClient implements IChatClient {
                 let text: string = `${Date.now()} ${message.command}: ${message.args.join(" ")}`;
                 this.unhandledMessages.push(text);
                 if (this.unhandledMessages.length > this.maxUnhandledMessages) {
-                    while(this.unhandledMessages.length > this.minUnhandledMessages) {
+                    while (this.unhandledMessages.length > this.minUnhandledMessages) {
                         this.unhandledMessages.shift();
                     }
                 }
