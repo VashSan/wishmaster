@@ -10,7 +10,6 @@ import { Configuration, Context, Database, ObsController } from "./src/shared";
 import { Alerts } from "./src/Features/Alerts";
 import { Bets } from "./src/Features/Bets";
 import { Harvest } from "./src/Features/Harvest";
-import { Loopback } from "./src/Features/Loopback";
 import { StaticAnswers } from "./src/Features/StaticAnswers";
 import { Stomt } from "./src/Features/Stomt";
 import { SongRequest } from "./src/Features/SongRequest";
@@ -105,8 +104,6 @@ class Startup {
         let context = new Context(this.config, this.logger, this.db, this.obsController);
 
         let featureList = new Set<MP.IFeature>([
-            // new Loopback(""),
-            // new Loopback("test"),
             new Alerts(context, this.config.alerts[0]), // TODO add all alerts
             new Harvest(context),
             new StaticAnswers(context),
