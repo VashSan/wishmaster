@@ -23,11 +23,6 @@ export interface IFeatureResponse {
     message: IMessage;
 }
 
-export class Emote {
-    id: number = 0;
-    start: number = 0;
-    end: number = 0;
-}
 
 export class Message implements IMessage {
     text: string = "";
@@ -52,9 +47,10 @@ export class Message implements IMessage {
     }
 }
 
+/** Takes care of distributing chat messages to the Feature classes */
 export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
-    private cClient: IChatClient;
+    private client: IChatClient;
     private context: Context;
     private config: Configuration;
     private logger: ILogger;
@@ -67,16 +63,16 @@ export class MessageProcessor {
         this.logger = context.logger;
 
         if (chatClient) {
-            this.cClient = chatClient;
+            this.client = chatClient;
         } else {
-            this.cClient = new TwitchChatClient(this.config.server, this.config.nickname, this.config.password);
+            this.client = new TwitchChatClient(this.config.server, this.config.nickname, this.config.password);
         }
 
-        this.cClient.onMessage((msg: IMessage): void => {
+        this.client.onMessage((msg: IMessage): void => {
             this.process(msg);
         });
 
-        this.cClient.onError((error: string): void => {
+        this.client.onError((error: string): void => {
             this.logger.error(error);
         });
     }
@@ -85,7 +81,7 @@ export class MessageProcessor {
         setInterval(this.resetMessageCount.bind(this), 1000 * 30);
         setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
 
-        this.cClient.connect(this.config.channel);
+        this.client.connect(this.config.channel);
     }
 
     private resetMessageCount() {
@@ -137,7 +133,7 @@ export class MessageProcessor {
         featureList.add(plugin);
     }
 
-    public process(message: IMessage) {
+    private process(message: IMessage) {
         let alwaysTriggered = this.featureMap.get("");
         this.invokePlugins(message, alwaysTriggered);
 
@@ -190,7 +186,7 @@ export class MessageProcessor {
         if (!isNullOrUndefined(r.message) && r.message.text != "" && r.message.channel != "") {
             if (this.isUnderMessageLimit()) {
                 this.messageCount30Sec += 1;
-                this.cClient.send(r.message.channel, r.message.text);
+                this.client.send(r.message.channel, r.message.text);
             } else {
                 this.deferResponse(r);
             }
