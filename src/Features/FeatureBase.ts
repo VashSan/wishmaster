@@ -11,7 +11,9 @@ export abstract class FeatureBase implements IFeature {
         this.config = config;
     }
 
-    public abstract getTrigger(): string;
+    public getTrigger(): string {
+        return "";
+    }
 
     public abstract act(message: IMessage): void;
 
