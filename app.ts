@@ -31,7 +31,7 @@ class Startup {
         this.logger = Log.LogManager.getLogger();
         Log.LogManager.addConsoleTarget();
 
-        this.config = new Configuration(this.logger);
+        this.config = new Configuration();
 
         if (!this.config.createLogConsole) {
             Log.LogManager.removeConsoleTarget();

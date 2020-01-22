@@ -181,7 +181,7 @@ export class TwitchChatClient implements IChatClient {
 
     private getMessageHandler(): (...args: any[]) => void {
         return (from, to, text, tags) => {
-            let message: IMessage & ITaggedMessage = {
+            let message: ITaggedMessage = {
                 from: from,
                 channel: to,
                 text: text,

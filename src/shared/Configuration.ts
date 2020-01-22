@@ -1,6 +1,6 @@
-import fs = require("fs");
-import path = require("path");
-import logger = require("psst-log");
+import * as fs from "fs";
+import * as path from "path";
+import { ILogger, LogManager } from "psst-log";
 
 export enum AlertTrigger {
     ChatMessage = "ChatMessage",
@@ -94,8 +94,16 @@ export class Configuration {
     rootPath: string;
     logDir: string;
 
-    constructor(log: logger.ILogger) {
-        this.configDir = `${process.env.localappdata}\\.wishmaster`;
+    constructor(configDir?: string, logger?: ILogger) {
+        if (!logger) {
+            logger = LogManager.getLogger();
+        }
+
+        if (configDir) {
+            this.configDir = configDir;
+        } else {
+            this.configDir = `${process.env.localappdata}\\.wishmaster`;
+        }
         Configuration.createDirIfNecessary(this.configDir);
 
         this.logDir = path.resolve(this.configDir, "log");
@@ -104,7 +112,7 @@ export class Configuration {
         this.configFilePath = `${this.configDir}\\${this.configFile}`;
 
         if (!fs.existsSync(this.configFilePath)) {
-            log.warn("The configuration does not exist. Will create a basic file but you need to create a setup and restart the bot.");
+            logger.error("The configuration does not exist. Will create a basic file but you need to create a setup and restart the bot.");
 
             fs.writeFileSync(this.configFilePath,
                 `{"server": "", "nickname": "", "password": "", "channel": ""}`);
@@ -119,8 +127,8 @@ export class Configuration {
         this.rootPath = path.dirname(process.argv[1]);
     }
 
-    private static createDirIfNecessary(path: string) : void {
-        if(!fs.existsSync(path)){
+    private static createDirIfNecessary(path: string): void {
+        if (!fs.existsSync(path)) {
             fs.mkdirSync(path);
         }
     }
