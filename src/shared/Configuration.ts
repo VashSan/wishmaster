@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import { ILogger, LogManager } from "psst-log";
 
@@ -102,14 +103,14 @@ export class Configuration {
         if (configDir) {
             this.configDir = configDir;
         } else {
-            this.configDir = `${process.env.localappdata}\\.wishmaster`;
+            this.configDir = path.join(process.env.localappdata || os.homedir(), '.wishmaster');
         }
         Configuration.createDirIfNecessary(this.configDir);
 
         this.logDir = path.resolve(this.configDir, "log");
         Configuration.createDirIfNecessary(this.logDir);
 
-        this.configFilePath = `${this.configDir}\\${this.configFile}`;
+        this.configFilePath = path.join(this.configDir, this.configFile);
 
         if (!fs.existsSync(this.configFilePath)) {
             logger.error("The configuration does not exist. Will create a basic file but you need to create a setup and restart the bot.");
