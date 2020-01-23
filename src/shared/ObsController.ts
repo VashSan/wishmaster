@@ -1,18 +1,32 @@
 import * as OBSWebSocket from "obs-websocket-js";
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
 import { IObsConfig } from "./Configuration";
 
 export class ObsController {
-    config: IObsConfig | null;
-    obs: OBSWebSocket = new OBSWebSocket();
-    isConnected: boolean = false;
-    log: ILogger;
-    availableScenes: Map<string, OBSWebSocket.Scene> = new Map<string, OBSWebSocket.Scene>();
+    private readonly config: IObsConfig | null;
+    private readonly obs: OBSWebSocket;
+    private isConnected: boolean = false;
+    private log: ILogger;
+    private availableScenes: Map<string, OBSWebSocket.Scene> = new Map<string, OBSWebSocket.Scene>();
 
-    constructor(obsConfig: IObsConfig | null, logger: ILogger) {
+    constructor(obsConfig: IObsConfig | null, obsApi?: OBSWebSocket, logger?: ILogger) {
+        if (logger) {
+            this.log = logger;
+        } else {
+            this.log = LogManager.getLogger();
+        }
+
+        if (obsApi) {
+            this.obs = obsApi;
+        } else {
+            this.obs = new OBSWebSocket();
+        }
+
         this.config = obsConfig;
-        this.log = logger;
+    }
+
+    public connect(onConnect?: (err?:string)=>void) {
         if (this.config == null) {
             this.log.warn("OBS connection skipped due to missing config.");
             return;
@@ -31,8 +45,15 @@ export class ObsController {
             data.scenes.forEach((scene: OBSWebSocket.Scene) => {
                 this.availableScenes.set(scene.name, scene);
             });
+
+            if (onConnect){
+                onConnect();
+            }
         }).catch(err => {
-            this.log.error("Error connecting and retreiving Scens from OBS: " + err);
+            this.log.error("Error connecting to OBS: " + err);
+            if (onConnect){
+                onConnect(err);
+            }
         });
     }
 

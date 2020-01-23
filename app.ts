@@ -52,8 +52,10 @@ class Startup {
         this.setupObs();
         return 0;
     }
+    
     static setupObs() {
-        this.obsController = new ObsController(this.config.obs, this.logger);
+        this.obsController = new ObsController(this.config.obs);
+        this.obsController.connect();
     }
 
     private static setupDb() {
