@@ -1,5 +1,5 @@
 import * as request from "request";
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
 import { Context } from "../shared";
 import { FeatureBase } from "./FeatureBase";
@@ -12,9 +12,13 @@ export class Stomt extends FeatureBase {
     logger: ILogger;
     isInitialized: boolean = false;
 
-    constructor(context: Context) {
+    constructor(context: Context, logger?: ILogger) {
         super(context.config);
-        this.logger = context.logger;
+        if (logger){
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
         
         if (context.config.stomt == null) {
             return;
