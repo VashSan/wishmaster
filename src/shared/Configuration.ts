@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { ILogger, LogManager } from "psst-log";
+import { IService } from "./Context";
 
 export enum AlertTrigger {
     ChatMessage = "ChatMessage",
@@ -67,7 +68,12 @@ export interface ISpotifyConfig {
     redirectUri: string;
 }
 
-export class Configuration {
+export class Configuration implements IService {
+    public static readonly ServiceName = "Configuration";
+    getServiceName(): string {
+        return Configuration.ServiceName;
+    }
+
     private configDir: string;
     private configFile: string = "wishmaster.json";
     private configFilePath: string;

@@ -46,3 +46,9 @@ test('getConfigDir', () => {
     let statsLog = fs.statSync(logFolder);
     expect(statsLog.isDirectory()).toBe(true);
 });
+
+test('getConfiguration', ()=>{
+    let logger = mock<ILogger>();
+    let config = new Configuration(tmpDir, logger);
+    expect(config.getServiceName()).toBe("Configuration");
+})

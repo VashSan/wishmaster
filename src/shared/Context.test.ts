@@ -4,7 +4,7 @@ import { Configuration, Context } from ".";
 import { Database } from "./Database";
 import { ObsController } from "./ObsController";
 
-function getContext(){
+function getContext() {
     let context = mock<Configuration>();
     let logger = mock<ILogger>();
     let db = mock<Database>();
@@ -28,11 +28,57 @@ test('isDeveloper', () => {
         process.env.NODE_ENV = "dev";
         let isDev = context.isDeveloper();
         expect(isDev).toBe(true);
-    
+
         process.env.NODE_ENV = "prod";
         isDev = context.isDeveloper();
         expect(isDev).toBe(false);
     } finally {
         process.env.NODE_ENV = original
     }
+});
+
+test('add throws when invalid name is provided', () => {
+    let config = mock<Configuration>();
+    let context = getContext();
+    config.getServiceName.mockReturnValue("");
+
+    expect(() => context.add(config)).toThrowError();
+});
+
+test('add throws when duplicate name is provided', () => {
+    let config = mock<Configuration>();
+    let context = getContext();
+    config.getServiceName.mockReturnValue("Configuration");
+
+    context.add(config)
+    expect(() => context.add(config)).toThrowError();
+});
+
+test('add service', () => {
+    let config = mock<Configuration>();
+    let context = getContext();
+
+    config.getServiceName.mockReturnValue("Configuration");
+
+    expect(() => context.add(config)).not.toThrow();
+});
+
+test('get service returns added instance', () => {
+    let config = mock<Configuration>();
+    let context = getContext();
+
+    config.getServiceName.mockReturnValue("Configuration");
+    context.add(config);
+
+    expect(context.get("Configuration")).toBe(config);
+});
+
+test('get service throws when adding unknown instance', () => {
+    let config = mock<Configuration>();
+    let context = getContext();
+
+    config.getServiceName.mockReturnValue("Configuration");
+    context.add(config);
+
+    expect(() => context.get("x")).toThrowError();
 });
