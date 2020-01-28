@@ -3,16 +3,10 @@ import * as tmp from "tmp";
 import * as rmdir from "rimraf";
 import * as fs from "fs";
 import * as path from "path";
-import { IFile, FileAccess } from ".";
-
-
-// beforeEach(() => {
-//     let prefix = path.join(os.tmpdir(), "wish-");
-
-// });
+import { IFileSystem, FileSystem } from ".";
 
 test('file exists', () => {
-    const file = new FileAccess() as IFile;
+    const file = new FileSystem() as IFileSystem;
     const existingFile = tmp.fileSync();
     const result = file.exists(existingFile.name);
     existingFile.removeCallback();
@@ -21,13 +15,21 @@ test('file exists', () => {
 });
 
 test('file does not exists', () => {
-    const fileReader = new FileAccess() as IFile;
+    const fileReader = new FileSystem() as IFileSystem;
     const missingFile = tmp.tmpNameSync();
     const result = fileReader.exists(missingFile);
 
     expect(result).toBe(false);
 });
 
-// test('read file', () => {
-//     let fileReader = new FileAccessor() as IFileReader;
-// });
+test('read all', () => {
+    const file = new FileSystem() as IFileSystem;
+    const existingFile = tmp.fileSync();
+    const testData = "ABC123";
+    fs.writeFileSync(existingFile.name, testData);
+
+    const result = file.readAll(existingFile.name);
+    existingFile.removeCallback();
+
+    expect(result).toBe(testData);
+});
