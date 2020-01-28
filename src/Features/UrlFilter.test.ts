@@ -1,12 +1,17 @@
 import { mock } from "jest-mock-extended";
 import { UrlFilter } from "./UrlFilter";
-import { Context, Configuration } from "../shared";
+import { IContext, IConfiguration } from "../shared";
 import { ResponseCallback } from "../MessageProcessor";
 import { Tags } from "../ChatClient";
 import { ILogger } from "psst-log";
 
-let context = mock<Context>({ config: { urlWhiteList: ["twitch.tv"] } });
-let logger = mock<ILogger>();
+const config = mock<IConfiguration>();
+config.getUrlWhiteList.mockReturnValue(["twitch.tv"]);
+
+const context = mock<IContext>();
+context.getConfiguration.mockReturnValue(config);
+
+const logger = mock<ILogger>();
 
 test('construction', () => {
     expect(() => { new UrlFilter(context) }).not.toThrow();

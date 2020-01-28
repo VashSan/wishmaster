@@ -8,5 +8,4 @@ test('construction', () => {
     let irc = mock<IChatClient>();
 
     expect(() => new MessageProcessor(context, irc)).not.toThrowError();
-    expect(() => new MessageProcessor(context)).not.toThrowError();
 });

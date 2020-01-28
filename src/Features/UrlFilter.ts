@@ -1,6 +1,6 @@
 import { ILogger, LogManager } from "psst-log";
 
-import { Context, TagReader } from "../shared";
+import { IContext, TagReader } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { IMessage, ITaggedMessage } from "../ChatClient";
 
@@ -11,8 +11,8 @@ export class UrlFilter extends FeatureBase {
     private whiteList: string[];
     private timeoutedUsers: string[] = [];
 
-    constructor(context: Context, logger?: ILogger) {
-        super(context.config);
+    constructor(context: IContext, logger?: ILogger) {
+        super(context.getConfiguration());
         if (logger) {
             this.logger = logger;
         } else {
