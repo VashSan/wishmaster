@@ -1,6 +1,6 @@
 import { isNullOrUndefined } from "util";
 import { ILogger } from "psst-log";
-import { Configuration, Context } from "./shared";
+import { Configuration, Context, IConfiguration } from "./shared";
 import { TwitchChatClient, IChatClient, IMessage, ITaggedMessage, hasTags } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
@@ -20,7 +20,7 @@ export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
     private client: IChatClient;
     private context: Context;
-    private config: Configuration;
+    private config: IConfiguration;
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCount30Sec = 0;
@@ -33,7 +33,7 @@ export class MessageProcessor {
         if (chatClient) {
             this.client = chatClient;
         } else {
-            this.client = new TwitchChatClient(this.config.server, this.config.nickname, this.config.password);
+            this.client = new TwitchChatClient(this.config.getServer(), this.config.getNickname(), this.config.getPassword());
         }
 
         this.client.onMessage((msg: IMessage): void => {
@@ -49,7 +49,7 @@ export class MessageProcessor {
         setInterval(this.resetMessageCount.bind(this), 1000 * 30);
         setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
 
-        this.client.connect(this.config.channel);
+        this.client.connect(this.config.getChannel());
     }
 
     private resetMessageCount() {
@@ -57,7 +57,7 @@ export class MessageProcessor {
     }
 
     private processDelayedMessages() {
-        if (this.delayedMessages.length > this.config.msgLimitPer30Sec) {
+        if (this.delayedMessages.length > this.config.getMsgLimitPer30Sec()) {
             console.warn("There are too many responses queued! I will be busy for a while...");
         }
 
@@ -74,7 +74,7 @@ export class MessageProcessor {
             }
 
             count += 1;
-            if (count > this.config.msgLimitPer30Sec / 3) {
+            if (count > this.config.getMsgLimitPer30Sec() / 3) {
                 // we check every 10 seconds, so we can split our responses in 3 batches.
                 // TODO Think about having a response timeout, so unimportant stuff can be removed from the queue in a safe manner.
                 return;
@@ -157,7 +157,7 @@ export class MessageProcessor {
     }
 
     private isUnderMessageLimit(): boolean {
-        return this.messageCount30Sec + 1 <= this.config.msgLimitPer30Sec;
+        return this.messageCount30Sec + 1 <= this.config.getMsgLimitPer30Sec();
     }
 
     private deferResponse(msg: IFeatureResponse) {
