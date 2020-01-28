@@ -1,9 +1,13 @@
 import { Stomt } from "./Stomt";
 import { mock } from "jest-mock-extended";
-import { Context } from "../shared";
+import { IConfiguration, IContext } from "../shared";
 
 test('construction with no init', () => {
-    const context = mock<Context>({ config: { stomt: null } });
+    const config = mock<IConfiguration>();
+    config.getStomt.mockReturnValue(null);
+
+    const context = mock<IContext>();
+    context.getConfiguration.mockReturnValue(config);
 
     expect(() => new Stomt(context)).not.toThrow();
 });
