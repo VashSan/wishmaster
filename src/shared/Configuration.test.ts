@@ -2,15 +2,19 @@ import * as os from "os";
 import * as rmdir from "rimraf";
 import * as fs from "fs";
 import * as path from "path";
-import { mock } from "jest-mock-extended";
+
 import { ILogger } from "psst-log";
-import { Configuration } from "./Configuration";
+import { Configuration, IConfiguration } from "./Configuration";
+import { mock, MockProxy } from "jest-mock-extended";
+import { IFileSystem } from "./FileSystem";
 
 let tmpDir: string;
+let fileSystem: IFileSystem & MockProxy<IFileSystem>;
 
 beforeEach(() => {
     let prefix = path.join(os.tmpdir(), "wish-");
     tmpDir = fs.mkdtempSync(prefix);
+    fileSystem = mock<IFileSystem>();
 });
 
 afterEach(() => {
@@ -22,33 +26,61 @@ afterEach(() => {
 });
 
 test('construction', () => {
+    // Arrange
     let logger = mock<ILogger>();
-    expect(() => new Configuration()).not.toThrow();
-    expect(() => new Configuration(tmpDir, logger)).not.toThrow();
+    fileSystem.exists.mockReturnValue(true);
+    fileSystem.readAll.mockReturnValueOnce("{}");
+
+    // Act & Assert
+    expect(() => new Configuration(tmpDir, fileSystem, logger)).not.toThrow();
+});
+
+test('construction throws if config is missing', () => {
+    // Arrange
+    let logger = mock<ILogger>();
+    fileSystem.exists.mockReturnValue(false);
+    fileSystem.readAll.mockReturnValueOnce("{}");
+
+    // Act & Assert
+    expect(() => new Configuration(tmpDir, fileSystem, logger)).toThrow();
 });
 
 test('getConfigDir', () => {
+    // Arrange
     let logger = mock<ILogger>();
-    let config = new Configuration(tmpDir, logger);
+    fileSystem.exists.mockReturnValue(true);
+    fileSystem.readAll.mockReturnValueOnce("{}");
 
+    let config = new Configuration(tmpDir, fileSystem, logger);
+
+    // Act
     let dir = config.getConfigDir();
 
+    // Assert
     expect(dir).toBeDefined();
-
-    let stats = fs.statSync(dir);
-    expect(stats.isDirectory()).toBe(true);
-
-    let configFile = path.join(dir, "wishmaster.json");
-    let statsConfig = fs.statSync(configFile);
-    expect(statsConfig.isFile()).toBe(true);
-
-    let logFolder = path.join(dir, "log");
-    let statsLog = fs.statSync(logFolder);
-    expect(statsLog.isDirectory()).toBe(true);
 });
 
-test('getConfiguration', ()=>{
+test('getConfiguration', () => {
+    // Arrange
     let logger = mock<ILogger>();
-    let config = new Configuration(tmpDir, logger);
+    fileSystem.exists.mockReturnValue(true);
+    fileSystem.readAll.mockReturnValueOnce("{}");
+    let config = new Configuration(tmpDir, fileSystem, logger);
+
+    // Act & Assert
     expect(config.getServiceName()).toBe("Configuration");
+})
+
+test('server', () => {
+    // Arrange
+    let logger = mock<ILogger>();
+    fileSystem.exists.mockReturnValue(true);
+    fileSystem.readAll.mockReturnValueOnce('{ "server": "x" }');
+
+    // Act
+    let config = new Configuration(tmpDir, fileSystem, logger);
+
+    // Assert
+    const c = config as IConfiguration;
+    expect(c.getServer()).toBe("x");
 })

@@ -1,8 +1,8 @@
-import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { ILogger, LogManager } from "psst-log";
 import { IService } from "./Context";
+import { FileSystem, IFileSystem } from ".";
 
 export enum AlertTrigger {
     ChatMessage = "ChatMessage",
@@ -68,17 +68,26 @@ export interface ISpotifyConfig {
     redirectUri: string;
 }
 
-export class Configuration implements IService {
+export interface IConfiguration extends IService {
+    getServer(): string;
+}
+
+export class Configuration implements IConfiguration {
     public static readonly ServiceName = "Configuration";
     getServiceName(): string {
         return Configuration.ServiceName;
     }
 
+    private readonly fs: IFileSystem;
     private configDir: string;
     private configFile: string = "wishmaster.json";
     private configFilePath: string;
 
-    server: string = "";
+    server: string = "";  
+    getServer() {
+        return this.server;
+    }
+    
     nickname: string = "";
     password: string = "";
     channel: string = "";
@@ -101,9 +110,15 @@ export class Configuration implements IService {
     rootPath: string;
     logDir: string;
 
-    constructor(configDir?: string, logger?: ILogger) {
+    constructor(configDir?: string, fileAccess?: IFileSystem, logger?: ILogger) {
         if (!logger) {
             logger = LogManager.getLogger();
+        }
+
+        if (fileAccess){
+            this.fs = fileAccess;
+        } else {
+            this.fs = new FileSystem();
         }
 
         if (configDir) {
@@ -111,22 +126,20 @@ export class Configuration implements IService {
         } else {
             this.configDir = path.join(process.env.localappdata || os.homedir(), '.wishmaster');
         }
-        Configuration.createDirIfNecessary(this.configDir);
+        this.createDirIfNecessary(this.configDir);
 
         this.logDir = path.resolve(this.configDir, "log");
-        Configuration.createDirIfNecessary(this.logDir);
+        this.createDirIfNecessary(this.logDir);
 
         this.configFilePath = path.join(this.configDir, this.configFile);
 
-        if (!fs.existsSync(this.configFilePath)) {
-            logger.error("The configuration does not exist. Will create a basic file but you need to create a setup and restart the bot.");
+        if (!this.fs.exists(this.configFilePath)) {
+            logger.error("The configuration does not exist.");
 
-            fs.writeFileSync(this.configFilePath,
-                `{"server": "", "nickname": "", "password": "", "channel": ""}`);
+            throw new Error("You need to create configuration file");
         }
 
-        let configFile = fs.readFileSync(this.configFilePath);
-        let configString = configFile.toString("utf8");
+        let configString = this.fs.readAll(this.configFilePath);
         let configObj = JSON.parse(configString);
 
         (<any>Object).assign(this, configObj);
@@ -134,9 +147,9 @@ export class Configuration implements IService {
         this.rootPath = path.dirname(process.argv[1]);
     }
 
-    private static createDirIfNecessary(path: string): void {
-        if (!fs.existsSync(path)) {
-            fs.mkdirSync(path);
+    private createDirIfNecessary(path: string): void {
+        if (!this.fs.exists(path)) {
+            this.fs.createDirectory(path);
         }
     }
 

@@ -5,6 +5,7 @@ import { ILogger } from "psst-log";
 
 test('construction', () => {
     let config = new Configuration();
+    config.rootPath = "";
     config.email = null;
     let logger = mock<ILogger>();
     let context = new Context(config, logger, mock<Database>(), mock<ObsController>());
