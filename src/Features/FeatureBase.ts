@@ -1,13 +1,13 @@
 import { IFeatureResponse, ResponseCallback, IFeature } from "../MessageProcessor";
-import { Configuration } from "../shared";
+import { IConfiguration } from "../shared";
 import { IMessage } from "../ChatClient";
 
 export abstract class FeatureBase implements IFeature {
     private sendResponseCallback: ResponseCallback | null = null;
 
-    protected config: Configuration;
+    protected config: IConfiguration;
 
-    constructor(config: Configuration) {
+    constructor(config: IConfiguration) {
         this.config = config;
     }
 
@@ -22,8 +22,12 @@ export abstract class FeatureBase implements IFeature {
     }
 
     protected createResponse(text: string): IFeatureResponse {
-        let m = { channel: this.config.channel, text: text, from: this.config.nickname };
-        let response = { message: m };
+        let message = { 
+            channel: this.config.getChannel(), 
+            text: text, 
+            from: this.config.getNickname() 
+        };
+        let response = { message: message };
         return response;
     }
 

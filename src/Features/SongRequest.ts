@@ -5,7 +5,7 @@ import * as querystring from "querystring";
 import { ILogger } from "psst-log";
 
 import * as mp from "../MessageProcessor";
-import { Context, ISongRequestConfig, ISpotifyConfig } from "../shared";
+import { Context, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { IMessage } from "../ChatClient";
 
@@ -42,8 +42,9 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
         };
 
         this.app = express();
-        if (context.config.songRequest != null) {
-            this.spotifyConfig = context.config.songRequest.spotify;
+        let songRequestConfig = this.config.getSongRequest();
+        if ( songRequestConfig != null) {
+            this.spotifyConfig = songRequestConfig.spotify;
             this.initServer();
         }
     }

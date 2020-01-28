@@ -11,7 +11,7 @@ export class StaticAnswers extends FeatureBase {
 
     constructor(context: Context) {
         super(context.config);
-        this.answers = context.config.staticAnswers;
+        this.answers = this.config.getStaticAnswers();
         this.logger = context.logger;
     }
 

@@ -46,7 +46,7 @@ export class Bets extends FeatureBase {
         /* let trigger = */ payload.splice(0, 1);
         let command = payload[0];
 
-        if (msg.from.toLowerCase() == this.config.nickname.toLowerCase()) {
+        if (msg.from.toLowerCase() == this.config.getNickname().toLowerCase()) {
             if (this.state == State.Idle && command.toLowerCase() == "open") {
                 this.answers.length = 0;
                 this.state = State.Open;

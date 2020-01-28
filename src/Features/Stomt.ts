@@ -7,10 +7,10 @@ import { IMessage } from "../ChatClient";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Stomt extends FeatureBase {
-    appId: string = "";
-    url: string = "";
-    logger: ILogger;
-    isInitialized: boolean = false;
+    private appId: string = "";
+    private url: string = "";
+    private logger: ILogger;
+    private isInitialized: boolean = false;
 
     constructor(context: Context, logger?: ILogger) {
         super(context.config);
@@ -20,11 +20,12 @@ export class Stomt extends FeatureBase {
             this.logger = LogManager.getLogger();
         }
         
-        if (context.config.stomt == null) {
+        let stomt = this.config.getStomt();
+        if (stomt == null) {
             return;
         }
-        this.appId = context.config.stomt.applicationId;
-        this.url = context.config.stomt.baseUrl;
+        this.appId = stomt.applicationId;
+        this.url = stomt.baseUrl;
 
         this.isInitialized = true;
     }

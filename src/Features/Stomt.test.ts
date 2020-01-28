@@ -4,6 +4,6 @@ import { Context } from "../shared";
 
 test('construction with no init', () => {
     const context = mock<Context>({ config: { stomt: null } });
-    let stomt = new Stomt(context);
-    expect(stomt.isInitialized).toBe(true);
+
+    expect(() => new Stomt(context)).not.toThrow();
 });

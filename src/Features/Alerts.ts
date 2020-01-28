@@ -47,13 +47,14 @@ export class Alerts extends FeatureBase {
         this.obs = context.obs;
         this.alertConfig = alertConfig;
 
-        this.soundsPath = path.resolve(this.config.rootPath, "sounds");
+        this.soundsPath = path.resolve(this.config.getRootPath(), "sounds");
 
-        if (this.config.email == null) {
+        let email: IEmailConfig | null = this.config.getEmail();
+        if (email == null) {
             this.logger.error("Email configuration missing.");
             return;
         }
-        let email: IEmailConfig = this.config.email;
+        
 
         let that = this;
 
@@ -87,7 +88,7 @@ export class Alerts extends FeatureBase {
 
     /** just check whether an alert was triggered manually */
     public act(msg: IMessage): void {
-        if (msg.from.toLowerCase() == this.config.nickname.toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
+        if (msg.from.toLowerCase() == this.config.getNickname().toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
             this.handleUserToBotCommand(msg);
             return;
         }
@@ -240,12 +241,12 @@ export class Alerts extends FeatureBase {
         let alertWav = path.resolve(this.soundsPath, "bell.wav");
 
         let args: string[] = [];
-        this.config.mediaPlayerArgs.forEach(element => {
+        this.config.getMediaPlayerArgs().forEach(element => {
             args.push(element.replace("{0}", `${alertWav}`));
         });
 
         let that = this;
-        execFile(this.config.mediaPlayer, args, function (err, data) {
+        execFile(this.config.getMediaPlayer(), args, function (err, data) {
             that.logger.error(`${err}: ${data.toString()}`);
         });
     }
