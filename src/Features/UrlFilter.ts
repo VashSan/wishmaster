@@ -19,7 +19,7 @@ export class UrlFilter extends FeatureBase {
             this.logger = LogManager.getLogger();
         }
 
-        this.whiteList = context.config.urlWhiteList;
+        this.whiteList = this.config.getUrlWhiteList();
     }
 
     /** Return the message we just received */
