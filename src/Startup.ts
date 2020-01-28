@@ -1,7 +1,7 @@
 
-import {LogManager, ILogger} from "psst-log";
+import { LogManager, ILogger } from "psst-log";
 
-import {MessageProcessor, IFeature} from "./MessageProcessor";
+import { MessageProcessor, IFeature } from "./MessageProcessor";
 import { Configuration, Context, Database, ObsController } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
@@ -24,11 +24,16 @@ export class Startup {
     private loadedCollections = 0;
     private erroredCollections = 0;
 
-    constructor(){
+    constructor(config?: Configuration) {
         this.logger = LogManager.getLogger();
         LogManager.addConsoleTarget();
 
-        this.config = new Configuration();
+        if (config) {
+            this.config = config;
+        } else {
+            this.config = new Configuration();
+        }
+
         this.db = new Database();
         this.obsController = new ObsController(this.config.obs);
 
@@ -58,7 +63,7 @@ export class Startup {
     }
 
     private setupDb() {
-        
+
         let configDir = this.config.getConfigDir();
         let channel = this.config.channel;
 

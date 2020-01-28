@@ -1,10 +1,18 @@
-import { Context, IAlert, Configuration, Database, ObsController } from "../shared";
+import * as os from "os";
+import * as path from "path";
+
+import { Context, IAlert, Configuration, Database, ObsController, IFileSystem } from "../shared";
 import { mock } from "jest-mock-extended";
 import Alerts from "./Alerts";
 import { ILogger } from "psst-log";
 
 test('construction', () => {
-    let config = new Configuration();
+    let configDir = path.join(process.env.localappdata || os.homedir(), '.wishmaster');
+    let fs = mock<IFileSystem>();
+    fs.exists.mockReturnValue(true);
+    fs.readAll.mockReturnValueOnce("{}");
+
+    let config = new Configuration(configDir, fs);
     config.rootPath = "";
     config.email = null;
     let logger = mock<ILogger>();
