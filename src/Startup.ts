@@ -1,7 +1,7 @@
 
-import * as MP from "./MessageProcessor";
-import * as Log from "psst-log";
+import {LogManager, ILogger} from "psst-log";
 
+import {MessageProcessor, IFeature} from "./MessageProcessor";
 import { Configuration, Context, Database, ObsController } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
@@ -15,8 +15,8 @@ import { UrlFilter } from "./Features/UrlFilter";
 
 export class Startup {
     private config: Configuration;
-    private logger: Log.ILogger;
-    private msgProcessor: MP.MessageProcessor;
+    private logger: ILogger;
+    private msgProcessor: MessageProcessor;
     private db: Database;
     private obsController: ObsController;
     private context: Context;
@@ -25,24 +25,24 @@ export class Startup {
     private erroredCollections = 0;
 
     constructor(){
-        this.logger = Log.LogManager.getLogger();
-        Log.LogManager.addConsoleTarget();
+        this.logger = LogManager.getLogger();
+        LogManager.addConsoleTarget();
 
         this.config = new Configuration();
         this.db = new Database();
         this.obsController = new ObsController(this.config.obs);
 
         this.context = new Context(this.config, this.logger, this.db, this.obsController);
-        this.msgProcessor = new MP.MessageProcessor(this.context);
+        this.msgProcessor = new MessageProcessor(this.context);
     }
 
     public main(): number {
         if (!this.config.createLogConsole) {
-            Log.LogManager.removeConsoleTarget();
+            LogManager.removeConsoleTarget();
         }
 
         if (this.config.createLogFile) {
-            Log.LogManager.addFileTarget(this.config.logDir, this.config.maxLogAgeDays);
+            LogManager.addFileTarget(this.config.logDir, this.config.maxLogAgeDays);
         }
 
         this.logger.info("Wishmaster at your serivce.");
@@ -102,7 +102,7 @@ export class Startup {
 
     private setupChat() {
 
-        let featureList = new Set<MP.IFeature>([
+        let featureList = new Set<IFeature>([
             new Alerts(this.context, this.config.alerts[0]), // TODO add all alerts
             new Harvest(this.context),
             new StaticAnswers(this.context),
@@ -112,7 +112,7 @@ export class Startup {
             new Bets(this.context)
         ]);
 
-        this.msgProcessor = new MP.MessageProcessor(this.context);
+        this.msgProcessor = new MessageProcessor(this.context);
         this.msgProcessor.connect();
         for (const f of featureList) {
             this.msgProcessor.registerFeature(f);
