@@ -71,16 +71,53 @@ test('getConfiguration', () => {
     expect(config.getServiceName()).toBe("Configuration");
 })
 
-test('server', () => {
+test('properties', () => {
     // Arrange
     let logger = mock<ILogger>();
     fileSystem.exists.mockReturnValue(true);
-    fileSystem.readAll.mockReturnValueOnce('{ "server": "x" }');
+    fileSystem.readAll.mockReturnValueOnce(`{ 
+        "server": "a", 
+        "nickname": "b", 
+	    "password": "c",
+	    "channel": "d",
+	    "msgLimitPer30Sec": 1,
+	    "createLogFile": true,
+	    "createLogConsole": true,
+	    "verbosity": "e",
+	    "maxLogAgeDays": 2,
+	    "mediaPlayer": "f",
+        "mediaPlayerArgs": [],
+        "email": null,
+        "alerts": [],
+        "obs": null,
+        "urlWhiteList": [],
+        "staticAnswers": [],
+        "stomt": null,
+        "songRequest": null }`);
 
     // Act
     let config = new Configuration(tmpDir, fileSystem, logger);
 
     // Assert
     const c = config as IConfiguration;
-    expect(c.getServer()).toBe("x");
+    expect(c.getEmail()).toBe(null);
+    expect(c.getObs()).toBe(null);
+    expect(c.getSongRequest()).toBe(null);
+    expect(c.getStomt()).toBe(null);
+
+    expect(c.getServer()).toBe("a");
+    expect(c.getNickname()).toBe("b");
+    expect(c.getPassword()).toBe("c");
+    expect(c.getChannel()).toBe("d");
+    expect(c.getMsgLimitPer30Sec()).toBe(1);
+    expect(c.getCreateLogFile()).toBe(true);
+    expect(c.getCreateLogConsole()).toBe(true);
+    expect(c.getVerbosity()).toBe("e");
+    expect(c.getMaxLogAgeDays()).toBe(2);
+    expect(c.getMediaPlayer()).toBe("f");
+
+    expect(c.getMediaPlayerArgs()).toStrictEqual([]);
+    expect(c.getUrlWhiteList()).toStrictEqual([]);
+    expect(c.getStaticAnswers()).toStrictEqual([]);
+    expect(c.getAlerts()).toStrictEqual([]);
 })

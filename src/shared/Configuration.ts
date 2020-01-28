@@ -69,7 +69,65 @@ export interface ISpotifyConfig {
 }
 
 export interface IConfiguration extends IService {
+    /** get the host name of the IRC server to connect to  */
     getServer(): string;
+
+    /** get the logon name to use with the IRC server */
+    getNickname(): string;
+
+    /** get the passphrase to use when logging on to the IRC server */
+    getPassword(): string;
+
+    /** get the IRC channel to join */
+    getChannel(): string;
+
+    /** get the max number of messages to send in half a minute */
+    getMsgLimitPer30Sec(): number;
+
+    /** the log levels the logger shall output to its targets (e.g. file) */
+    getVerbosity(): string;
+
+    /** whether to log to a file or not */
+    getCreateLogFile(): boolean;
+
+    /** whether to log to console or not */
+    getCreateLogConsole(): boolean;
+
+    /** the sound player to use for audio output */
+    getMediaPlayer(): string;
+
+    /** the sound player argument options send to the media player */
+    getMediaPlayerArgs(): string[];
+
+    /** Configuration of trigger causing OBS to react */
+    getAlerts(): IAlert[];
+
+    /** Mailbox to scan for triggers (e.g. follower alerts) */
+    getEmail(): IEmailConfig | null;
+
+    /** OBS specific configuration */
+    getObs(): IObsConfig | null;
+
+    /** URL patterns that the URL filter allows to be posted to the chat */
+    getUrlWhiteList(): string[];
+
+    /** Chat reactions upons certain commands */
+    getStaticAnswers(): IStaticAnswer[];
+
+    /** Stomt specific configuration */
+    getStomt(): IStomtConfig | null;
+
+    /** Song request specific configuration */
+    getSongRequest(): ISongRequestConfig | null;
+
+    /** number of days the log files are kept */
+    getMaxLogAgeDays(): number;
+
+    /** The base path containing config files etc. */
+    getRootPath(): string;
+
+    /** The directory the log files are written to */
+    getLogDir(): string;
 }
 
 export class Configuration implements IConfiguration {
@@ -83,39 +141,12 @@ export class Configuration implements IConfiguration {
     private configFile: string = "wishmaster.json";
     private configFilePath: string;
 
-    server: string = "";  
-    getServer() {
-        return this.server;
-    }
-    
-    nickname: string = "";
-    password: string = "";
-    channel: string = "";
-    msgLimitPer30Sec: number = 20;
-    verbosity: string = "debug,info,warn,error";
-    createLogFile: boolean = false;
-    createLogConsole: boolean = true;
-    mediaPlayer: string = "";
-    mediaPlayerArgs: string[] = [];
-    alerts: IAlert[] = [];
-    email: IEmailConfig | null = null;
-    obs: IObsConfig | null = null;
-    urlWhiteList: string[] = [];
-    staticAnswers: IStaticAnswer[] = [];
-    stomt: IStomtConfig | null = null;
-    songRequest: ISongRequestConfig | null = null;
-    maxLogAgeDays = 10;
-
-    // runtime options
-    rootPath: string;
-    logDir: string;
-
     constructor(configDir?: string, fileAccess?: IFileSystem, logger?: ILogger) {
         if (!logger) {
             logger = LogManager.getLogger();
         }
 
-        if (fileAccess){
+        if (fileAccess) {
             this.fs = fileAccess;
         } else {
             this.fs = new FileSystem();
@@ -145,6 +176,106 @@ export class Configuration implements IConfiguration {
         (<any>Object).assign(this, configObj);
 
         this.rootPath = path.dirname(process.argv[1]);
+    }
+
+    server: string = "";
+    getServer() {
+        return this.server;
+    }
+
+    nickname: string = "";
+    getNickname(): string {
+        return this.nickname;
+    }
+
+    password: string = "";
+    getPassword(): string {
+        return this.password;
+    }
+
+    channel: string = "";
+    getChannel(): string {
+        return this.channel;
+    }
+
+    msgLimitPer30Sec: number = 20;
+    getMsgLimitPer30Sec(): number {
+        return this.msgLimitPer30Sec;
+    }
+
+    verbosity: string = "debug,info,warn,error";
+    getVerbosity(): string {
+        return this.verbosity;
+    }
+
+    createLogFile: boolean = false;
+    getCreateLogFile(): boolean {
+        return this.createLogFile;
+    }
+    
+    createLogConsole: boolean = true;
+    getCreateLogConsole(): boolean {
+        return this.createLogConsole;
+    }
+
+    mediaPlayer: string = "";
+    getMediaPlayer(): string {
+        return this.mediaPlayer;
+    }
+
+    mediaPlayerArgs: string[] = [];
+    getMediaPlayerArgs(): string[] {
+        return this.mediaPlayerArgs;
+    }
+
+    alerts: IAlert[] = [];
+    getAlerts(): IAlert[] {
+        return this.alerts;
+    }
+
+    email: IEmailConfig | null = null;
+    getEmail(): IEmailConfig | null {
+        return this.email;
+    }
+    
+    obs: IObsConfig | null = null;
+    getObs(): IObsConfig | null {
+        return this.obs;
+    }
+    
+    urlWhiteList: string[] = [];
+    getUrlWhiteList(): string[] {
+        return this.urlWhiteList;
+    }
+
+    staticAnswers: IStaticAnswer[] = [];
+    getStaticAnswers(): IStaticAnswer[] {
+        return this.staticAnswers;
+    }
+
+    stomt: IStomtConfig | null = null;
+    getStomt(): IStomtConfig | null {
+        return this.stomt;
+    }
+        
+    songRequest: ISongRequestConfig | null = null;
+    getSongRequest(): ISongRequestConfig | null {
+        return this.songRequest;
+    }
+
+    maxLogAgeDays = 10;
+    getMaxLogAgeDays(): number {
+        return this.maxLogAgeDays;
+    }
+
+    rootPath: string;
+    getRootPath(): string {
+        return this.rootPath;
+    }
+    
+    logDir: string;
+    getLogDir(): string {
+        return this.logDir;
     }
 
     private createDirIfNecessary(path: string): void {
