@@ -18,7 +18,6 @@ describe('MessageProcessor', () => {
     beforeEach(() => {
         config = mock<IConfiguration>();
         config.getChannel.mockReturnValue(testChannel);
-        config.getMsgLimitPer30Sec.mockReturnValue(10);
 
         context = mock<IContext>();
         context.getConfiguration.mockReturnValue(config);
@@ -86,36 +85,41 @@ describe('MessageProcessor', () => {
 
             // Act
             let response = { channel: testChannel, from: fromBob, text: "test" };
-            sendMessageToServer(null, {message: response});
+            sendMessageToServer(null, { message: response });
 
             // Assert
             expect(irc.send).toHaveBeenCalledTimes(1);
             expect(irc.send).toHaveBeenCalledWith(testChannel, "test");
         });
 
-//requires additional configuration for faster test
-        // test('defer too many messages', (done) => {
-        //     // Arrange
-        //     const msgLimit = 2;
-        //     config.getMsgLimitPer30Sec.mockReturnValue(msgLimit);
+        test('defer too many messages', (done) => {
+            // Arrange
+            const msgLimit = 2;
+            config.getMessageProcessorConfig.mockReturnValue({
+                delayIntervalInMilliseconds: 400,
+                maxNumberOfResponsesPerDelayInterval: 1,
+                responseIntervalInMilliseconds: 200,
+                responseLimitPerInterval: msgLimit
+            });
 
-        //     let mp = createMessageProcessor();
-        //     feature.getTrigger.mockReturnValue("xxx");
-        //     mp.registerFeature(feature);
-            
-        //     // Act
-        //     let response = { channel: testChannel, from: fromBob, text: "test" };
-        //     for(let i = 0; i < msgLimit + 1; i++){
-        //         sendMessageToServer(null, {message: response});
-        //     }
+            let mp = createMessageProcessor();
+            feature.getTrigger.mockReturnValue("xxx");
+            mp.registerFeature(feature);
 
-        //     // Assert
-        //     expect(irc.send).toHaveBeenCalledTimes(msgLimit);
-        //     setTimeout(()=>{
-        //         expect(irc.send).toHaveBeenCalledTimes(msgLimit);
-        //         done();
-        //     }, 30*1000);
-        // });
+            // Act
+            mp.connect(); // to enable timers
+            let response = { channel: testChannel, from: fromBob, text: "test" };
+            for (let i = 0; i < msgLimit + 1; i++) {
+                sendMessageToServer(null, { message: response });
+            }
+
+            // Assert
+            expect(irc.send).toHaveBeenCalledTimes(msgLimit);
+            setTimeout(() => {
+                expect(irc.send).toHaveBeenCalledTimes(msgLimit + 1);
+                done();
+            }, 1000);
+        });
 
         test('act is invoked on correct trigger', () => {
             // Arrange

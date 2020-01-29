@@ -25,9 +25,6 @@ Remember to strip the comments before saving it as configuration file.
 	/** The channel to connect to. */
 	"channel": "#vash1080",
 
-	/** The bot limit itself to this number of messages in 30 seconds. (2) */
-	"msgLimitPer30Sec": 20,
-
 	/** log,info,warn,error ... remove a token to avoid being written to log file. */
 	"verbosity": "info,warn,error",
 	
@@ -87,6 +84,9 @@ Remember to strip the comments before saving it as configuration file.
 	"staticAnswers": [
 		{"trigger": "!discord", "answer": "My discord URL: ..."}
 	],
+	// Some limits which are defined by Twitch see (2), 
+	// I recommend to set this to null to get the default values.
+	"messageProcessorConfig": null
 
 	// experimental stomt config not documented yet 
 	// experimental song request config not documented yet 
@@ -105,9 +105,20 @@ Remember to strip the comments before saving it as configuration file.
 
    ATOW the limit is 20 per 30 seconds for Users sending commands or messages to 
    channels in which they do not have Moderator or Operator status. It is 100 per 30 
-   seconds for moderators or operators.
+   seconds for moderators or operators. The default settings are for users, if you want 
+   to modify them use this object:
 
-
+   ```javascript
+   {
+		/** max messages within the response interval */
+		"responseLimitPerInterval": 20,
+		/** within this interval a certain max message count is measured */
+		"responseIntervalInMilliseconds": 30000,
+		/** to avoid sending all responses at once we send out this max number */
+		"maxNumberOfResponsesPerDelayInterval": 1,
+		/** in this interval the check for delayed messages is perfomred */
+		"delayIntervalInMilliseconds": 1000
+	}```
 
 ## Setup Workspace
 * Install Node

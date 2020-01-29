@@ -68,6 +68,17 @@ export interface ISpotifyConfig {
     redirectUri: string;
 }
 
+export interface IMessageProcessorConfig {
+    /** max messages within the response interval */
+    responseLimitPerInterval: number;
+    /** within this interval a certain max message count is measured */
+    responseIntervalInMilliseconds: number;
+    /** to avoid sending all responses at once we send out this max number */
+    maxNumberOfResponsesPerDelayInterval: number;
+    /** in this interval the check for delayed messages is perfomred */
+    delayIntervalInMilliseconds: number;
+}
+
 export interface IConfiguration extends IService {
     /** get the host name of the IRC server to connect to  */
     getServer(): string;
@@ -80,9 +91,6 @@ export interface IConfiguration extends IService {
 
     /** get the IRC channel to join */
     getChannel(): string;
-
-    /** get the max number of messages to send in half a minute */
-    getMsgLimitPer30Sec(): number;
 
     /** the log levels the logger shall output to its targets (e.g. file) */
     getVerbosity(): string;
@@ -122,6 +130,9 @@ export interface IConfiguration extends IService {
 
     /** number of days the log files are kept */
     getMaxLogAgeDays(): number;
+
+    /** define special data for message processor */
+    getMessageProcessorConfig(): IMessageProcessorConfig | null;
 
     /** The base path containing config files etc. */
     getRootPath(): string;
@@ -198,11 +209,6 @@ export class Configuration implements IConfiguration {
         return this.channel;
     }
 
-    msgLimitPer30Sec: number = 20;
-    getMsgLimitPer30Sec(): number {
-        return this.msgLimitPer30Sec;
-    }
-
     verbosity: string = "debug,info,warn,error";
     getVerbosity(): string {
         return this.verbosity;
@@ -276,6 +282,11 @@ export class Configuration implements IConfiguration {
     logDir: string;
     getLogDir(): string {
         return this.logDir;
+    }
+
+    messageProcessorConfig: IMessageProcessorConfig | null = null;
+    getMessageProcessorConfig(): IMessageProcessorConfig | null {
+        return this.messageProcessorConfig;
     }
 
     private createDirIfNecessary(path: string): void {

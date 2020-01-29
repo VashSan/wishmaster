@@ -93,7 +93,8 @@ test('properties', () => {
         "urlWhiteList": [],
         "staticAnswers": [],
         "stomt": null,
-        "songRequest": null }`);
+        "songRequest": null,
+        "messageProcessorConfig": null }`);
 
     // Act
     let config = new Configuration(tmpDir, fileSystem, logger);
@@ -104,12 +105,12 @@ test('properties', () => {
     expect(c.getObs()).toBe(null);
     expect(c.getSongRequest()).toBe(null);
     expect(c.getStomt()).toBe(null);
+    expect(c.getMessageProcessorConfig()).toBe(null);
 
     expect(c.getServer()).toBe("a");
     expect(c.getNickname()).toBe("b");
     expect(c.getPassword()).toBe("c");
     expect(c.getChannel()).toBe("d");
-    expect(c.getMsgLimitPer30Sec()).toBe(1);
     expect(c.getCreateLogFile()).toBe(true);
     expect(c.getCreateLogConsole()).toBe(true);
     expect(c.getVerbosity()).toBe("e");

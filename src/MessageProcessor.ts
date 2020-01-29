@@ -1,6 +1,6 @@
 import { isNullOrUndefined } from "util";
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IConfiguration } from "./shared";
+import { IContext, IConfiguration, IMessageProcessorConfig, Seconds } from "./shared";
 import { TwitchChatClient, IChatClient, IMessage, ITaggedMessage, hasTags } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
@@ -21,14 +21,15 @@ export class MessageProcessor {
     private client: IChatClient;
     private context: IContext;
     private config: IConfiguration;
+    private myConfig: IMessageProcessorConfig;
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
-    private messageCount30Sec = 0;
+    private messageCountInInterval = 0;
 
     constructor(context: IContext, chatClient?: IChatClient, logger?: ILogger) {
         this.context = context;
         this.config = context.getConfiguration();
-        
+
         if (logger) {
             this.logger = logger;
         } else {
@@ -41,6 +42,18 @@ export class MessageProcessor {
             this.client = new TwitchChatClient(this.config.getServer(), this.config.getNickname(), this.config.getPassword());
         }
 
+        let mpConfig = this.config.getMessageProcessorConfig();
+        if (mpConfig != null) {
+            this.myConfig = mpConfig;
+        } else {
+            this.myConfig = {
+                responseIntervalInMilliseconds: new Seconds(30).inMilliseconds(),
+                responseLimitPerInterval: 20,
+                delayIntervalInMilliseconds: new Seconds(1).inMilliseconds(),
+                maxNumberOfResponsesPerDelayInterval: 1
+            };
+        }
+
         this.client.onMessage((msg: IMessage): void => {
             this.process(msg);
         });
@@ -51,18 +64,18 @@ export class MessageProcessor {
     }
 
     public connect() {
-        setInterval(this.resetMessageCount.bind(this), 1000 * 30);
-        setInterval(this.processDelayedMessages.bind(this), 1000 * 10);
+        setInterval(this.resetMessageCount.bind(this), this.myConfig.responseIntervalInMilliseconds);
+        setInterval(this.processDelayedMessages.bind(this), this.myConfig.delayIntervalInMilliseconds);
 
         this.client.connect(this.config.getChannel());
     }
 
     private resetMessageCount() {
-        this.messageCount30Sec = 0;
+        this.messageCountInInterval = 0;
     }
 
     private processDelayedMessages() {
-        if (this.delayedMessages.length > this.config.getMsgLimitPer30Sec()) {
+        if (this.delayedMessages.length > this.myConfig.responseLimitPerInterval) {
             console.warn("There are too many responses queued! I will be busy for a while...");
         }
 
@@ -79,8 +92,7 @@ export class MessageProcessor {
             }
 
             count += 1;
-            if (count > this.config.getMsgLimitPer30Sec() / 3) {
-                // we check every 10 seconds, so we can split our responses in 3 batches.
+            if (count > this.myConfig.maxNumberOfResponsesPerDelayInterval) {
                 // TODO Think about having a response timeout, so unimportant stuff can be removed from the queue in a safe manner.
                 return;
             }
@@ -153,7 +165,7 @@ export class MessageProcessor {
 
         if (!isNullOrUndefined(r.message) && r.message.text != "" && r.message.channel != "") {
             if (this.isUnderMessageLimit()) {
-                this.messageCount30Sec += 1;
+                this.messageCountInInterval += 1;
                 this.client.send(r.message.channel, r.message.text);
             } else {
                 this.deferResponse(r);
@@ -162,7 +174,7 @@ export class MessageProcessor {
     }
 
     private isUnderMessageLimit(): boolean {
-        return this.messageCount30Sec + 1 <= this.config.getMsgLimitPer30Sec();
+        return this.messageCountInInterval + 1 <= this.myConfig.responseLimitPerInterval;
     }
 
     private deferResponse(msg: IFeatureResponse) {
