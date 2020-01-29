@@ -1,6 +1,6 @@
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
-import { Context } from "../shared";
+import { IContext } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { IMessage } from "../ChatClient";
 
@@ -23,15 +23,16 @@ export class Bets extends FeatureBase {
     private state: State;
     private answers: IAnswer[] = [];
 
-    constructor(context: Context) {
-        super(context.config);
-        this.logger = context.logger;
-        this.state = State.Idle;
+    constructor(context: IContext, logger?: ILogger) {
+        super(context.getConfiguration());
 
-        let that = this;
-        this.sendResponse = function () {
-            that.logger.error("Response callback missing");
-        };
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
+
+        this.state = State.Idle;
     }
 
     public getTrigger(): string {
