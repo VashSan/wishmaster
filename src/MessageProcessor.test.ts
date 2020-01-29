@@ -41,6 +41,7 @@ describe('MessageProcessor', () => {
         mp.connect();
         // Assert
         expect(irc.connect).toHaveBeenCalledTimes(1);
+        mp.disconnect(); // to clear timers
     });
 
     describe('feature tests', () => {
