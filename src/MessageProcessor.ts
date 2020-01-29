@@ -25,6 +25,7 @@ export class MessageProcessor {
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCountInInterval = 0;
+    private timerHandles: NodeJS.Timer[] = [];
 
     constructor(context: IContext, chatClient?: IChatClient, logger?: ILogger) {
         this.context = context;
@@ -64,10 +65,24 @@ export class MessageProcessor {
     }
 
     public connect() {
-        setInterval(this.resetMessageCount.bind(this), this.myConfig.responseIntervalInMilliseconds);
-        setInterval(this.processDelayedMessages.bind(this), this.myConfig.delayIntervalInMilliseconds);
+        let timersToCreate = [
+            {method: this.resetMessageCount, timeout: this.myConfig.responseIntervalInMilliseconds},
+            {method: this.processDelayedMessages, timeout: this.myConfig.delayIntervalInMilliseconds}
+        ];
+        
+        timersToCreate.forEach((t)=>{
+            let timer = setInterval(t.method.bind(this), t.timeout);
+            this.timerHandles.push(timer);
+        });
 
         this.client.connect(this.config.getChannel());
+    }
+
+    public disconnect() {
+        this.timerHandles.forEach((timer)=>{
+            clearInterval(timer);
+        });
+        // TODO this.client.disconnect
     }
 
     private resetMessageCount() {

@@ -117,6 +117,7 @@ describe('MessageProcessor', () => {
             expect(irc.send).toHaveBeenCalledTimes(msgLimit);
             setTimeout(() => {
                 expect(irc.send).toHaveBeenCalledTimes(msgLimit + 1);
+                mp.disconnect(); // to clear timers
                 done();
             }, 1000);
         });
