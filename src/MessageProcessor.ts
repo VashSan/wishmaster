@@ -1,6 +1,6 @@
 import { isNullOrUndefined } from "util";
-import { ILogger } from "psst-log";
-import { Configuration, Context, IConfiguration } from "./shared";
+import { ILogger, LogManager } from "psst-log";
+import { IContext, IConfiguration } from "./shared";
 import { TwitchChatClient, IChatClient, IMessage, ITaggedMessage, hasTags } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
@@ -19,16 +19,21 @@ export interface IFeatureResponse {
 export class MessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
     private client: IChatClient;
-    private context: Context;
+    private context: IContext;
     private config: IConfiguration;
     private logger: ILogger;
     private delayedMessages: IFeatureResponse[] = [];
     private messageCount30Sec = 0;
 
-    constructor(context: Context, chatClient?: IChatClient) {
+    constructor(context: IContext, chatClient?: IChatClient, logger?: ILogger) {
         this.context = context;
-        this.config = context.config;
-        this.logger = context.logger;
+        this.config = context.getConfiguration();
+        
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
 
         if (chatClient) {
             this.client = chatClient;
