@@ -14,17 +14,8 @@ export interface IMessage {
     from: string;
     channel: string;
     text: string;
+    tags?: ITags;
 }
-
-
-export interface ITaggedMessage extends IMessage {
-    tags: ITags | null;
-}
-
-export function hasTags(message: IMessage): message is ITaggedMessage {
-    return 'tags' in message;
-}
-
 
 export interface IChatClient {
     connect(channel: string): void;
@@ -34,19 +25,17 @@ export interface IChatClient {
     send(to: string, text: string, isCommand?: boolean): void;
 }
 
-export class Message implements IMessage, ITaggedMessage {
+export class Message implements IMessage {
     text: string = "";
     from: string = "";
     /** Channel starts with # otherwise it is a whisper or system notice I guess */
     channel: string = "";
-    tags: ITags | null;;
+    tags?: ITags;
 
 
     constructor(init: Partial<Message>, tags?: ITags) {
         (<any>Object).assign(this, init);
-        if (isNullOrUndefined(tags)) {
-            this.tags = null;
-        } else {
+        if (!isNullOrUndefined(tags)) {
             this.tags = tags;
         }
     }
@@ -182,12 +171,11 @@ export class TwitchChatClient implements IChatClient {
     }
 
     private getMessageHandler(): (...args: any[]) => void {
-        return (from, to, text, tags) => {
-            let message: ITaggedMessage = {
+        return (from, to, text, obj) => {
+            let message: IMessage = {
                 from: from,
                 channel: to,
-                text: text,
-                tags: tags
+                text: text
             };
             this.invokeAll1(this.messageListener, message);
         }
@@ -243,7 +231,14 @@ export class TwitchChatClient implements IChatClient {
             } else {
                 let text = payload.substring(separatorPos + 1);
                 let tags = new Tags(tagString, this.logger);
-                this.getMessageHandler()(from, to, text, tags);
+
+                let message: IMessage = {
+                    from: from,
+                    channel: to,
+                    text: text,
+                    tags: tags
+                };
+                this.invokeAll1(this.messageListener, message);
             }
         }
     }

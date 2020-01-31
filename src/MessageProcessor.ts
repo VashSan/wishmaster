@@ -1,7 +1,7 @@
 import { isNullOrUndefined } from "util";
 import { ILogger, LogManager } from "psst-log";
 import { IContext, IConfiguration, IMessageProcessorConfig, Seconds } from "./shared";
-import { TwitchChatClient, IChatClient, IMessage, ITaggedMessage, hasTags } from "./ChatClient";
+import { TwitchChatClient, IChatClient, IMessage } from "./ChatClient";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 
@@ -216,10 +216,8 @@ export class MessageProcessor {
             [msg1.text, msg2.text]
         ];
 
-        if (hasTags(msg1) && hasTags(msg2)) {
-            let msgT1 = (msg1 as ITaggedMessage);
-            let msgT2 = (msg2 as ITaggedMessage);
-            compares.push([msgT1.tags, msgT2.tags]);
+        if (msg1.tags && msg2.tags) {
+            compares.push([msg1.tags, msg2.tags]);
         }
 
         for (const comp of compares) {

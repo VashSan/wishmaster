@@ -4,7 +4,7 @@ import { Context, Database } from "../shared";
 import { TagReader } from "../shared/TagReader";
 import { FeatureBase } from "./FeatureBase";
 import { IFeature } from "../MessageProcessor";
-import { IMessage, ITaggedMessage, hasTags } from "../ChatClient";
+import { IMessage } from "../ChatClient";
 
 /** Pushes information into the database */
 export class Harvest extends FeatureBase implements IFeature {
@@ -22,15 +22,14 @@ export class Harvest extends FeatureBase implements IFeature {
     }
 
     /** Evaluates the message to update user table, and add message log */
-    public act(msg: IMessage): void {
-        this.updateUser(msg);
-        let mt = msg as ITaggedMessage;
-        if (mt != null) {
-            this.updateLog(mt);
+    public act(message: IMessage): void {
+        this.updateUser(message);
+        if (message.tags) {
+            this.updateLog(message);
         }
     }
 
-    private updateLog(msg: ITaggedMessage) {
+    private updateLog(msg: IMessage) {
         if (msg.tags == null) {
             this.logger.warn("If tags are not set we cannot update log");
             return;
@@ -73,8 +72,7 @@ export class Harvest extends FeatureBase implements IFeature {
     }
 
     private updateUser(message: IMessage) {
-        let msg = message as ITaggedMessage;
-        if (msg == null || msg.tags == null) {
+        if (!message.tags) {
             // if tags dont work we wont collect user stats for now
             return;
         }
@@ -82,14 +80,14 @@ export class Harvest extends FeatureBase implements IFeature {
         let that = this;
         // We could update counts when evaluating logs at distinct times to avoid getting user first.
         // However this is easy and fast enough as it seems at first glance.
-        let tr = new TagReader(msg.tags, this.logger);
+        let tr = new TagReader(message.tags, this.logger);
         this.db.users.findOne({ $or: [{ twitchid: tr.userId }, { name: tr.displayName }] }, function (err: Error, doc: any) {
             if (err != null) {
                 that.logger.error(err);
                 return;
             }
 
-            if (msg.tags == null) {
+            if (message.tags == null) {
                 that.logger.warn("If tags are not set we cannot update user");
                 return;
             }
@@ -108,7 +106,7 @@ export class Harvest extends FeatureBase implements IFeature {
             }
 
             // TODO New Tags? flags, badge-info
-            let tagReader = new TagReader(msg.tags);
+            let tagReader = new TagReader(message.tags);
             let user = {
                 twitchid: tr.userId,
                 name: tr.displayName,

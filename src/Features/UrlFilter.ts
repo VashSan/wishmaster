@@ -2,7 +2,7 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext, TagReader } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage, ITaggedMessage } from "../ChatClient";
+import { IMessage } from "../ChatClient";
 
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter extends FeatureBase {
@@ -37,9 +37,8 @@ export class UrlFilter extends FeatureBase {
         }
     }
 
-    private shallCheckDomain(msg: IMessage): boolean {
-        let message = msg as ITaggedMessage;
-        if (message && message.tags) {
+    private shallCheckDomain(message: IMessage): boolean {
+        if (message.tags) {
             let tagReader = new TagReader(message.tags);
             if (tagReader.isMod || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
                 return false;
