@@ -1,6 +1,6 @@
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
-import { Context, IStaticAnswer } from "../shared";
+import { IStaticAnswer, IContext } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -9,10 +9,15 @@ export class StaticAnswers extends FeatureBase {
     private answers: IStaticAnswer[];
     private logger: ILogger;
 
-    constructor(context: Context) {
-        super(context.config);
+    constructor(context: IContext, logger?: ILogger) {
+        super(context.getConfiguration());
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
+
         this.answers = this.config.getStaticAnswers();
-        this.logger = context.logger;
     }
 
     public act(msg: IMessage): void {
@@ -25,7 +30,9 @@ export class StaticAnswers extends FeatureBase {
     }
 
     private sendReply(reply: string): void {
-        let response = this.createResponse(reply);
-        this.sendResponse(response);
+        if (reply != "") {
+            let response = this.createResponse(reply);
+            this.sendResponse(response);
+        }
     }
 }
