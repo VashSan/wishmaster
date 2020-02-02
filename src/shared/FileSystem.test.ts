@@ -15,11 +15,19 @@ describe('path functions', () => {
     // jest.mock('path');
     // const pathMock = mocked(path, true);
 
-    test('resolve', ()=>{
+    test('resolve', () => {
         const file = new FileSystem() as IFileSystem;
-        
-        let result = file.joinPaths(`\\test\\`, `a\\b`);
-        expect(result).toBe(`\\test\\a\\b`);
+
+        let pathA = "/test";
+        let pathB = "B/C";
+
+        let result = file.joinPaths(pathA, pathB);
+        if (process.platform == "win32") {
+            expect(result.toLowerCase()).toBe(`c:\\test\\b\\c`);
+        } else {
+            expect(result.toLowerCase()).toBe(`/test/b/c`);
+        }
+
     });
 });
 

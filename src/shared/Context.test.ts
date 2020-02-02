@@ -3,14 +3,16 @@ import { mock } from "jest-mock-extended";
 import { Configuration, Context } from ".";
 import { Database } from "./Database";
 import { ObsController } from "./ObsController";
+import * as os from 'os';
 
 function getContext() {
-    let context = mock<Configuration>();
+    let config = mock<Configuration>();
+    config.getRootPath.mockReturnValue(os.homedir());
     let logger = mock<ILogger>();
     let db = mock<Database>();
     let obs = mock<ObsController>();
 
-    return new Context(context, logger, db, obs);
+    return new Context(config, logger, db, obs);
 }
 
 test('construction', () => {
