@@ -1,5 +1,6 @@
 import { ILogger } from "psst-log";
 import { Database, ObsController, IConfiguration } from "./";
+import { MediaPlayer, IMediaPlayer } from "./MediaPlayer";
 
 export interface IService {
     getServiceName(): string;
@@ -7,6 +8,7 @@ export interface IService {
 
 export interface IContext {
     getConfiguration(): IConfiguration;
+    getMediaPlayer(): IMediaPlayer;
 }
 
 export class Context implements IContext {
@@ -17,12 +19,18 @@ export class Context implements IContext {
         return this.config;
     }
 
+    public readonly mediaPlayer: IMediaPlayer;
+    getMediaPlayer(): IMediaPlayer {
+        return this.mediaPlayer;
+    }
+
     public readonly logger: ILogger;
     public readonly db: Database;
     public readonly obs: ObsController;
 
     constructor(config: IConfiguration, logger: ILogger, db: Database, obs: ObsController) {
         this.config = config;
+        this.mediaPlayer = new MediaPlayer(this.config.getMediaPlayer(), this.config.getMediaPlayerArgs());
         this.logger = logger;
         this.db = db;
         this.obs = obs;
