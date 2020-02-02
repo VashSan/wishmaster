@@ -1,9 +1,11 @@
 import * as fs from "fs";
+import * as path from "path";
 
 export interface IFileSystem {
     createDirectory(path: string): void;
     exists(path: string): boolean;
-    readAll(path: string): string
+    readAll(path: string): string;
+    joinPaths(...paths: string[]): string;
 }
 
 export class FileSystem implements IFileSystem {
@@ -19,6 +21,10 @@ export class FileSystem implements IFileSystem {
         let buffer = fs.readFileSync(path);
         let content = buffer.toString("utf8");
         return content;
+    }
+
+    joinPaths(...paths: string[]): string {
+        return path.resolve(...paths);
     }
 }
 
