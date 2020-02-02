@@ -1,9 +1,8 @@
 import * as IMAP from "imap-simple";
 import * as path from "path"
-import { execFile } from "child_process"
 import { ILogger } from "psst-log";
 
-import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction } from "../shared";
+import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -30,6 +29,7 @@ export class Alerts extends FeatureBase {
     private logger: ILogger;
     private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
+    private mediaPlayer: IMediaPlayer;
     private obs: ObsController;
     private alertConfig: IAlert;
     private pendingAlerts: PendingAlert[] = [];
@@ -42,6 +42,7 @@ export class Alerts extends FeatureBase {
     constructor(context: Context, alertConfig: IAlert) {
         super(context.config);
 
+        this.mediaPlayer = context.getMediaPlayer();
         this.db = context.db;
         this.logger = context.logger;
         this.obs = context.obs;
@@ -54,7 +55,7 @@ export class Alerts extends FeatureBase {
             this.logger.error("Email configuration missing.");
             return;
         }
-        
+
 
         let that = this;
 
@@ -110,7 +111,7 @@ export class Alerts extends FeatureBase {
 
         let newFollowerAlert = new PendingAlert(hostFrom, () => {
             this.updateUserDatabase(hostFrom, "host");
-            this.playFollowerSoundAlert();
+            this.playBell();
             //this.setObsNewHostText(hostFrom);
             this.appendToViewerActionsHistory(hostFrom, "Host");
             //this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
@@ -237,18 +238,9 @@ export class Alerts extends FeatureBase {
         this.sendResponse(response);
     }
 
-    private playFollowerSoundAlert() {
+    private playBell() {
         let alertWav = path.resolve(this.soundsPath, "bell.wav");
-
-        let args: string[] = [];
-        this.config.getMediaPlayerArgs().forEach(element => {
-            args.push(element.replace("{0}", `${alertWav}`));
-        });
-
-        let that = this;
-        execFile(this.config.getMediaPlayer(), args, function (err, data) {
-            that.logger.error(`${err}: ${data.toString()}`);
-        });
+        this.mediaPlayer.playAudio(alertWav);
     }
 
     /** Writes a name to a text file
