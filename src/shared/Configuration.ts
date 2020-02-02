@@ -49,6 +49,8 @@ export interface IObsConfig {
 export interface IStaticAnswer {
     trigger: string;
     answer: string;
+    soundFile?: string;
+    timeoutInSeconds?: number;
 }
 
 export interface IStomtConfig {

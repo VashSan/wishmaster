@@ -1,5 +1,5 @@
-import { Seconds } from "./";
-import { IgnoreDuringTimeout } from "./Helper";
+import { IgnoreDuringTimeout, Seconds } from "./";
+
 describe('seconds', () => {
     test('milliseconds', () => {
         let result = new Seconds(1).inMilliseconds();
@@ -33,7 +33,7 @@ describe('IgnoreDuringTimeout', () => {
         handler.handle();
         handler.handle(); // will be ignored
 
-        setTimeout(()=>{
+        setTimeout(() => {
             handler.handle(); // will be invoked again
 
             // Assert

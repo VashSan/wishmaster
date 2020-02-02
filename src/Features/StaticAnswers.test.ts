@@ -1,6 +1,6 @@
 
 import { mock, MockProxy } from "jest-mock-extended";
-import { IContext, IConfiguration } from "../shared";
+import { IContext, IConfiguration, Seconds } from "../shared";
 import { StaticAnswers } from "./StaticAnswers";
 import { ILogger } from "psst-log";
 import { response } from "express";
@@ -59,4 +59,21 @@ test('does not send empty response', () => {
     impl.act(someMessage);
 
     expect(callbackInvoked).toBe(false);
+});
+
+test('respects timeout', (done) => {
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text", timeoutInSeconds: 1 }]);
+
+    const impl = new StaticAnswers(context, logger);
+
+    let callbackInvokedTimes = 0;
+    impl.setup(() => callbackInvokedTimes += 1);
+
+    impl.act(someMessage);
+    impl.act(someMessage);
+    setTimeout(() => {
+        impl.act(someMessage);
+        expect(callbackInvokedTimes).toBe(2);
+        done();
+    }, new Seconds(1.2).inMilliseconds());
 });
