@@ -35,6 +35,7 @@ export class IgnoreDuringTimeout<T> {
         }
 
         const threshold = this.lastCall.getTime() + this.timeout.inMilliseconds();
-        return Date.now() > threshold;
+        const now = Date.now();
+        return now >= threshold;
     }
 }
