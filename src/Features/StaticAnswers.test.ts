@@ -1,23 +1,26 @@
 
 import { mock, MockProxy } from "jest-mock-extended";
-import { IContext, IConfiguration, Seconds } from "../shared";
+import { IContext, IConfiguration, Seconds, IMediaPlayer } from "../shared";
 import { StaticAnswers } from "./StaticAnswers";
 import { ILogger } from "psst-log";
-import { response } from "express";
 
 let logger: MockProxy<ILogger> & ILogger;
 let config: MockProxy<IConfiguration> & IConfiguration;
 let context: MockProxy<IContext> & IContext;
+let mediaPlayer: MockProxy<IMediaPlayer> & IMediaPlayer;
+
 const someMessage = { channel: "#c", from: "someguy", text: "!x" };
 
 beforeEach(() => {
     logger = mock<ILogger>();
+    mediaPlayer = mock<IMediaPlayer>();
 
     config = mock<IConfiguration>();
     config.getStaticAnswers.mockReturnValue([]);
 
     context = mock<IContext>();
     context.getConfiguration.mockReturnValue(config);
+    context.getMediaPlayer.mockReturnValue(mediaPlayer);
 });
 
 test('construction with no init', () => {
@@ -61,8 +64,27 @@ test('does not send empty response', () => {
     expect(callbackInvoked).toBe(false);
 });
 
+test('respects empty timeout', (done) => {
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text" }]);
+
+    const impl = new StaticAnswers(context, logger);
+
+    let callbackInvokedTimes = 0;
+    impl.setup(() => callbackInvokedTimes += 1);
+
+    impl.act(someMessage);
+    impl.act(someMessage);
+    impl.act(someMessage);
+
+    setTimeout(() => {
+        expect(callbackInvokedTimes).toBe(3);
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+
+});
+
 test('respects timeout', (done) => {
-    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text", timeoutInSeconds: 1 }]);
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text", timeoutInSeconds: 0.2 }]);
 
     const impl = new StaticAnswers(context, logger);
 
@@ -75,5 +97,15 @@ test('respects timeout', (done) => {
         impl.act(someMessage);
         expect(callbackInvokedTimes).toBe(2);
         done();
-    }, new Seconds(1.2).inMilliseconds());
+    }, new Seconds(0.4).inMilliseconds());
+});
+
+test('sound', () => {
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "", soundFile: "x" }]);
+
+    const impl = new StaticAnswers(context, logger);
+
+    impl.act(someMessage);
+
+    expect(mediaPlayer.playAudio).toBeCalledWith("x");
 });

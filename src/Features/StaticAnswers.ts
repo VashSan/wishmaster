@@ -1,6 +1,6 @@
 import { ILogger, LogManager } from "psst-log";
 
-import { IStaticAnswer, IContext, IgnoreDuringTimeout, Seconds } from "../shared";
+import { IStaticAnswer, IContext, IgnoreDuringTimeout, Seconds, IMediaPlayer } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -10,6 +10,7 @@ type StaticAnswerTimeout = IgnoreDuringTimeout<IStaticAnswer>;
 export class StaticAnswers extends FeatureBase {
     private answers: Map<string, StaticAnswerTimeout> = new Map<string, StaticAnswerTimeout>();
     private logger: ILogger;
+    private readonly mediaPlayer: IMediaPlayer;
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
@@ -18,6 +19,8 @@ export class StaticAnswers extends FeatureBase {
         } else {
             this.logger = LogManager.getLogger();
         }
+
+        this.mediaPlayer = context.getMediaPlayer();
 
         this.config.getStaticAnswers().forEach((answer: IStaticAnswer) => {
             let seconds = 0;
@@ -44,7 +47,7 @@ export class StaticAnswers extends FeatureBase {
     }
 
     private getFirstWord(msg: IMessage): string {
-        let parts = msg.text.split(" ", 2);
+        let parts = msg.text.split(" ");
         return parts[0];
     }
 
@@ -56,6 +59,6 @@ export class StaticAnswers extends FeatureBase {
     }
 
     private playSound(soundFile: string): void {
-        throw "not implemented";
+        this.mediaPlayer.playAudio(soundFile);
     }
 }
