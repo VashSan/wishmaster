@@ -30,7 +30,7 @@ export class Context implements IContext {
 
     constructor(config: IConfiguration, logger: ILogger, db: Database, obs: ObsController) {
         this.config = config;
-        this.mediaPlayer = new MediaPlayer(this.config.getMediaPlayer(), this.config.getMediaPlayerArgs());
+        this.mediaPlayer = new MediaPlayer(this.config);
         this.logger = logger;
         this.db = db;
         this.obs = obs;

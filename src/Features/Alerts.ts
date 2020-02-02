@@ -2,7 +2,7 @@ import * as IMAP from "imap-simple";
 import * as path from "path"
 import { ILogger } from "psst-log";
 
-import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer } from "../shared";
+import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer, Sound } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -27,7 +27,6 @@ class PendingAlert {
 export class Alerts extends FeatureBase {
     private db: Database;
     private logger: ILogger;
-    private soundsPath: string;
     private connection: IMAP.ImapSimple | null = null;
     private mediaPlayer: IMediaPlayer;
     private obs: ObsController;
@@ -47,8 +46,6 @@ export class Alerts extends FeatureBase {
         this.logger = context.logger;
         this.obs = context.obs;
         this.alertConfig = alertConfig;
-
-        this.soundsPath = path.resolve(this.config.getRootPath(), "sounds");
 
         let email: IEmailConfig | null = this.config.getEmail();
         if (email == null) {
@@ -111,7 +108,7 @@ export class Alerts extends FeatureBase {
 
         let newFollowerAlert = new PendingAlert(hostFrom, () => {
             this.updateUserDatabase(hostFrom, "host");
-            this.playBell();
+            this.mediaPlayer.play(Sound.Bell);
             //this.setObsNewHostText(hostFrom);
             this.appendToViewerActionsHistory(hostFrom, "Host");
             //this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
@@ -236,11 +233,6 @@ export class Alerts extends FeatureBase {
         let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
         let response = this.createResponse(text);
         this.sendResponse(response);
-    }
-
-    private playBell() {
-        let alertWav = path.resolve(this.soundsPath, "bell.wav");
-        this.mediaPlayer.playAudio(alertWav);
     }
 
     /** Writes a name to a text file
