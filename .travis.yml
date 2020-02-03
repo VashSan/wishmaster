@@ -1,7 +1,5 @@
 language: node_js
 node_js:
-    - 10
-before_install:
-  - npm install -g node-gyp
+    - 12
 after_success:
   - codecov
