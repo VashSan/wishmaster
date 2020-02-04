@@ -101,6 +101,8 @@ test('properties', () => {
 
     // Assert
     const c = config as IConfiguration;
+    expect(c.getConfigDir()).toBe(tmpDir);
+    
     expect(c.getEmail()).toBe(null);
     expect(c.getObs()).toBe(null);
     expect(c.getSongRequest()).toBe(null);

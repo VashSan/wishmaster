@@ -141,6 +141,9 @@ export interface IConfiguration extends IService {
 
     /** The directory the log files are written to */
     getLogDir(): string;
+
+    /** The directory the configuration can be found in */
+    getConfigDir(): string;
 }
 
 export class Configuration implements IConfiguration {
