@@ -1,40 +1,60 @@
 import Nedb = require("nedb");
 import { isNullOrUndefined } from "util";
 
-type CollectionMap = Map<string, Nedb>;
+type CollectionMap = Map<string, ICollection>;
 
-export class Database {
-    private map: CollectionMap;
+export interface ICollection {
 
-    constructor(){
-        this.map = new Map<string, Nedb>();
+}
+
+export interface IUserCollection extends ICollection {
+
+}
+
+export interface ILogCollection extends ICollection {
+
+}
+
+export interface IDatabase {
+    getSize(): number;
+    createCollection(name: string, options: object, cb: (err: any) => void): void;
+    get(name: string): ICollection;
+}
+
+class Collection implements ICollection {
+    private db: Nedb;
+    constructor(db: Nedb) {
+        this.db = db;
     }
 
-    public get size() : number {
+
+}
+
+export class Database implements IDatabase {
+    private map: CollectionMap;
+
+    constructor() {
+        this.map = new Map<string, ICollection>();
+    }
+
+    public getSize(): number {
         return this.map.size;
     }
 
-    public get users() : Nedb {
-        let users = this.map.get("users");
-        if (isNullOrUndefined(users)){
+    public get(name: string) {
+        let collection = this.map.get(name);
+        if (isNullOrUndefined(collection)) {
             // we throw because we implemented that this could never happen
-            throw "Database is not initialized"; 
+            throw `Collection '${collection}' is not initialized`;
         }
-        return users;
-    }
-    
-    public get log() : Nedb {
-        let log = this.map.get("log");
-        if (isNullOrUndefined(log)){
-            // we throw because we implemented that this could never happen
-            throw "Database is not initialized"; 
-        }
-        return log;
+        return collection;
     }
 
-    public createCollection(name: string, options: object, cb:(err:any) => void) {
+    public createCollection(name: string, options: object, cb: (err: any) => void): void {
         let db = new Nedb(options);
-        this.map.set(name, db);
         db.loadDatabase(cb);
+
+        let collection = new Collection(db);
+        this.map.set(name, collection);
     }
 }

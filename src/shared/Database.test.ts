@@ -1,12 +1,13 @@
-jest.mock('nedb');
+import { Database } from "./Database";
 
 import Nedb = require("nedb");
-import { Database } from "./Database";
+jest.mock('nedb');
+
 
 test('create collection', () => {
     // Arrange
     let db = new Database();
-    expect(db.size).toBe(0);
+    expect(db.getSize()).toBe(0);
 
     // Act
     db.createCollection("users", {
@@ -15,26 +16,27 @@ test('create collection', () => {
 
     // Assert
     expect(Nedb.prototype.loadDatabase).toBeCalledTimes(1);
-    expect(db.size).toBe(1);
+    expect(db.getSize()).toBe(1);
 });
 
 test('return created collection', () => {
     // Arrange
     let db = new Database();
-    expect(db.size).toBe(0);
+    expect(db.getSize()).toBe(0);
 
     // Act
     db.createCollection("users", { timestampData: true }, () => { });
     db.createCollection("log", { timestampData: true }, () => { });
 
     // Assert
-    expect(db.size).toBe(2);
-    expect(db.log).toBeInstanceOf(Nedb);
-    expect(db.users).toBeInstanceOf(Nedb);
+    expect(db.getSize()).toBe(2);
+
+    expect(() => db.get("log")).not.toThrow();
+    expect(() => db.get("users")).not.toThrow();
 });
 
 test('use unavailable database throws', () => {
     let db = new Database();
-    expect(() => db.log).toThrow();
-    expect(() => db.users).toThrow();
+    expect(() => db.get("log")).toThrow();
+    expect(() => db.get("users")).toThrow();
 });
