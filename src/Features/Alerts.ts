@@ -38,14 +38,14 @@ export class Alerts extends FeatureBase {
     // TODO action file separator for horizontal
     // TODO action file prefix
 
-    constructor(context: Context, alertConfig: IAlert) {
+    constructor(context: Context) {
         super(context.config);
 
         this.mediaPlayer = context.getMediaPlayer();
         this.db = context.db;
         this.logger = context.logger;
         this.obs = context.obs;
-        this.alertConfig = alertConfig;
+        this.alertConfig = this.config.getAlerts()[0]; // TODO interpret additional alerts
 
         let email: IEmailConfig | null = this.config.getEmail();
         if (email == null) {

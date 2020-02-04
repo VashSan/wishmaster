@@ -19,6 +19,6 @@ test('construction', () => {
     let context = new Context(config, logger, mock<Database>(), mock<ObsController>());
     let alertConfig = mock<IAlert>();
 
-    expect(() => new Alerts(context, alertConfig)).not.toThrow();
+    expect(() => new Alerts(context)).not.toThrow();
     expect(logger.error).toBeCalledTimes(1);
 });
