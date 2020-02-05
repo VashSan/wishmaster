@@ -1,8 +1,7 @@
 import * as IMAP from "imap-simple";
-import * as path from "path"
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
-import { Context, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext } from "../shared";
+import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -29,7 +28,7 @@ export class Alerts extends FeatureBase {
     private logger: ILogger;
     private connection: IMAP.ImapSimple | null = null;
     private mediaPlayer: IMediaPlayer;
-    private obs: ObsController;
+    private obs: IObsController;
     private alertConfig: IAlert;
     private pendingAlerts: PendingAlert[] = [];
     private timer: NodeJS.Timer | null = null;
@@ -38,14 +37,18 @@ export class Alerts extends FeatureBase {
     // TODO action file separator for horizontal
     // TODO action file prefix
 
-    constructor(context: IContext) {
+    constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
 
         this.mediaPlayer = context.getMediaPlayer();
         this.db = context.getDatabase();
-        this.logger = context.logger;
-        this.obs = context.obs;
-        this.alertConfig = this.config.getAlerts()[0]; // TODO interpret additional alerts
+        this.obs = context.getObs();
+        this.alertConfig = this.config.getAlerts()[0]; // todo handle all alerts
 
         let email: IEmailConfig | null = this.config.getEmail();
         if (email == null) {
