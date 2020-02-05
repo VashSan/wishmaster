@@ -3,7 +3,25 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IObsConfig } from "./Configuration";
 
-export class ObsController {
+export interface IObsController {
+    // todo provide promise
+    /** establish connection to OBS */
+    connect(): Promise<void>;
+
+    /** Changes to the desired scene */
+    switchToScene(sceneName: string): void;
+
+    /** toggles the visibility state of an OBS source for a distinct timespan. 
+     * @param sourceName the OBS Source
+     * @param durationInSeconds 0 for a one time toggle, otherwise after the timespan the toggle is reverted
+     */
+    toggleSource(sourceName: string, durationInSeconds?: number): void;
+
+    /** sets the text property of a OBS text source */
+    setText(textSourceName: string, text: string): void;
+}
+
+export class ObsController implements IObsController {
     private readonly config: IObsConfig | null;
     private readonly obs: OBSWebSocket;
     private isConnected: boolean = false;
@@ -26,34 +44,33 @@ export class ObsController {
         this.config = obsConfig;
     }
 
-    public connect(onConnect?: (err?:string)=>void) {
-        if (this.config == null) {
-            this.log.warn("OBS connection skipped due to missing config.");
-            return;
-        }
+    public connect(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (this.config == null) {
+                this.log.warn("OBS connection skipped due to missing config.");
+                reject("Could not connect due to missing conifg");
+                return;
+            }
 
-        this.obs.connect({
-            address: `${this.config.address}:${this.config.port}`,
-            password: this.config.password
-        }).then(() => {
-            this.log.info("Connected to OBS.");
-            this.isConnected = true;
-            return this.obs.send('GetSceneList', undefined);
-        }).then((data: any) => {
-            this.log.info(`Scanning ${data.scenes.length} available scenes!`);
+            this.obs.connect({
+                address: `${this.config.address}:${this.config.port}`,
+                password: this.config.password
+            }).then(() => {
+                this.log.info("Connected to OBS.");
+                this.isConnected = true;
+                return this.obs.send('GetSceneList', undefined);
+            }).then((data: any) => {
+                this.log.info(`Scanning ${data.scenes.length} available scenes!`);
 
-            data.scenes.forEach((scene: OBSWebSocket.Scene) => {
-                this.availableScenes.set(scene.name, scene);
+                data.scenes.forEach((scene: OBSWebSocket.Scene) => {
+                    this.availableScenes.set(scene.name, scene);
+                });
+
+               resolve();
+            }).catch(err => {
+                this.log.error("Error connecting to OBS: " + err);
+                reject(err);
             });
-
-            if (onConnect){
-                onConnect();
-            }
-        }).catch(err => {
-            this.log.error("Error connecting to OBS: " + err);
-            if (onConnect){
-                onConnect(err);
-            }
         });
     }
 

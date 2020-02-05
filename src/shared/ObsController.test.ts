@@ -38,14 +38,13 @@ test('switchToScene', async (done) => {
     mockSendInit(obs).mockResolvedValueOnce();
 
     let obsController = new ObsController(config, obs, logger);
-   
-    function onConnect(err?: string): void {
+
+    obsController.connect().then((err) => {
         expect(logger.warn).toBeCalledTimes(0);
         expect(logger.info).toBeCalledTimes(2);
         expect(err).toBeUndefined();
         done();
-    }
-    obsController.connect(onConnect);
+    });
 
     // obsController.switchToScene(TestSceneName);
 
@@ -53,13 +52,14 @@ test('switchToScene', async (done) => {
 });
 
 test('setText', () => {
-    // let logger = mock<ILogger>();
-    // let config = mock<IObsConfig>();
-    // let obs = createMock();
-    // let obsController= new ObsController(config, obs, logger);
-    // There is bug that the "render" property is not recognized
-    // obs.send.mockResolvedValueOnce({
-    //     "render": undefined,
+    let logger = mock<ILogger>();
+    let config = mock<IObsConfig>();
+    let obs = createMock();
+    let obsController= new ObsController(config, obs, logger);
+    //There is bug that the "render" property is not recognized
+    obs.send.mockResolvedValueOnce();
+    // {
+    //     render: true,
     //     source: "string",      
     //     "bk-color": 1,
     //     "bk-opacity": 1,
@@ -84,6 +84,6 @@ test('setText', () => {
     //     outline_size: 1,
     //     outline_opacity: 1
     //   });
-    // obsController.setText(TestSceneName, "text");
-    // expect(obs.send).toBeCalledTimes(1);
+    obsController.setText(TestSceneName, "text");
+    expect(obs.send).toBeCalledTimes(1);
 });
