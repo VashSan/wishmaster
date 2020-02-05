@@ -1,6 +1,6 @@
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
-import { Context, Database } from "../shared";
+import { IContext, IDatabase } from "../shared";
 import { TagReader } from "../shared/TagReader";
 import { FeatureBase } from "./FeatureBase";
 import { IFeature } from "../MessageProcessor";
@@ -8,13 +8,18 @@ import { IMessage } from "../ChatClient";
 
 /** Pushes information into the database */
 export class Harvest extends FeatureBase implements IFeature {
-    private db: Database;
+    private db: IDatabase;
     private logger: ILogger;
 
-    constructor(context: Context) {
-        super(context.config);
-        this.db = context.db;
-        this.logger = context.logger;
+    constructor(context: IContext, logger?: ILogger) {
+        super(context.getConfiguration());
+        this.db = context.getDatabase();
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
+        
     }
 
     public getTrigger(): string {
