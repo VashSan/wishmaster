@@ -2,7 +2,7 @@ import * as IMAP from "imap-simple";
 import * as path from "path"
 import { ILogger } from "psst-log";
 
-import { Context, Database, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer, Sound } from "../shared";
+import { Context, IAlert, IEmailConfig, ObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -25,7 +25,7 @@ class PendingAlert {
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts extends FeatureBase {
-    private db: Database;
+    private db: IDatabase;
     private logger: ILogger;
     private connection: IMAP.ImapSimple | null = null;
     private mediaPlayer: IMediaPlayer;
@@ -38,11 +38,11 @@ export class Alerts extends FeatureBase {
     // TODO action file separator for horizontal
     // TODO action file prefix
 
-    constructor(context: Context) {
-        super(context.config);
+    constructor(context: IContext) {
+        super(context.getConfiguration());
 
         this.mediaPlayer = context.getMediaPlayer();
-        this.db = context.db;
+        this.db = context.getDatabase();
         this.logger = context.logger;
         this.obs = context.obs;
         this.alertConfig = this.config.getAlerts()[0]; // TODO interpret additional alerts

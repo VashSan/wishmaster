@@ -15,9 +15,9 @@ test('construction', () => {
     let config = new Configuration(configDir, fs);
     config.rootPath = "";
     config.email = null;
+    config.alerts = [mock<IAlert>()];
     let logger = mock<ILogger>();
     let context = new Context(config, logger, mock<Database>(), mock<ObsController>());
-    let alertConfig = mock<IAlert>();
 
     expect(() => new Alerts(context)).not.toThrow();
     expect(logger.error).toBeCalledTimes(1);
