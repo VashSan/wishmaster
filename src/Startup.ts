@@ -2,7 +2,7 @@
 import { LogManager, ILogger } from "psst-log";
 
 import { MessageProcessor, IFeature } from "./MessageProcessor";
-import { Configuration, Context, Database, ObsController } from "./shared";
+import { Configuration, Context, Database, UserCollection, ObsController, IConfiguration, IContext, Seconds, LogCollection } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
 import { Harvest } from "./Features/Harvest";
@@ -14,19 +14,23 @@ import { UrlFilter } from "./Features/UrlFilter";
 
 
 export class Startup {
-    private config: Configuration;
+    private config: IConfiguration;
     private logger: ILogger;
     private msgProcessor: MessageProcessor;
     private db: Database;
     private obsController: ObsController;
-    private context: Context;
+    private context: IContext;
 
     private loadedCollections = 0;
     private erroredCollections = 0;
 
-    constructor(config?: Configuration) {
-        this.logger = LogManager.getLogger();
-        LogManager.addConsoleTarget();
+    constructor(context?: IContext, config?: IConfiguration, logger?: ILogger) {
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+            LogManager.addConsoleTarget();
+        }
 
         if (config) {
             this.config = config;
@@ -34,20 +38,25 @@ export class Startup {
             this.config = new Configuration();
         }
 
-        this.db = new Database();
-        this.obsController = new ObsController(this.config.obs);
+        this.db = new Database(this.config);
+        this.obsController = new ObsController(this.config.getObs());
 
-        this.context = new Context(this.config, this.logger, this.db, this.obsController);
+        if (context) {
+            this.context = context;
+        } else {
+            this.context = new Context(this.config, this.logger, this.db, this.obsController);
+        }
+
         this.msgProcessor = new MessageProcessor(this.context);
     }
 
     public main(): number {
-        if (!this.config.createLogConsole) {
+        if (!this.config.getCreateLogConsole()) {
             LogManager.removeConsoleTarget();
         }
 
-        if (this.config.createLogFile) {
-            LogManager.addFileTarget(this.config.logDir, this.config.maxLogAgeDays);
+        if (this.config.getCreateLogFile()) {
+            LogManager.addFileTarget(this.config.getLogDir(), this.config.getMaxLogAgeDays());
         }
 
         this.logger.info("Wishmaster at your serivce.");
@@ -56,42 +65,27 @@ export class Startup {
             this.logger.warn("This program likely contains bugs in other OS than Windows. Please report bugs.");
         }
 
-        this.logger.info("setting up db");
-        this.setupDb();
+        this.logger.info("connecting to OBS");
         this.obsController.connect();
+
+        this.logger.info("setting up db");
+        this.setupDb()
+            .then(() => this.finalInit())
+            .catch(() => {
+                this.logger.error("Database load failed");
+            });
+
         return 0;
     }
 
-    private setupDb() {
-
-        let configDir = this.config.getConfigDir();
-        let channel = this.config.channel;
-
-        this.db.createCollection("log", {
-            filename: `${configDir}\\log-${channel}.db`,
-            timestampData: true
-        }, this.loadDatabaseCallback.bind(this));
-
-        this.db.createCollection("users", {
-            filename: `${configDir}\\user-${channel}.db`,
-            timestampData: true
-        }, this.loadDatabaseCallback.bind(this));
-    }
-
-    private loadDatabaseCallback(err: any): void {
-        if (err != null) {
-            this.logger.error("Error when loading database:", err);
-            this.erroredCollections += 1;
-        } else {
-            this.logger.info("DB loaded");
-            this.loadedCollections += 1;
-        }
-
-        this.finalInit();
+    private setupDb(): Promise<void> {
+        this.db.createCollection(UserCollection, "users");
+        this.db.createCollection(LogCollection, "log");
+        return this.db.waitAllLoaded(new Seconds(10));
     }
 
     private finalInit() {
-        if (this.db.size == this.loadedCollections) {
+        if (this.db.getSize() == this.loadedCollections) {
             this.logger.info("setting up chat");
             this.setupChat();
 
@@ -99,7 +93,7 @@ export class Startup {
             this.setupConsole();
         }
 
-        if (this.erroredCollections > 0 && this.db.size == this.erroredCollections + this.loadedCollections) {
+        if (this.erroredCollections > 0 && this.db.getSize() == this.erroredCollections + this.loadedCollections) {
             this.logger.error("Can not work without all databases loaded. Terminating.");
             process.exitCode = 1;
         }
@@ -108,7 +102,7 @@ export class Startup {
     private setupChat() {
 
         let featureList = new Set<IFeature>([
-            new Alerts(this.context, this.config.alerts[0]), // TODO add all alerts
+            new Alerts(this.context),
             new Harvest(this.context),
             new StaticAnswers(this.context),
             new UrlFilter(this.context),
@@ -133,17 +127,17 @@ export class Startup {
         // note:  d is an object, and when converted to a string it will
         // end with a linefeed.  so we (rather crudely) account for that  
         // with toString() and then trim() 
-        let val = d.toString().trim();
+        // let val = d.toString().trim();
 
-        let that = this;
+        // let that = this;
 
-        this.db.users.find({ name: val }, function (err: any, doc: any) {
-            if (err != null) {
-                that.logger.error(err);
-            } else {
-                that.logger.log(doc[0], doc[1]);
-            }
-        });
+        // this.db.users.find({ name: val }, function (err: any, doc: any) {
+        //     if (err != null) {
+        //         that.logger.error(err);
+        //     } else {
+        //         that.logger.log(doc[0], doc[1]);
+        //     }
+        // });
     }
 }
 
