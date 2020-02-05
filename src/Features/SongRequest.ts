@@ -49,10 +49,6 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
         }
     }
 
-    public getTrigger(): string {
-        return "bet";
-    }
-
     /** Enqueue the requested song to the playlist */
     public act(msg: IMessage): void {
         if (!this.isSpotifyEnabled) {
