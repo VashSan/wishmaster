@@ -238,22 +238,19 @@ export class Alerts extends FeatureBase {
         const separator = "  ";
         const endSeparator = "---";
 
-        let bannerText = "";
-
         this.userDb.findLastActions(this.maxActions)
             .then((result: IUserAction[]) => {
+                let bannerText = "";
                 result.forEach(element => {
                     let name = this.alertConfig.bannerTextPattern.replace(AlertConst.ViewerPlaceholder, element.name.toString());
                     bannerText += name + separator;
                 });
+                bannerText += endSeparator + separator;
+                this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
             })
             .catch((err) => {
                 this.logger.error("Error finding last actions: " + err);
             });
-
-        bannerText += endSeparator + separator;
-
-        this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
     }
 }
 
