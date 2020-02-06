@@ -20,7 +20,7 @@ export class Harvest extends FeatureBase implements IFeature {
         }
 
         const db = context.getDatabase();        
-        this.userDb = <IUserCollection>db.get("users");
+        this.userDb = <IUserCollection>db.get("user");
         this.logDb = <ILogCollection>db.get("log");
     }
 
