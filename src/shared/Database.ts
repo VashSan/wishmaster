@@ -3,6 +3,8 @@ import { isNullOrUndefined } from "util";
 import { IConfiguration } from "./Configuration";
 import { ILogger, LogManager } from "psst-log";
 import { Seconds } from "./Helper";
+import { IMessage } from "../ChatClient";
+import { TagReader } from ".";
 
 type CollectionMap = Map<string, ICollection>;
 
@@ -19,6 +21,7 @@ export interface IUserAction {
 }
 
 export interface IUserCollection extends ICollection {
+    newMessage(message: IMessage): void;
     findLastActions(maxActions: number): Promise<IUserAction[]>;
     newFollowFrom(viewer: string): void;
     newHostFrom(viewer: string): void;
@@ -159,6 +162,71 @@ export enum ViewerAction {
 }
 type NameAndActionArray = { name: string, lastAction: number, lastActionDate: Date }[];
 export class UserCollection extends Collection implements IUserCollection {
+    newMessage(message: IMessage): void {
+        if (!message.tags){
+            return;
+        }
+        let that = this;
+        let tr = new TagReader(message.tags, this.logger);
+        this.db.findOne({ $or: [{ twitchid: tr.userId }, { name: tr.displayName }] }, function (err: Error, doc: any) {
+            if (err != null) {
+                that.logger.error(err);
+                return;
+            }
+
+            if (message.tags == null) {
+                that.logger.warn("If tags are not set we cannot update user");
+                return;
+            }
+
+            let totalBits = 0;
+            let emoteOnlyCount = 0;
+            let messageCount = 0;
+            if (doc != null) {
+                totalBits = doc.totalBits + tr.bits;
+                emoteOnlyCount = doc.emoteOnlyCount + tr.isEmoteOnly ? 1 : 0;
+                messageCount = doc.messageCount + 1;
+            }
+            let followDate = new Date(0);
+            if (doc.followDate != undefined) {
+                followDate = doc.followDate;
+            }
+
+            // TODO New Tags? flags, badge-info
+            let tagReader = new TagReader(message.tags);
+            let user = {
+                twitchid: tr.userId,
+                name: tr.displayName,
+                followDate: followDate,
+                color: tr.color,
+                badges: tr.badgeList,
+                emoteOnlyCount: emoteOnlyCount,
+                messageCount: messageCount,
+                totalBits: totalBits,
+                isMod: tr.isMod,
+                isSubscriber: tr.isSubscriber,
+                isTurbo: tr.isTurbo,
+                lastRoomSeen: tr.roomId,
+                lastTimeSeen: tr.serverReceivedMsgTime,
+                type: tr.userType
+            };
+
+            that.upsertUser(tr.userId, user);
+        });
+
+    }
+
+    private upsertUser(id: number, user: object) {
+        let that = this;
+        this.db.update({ twitchid: id }, user, { upsert: true }, function (err, numReplaced, upsert) {
+            // numReplaced = 1, upsert = { _id: 'id5', planet: 'Pluton', inhabited: false }
+            // A new document { _id: 'id5', planet: 'Pluton', inhabited: false } has been added to the collection
+
+            if (err != null) {
+                that.logger.error(err);
+            }
+        });
+    }
 
     findLastActions(maxActions: number): Promise<IUserAction[]> {
         return new Promise((resolve, reject) => {
