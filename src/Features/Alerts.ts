@@ -93,7 +93,7 @@ export class Alerts extends FeatureBase {
 
     /** just check whether an alert was triggered manually */
     public act(msg: IMessage): void {
-        if (msg.from.toLowerCase() == this.config.getNickname().toLowerCase() && msg.text.toLowerCase().startsWith("!alert")) {
+        if (this.isBotHost(msg) && this.isAlertCommand(msg)) {
             this.handleUserToBotCommand(msg);
             return;
         }
@@ -103,6 +103,14 @@ export class Alerts extends FeatureBase {
             this.handleTwitchCommands(msg);
         }
     }
+    private isAlertCommand(msg: IMessage) {
+        return msg.text.toLowerCase().startsWith("!alert");
+    }
+
+    private isBotHost(msg: IMessage) {
+        return msg.from.toLowerCase() == this.config.getNickname().toLowerCase();
+    }
+
     private handleTwitchCommands(msg: IMessage): void {
         // radiodefiant is now hosting you.
         const regex = /(\w+) is now hosting you\./;

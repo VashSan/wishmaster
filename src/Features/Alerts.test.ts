@@ -1,23 +1,29 @@
-import * as os from "os";
-import * as path from "path";
-
-import { Context, IAlert, Configuration, Database, ObsController, IFileSystem } from "../shared";
-import { mock } from "jest-mock-extended";
+import { IAlert, IConfiguration, IContext, IUserCollection, IDatabase } from "../shared";
+import { mock, MockProxy } from "jest-mock-extended";
 import Alerts from "./Alerts";
 import { ILogger } from "psst-log";
 
-test('construction', () => {
-    let configDir = path.join(process.env.localappdata || os.homedir(), '.wishmaster');
-    let fs = mock<IFileSystem>();
-    fs.exists.mockReturnValue(true);
-    fs.readAll.mockReturnValueOnce("{}");
+function getDatabaseMock(): MockProxy<IDatabase> & IDatabase{
+    let userDb = mock<IUserCollection>();
 
-    let config = new Configuration(configDir, fs);
-    config.rootPath = "";
-    config.email = null;
-    config.alerts = [mock<IAlert>()];
+    let db = mock<IDatabase>();
+    db.get.calledWith("user").mockReturnValue(userDb);
+    return db;
+}
+
+test('construction', () => {
+    let db = getDatabaseMock();
+
+    let config = mock<IConfiguration>();
+    
+    config.getRootPath.mockReturnValue("");
+    config.getEmail.mockReturnValue(null);
+    config.getAlerts.mockReturnValue([mock<IAlert>()]);
     let logger = mock<ILogger>();
-    let context = new Context(config, logger, mock<Database>(), mock<ObsController>());
+
+    let context = mock<IContext>();
+    context.getConfiguration.mockReturnValue(config);
+    context.getDatabase.mockReturnValue(db);
 
     expect(() => new Alerts(context, logger)).not.toThrow();
     expect(logger.error).toBeCalledTimes(1);
