@@ -79,7 +79,7 @@ export class Startup {
     }
 
     private setupDb(): Promise<void> {
-        this.db.createCollection(UserCollection, "users");
+        this.db.createCollection(UserCollection, "user");
         this.db.createCollection(LogCollection, "log");
         return this.db.waitAllLoaded(new Seconds(10));
     }

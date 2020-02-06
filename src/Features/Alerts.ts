@@ -49,7 +49,7 @@ export class Alerts extends FeatureBase {
         this.mediaPlayer = context.getMediaPlayer();
 
         const db = context.getDatabase();
-        this.userDb = <IUserCollection>db.get("Users");
+        this.userDb = <IUserCollection>db.get("user");
 
         this.obs = context.getObs();
         this.alertConfig = this.config.getAlerts()[0]; // todo handle all alerts
