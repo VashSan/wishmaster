@@ -66,13 +66,16 @@ export class Startup {
         }
 
         this.logger.info("connecting to OBS");
-        this.obsController.connect();
+        this.obsController.connect()
+            .then(() => this.logger.info("Connected to OBS"))
+            .catch((e) => this.logger.info("Proceeding without OBS: " + e));
 
         this.logger.info("setting up db");
         this.setupDb()
             .then(() => this.finalInit())
-            .catch(() => {
-                this.logger.error("Database load failed");
+            .catch((err) => {
+                this.logger.error("Database load failed: " + err);
+                process.exitCode = 1;
             });
 
         return 0;
@@ -85,18 +88,11 @@ export class Startup {
     }
 
     private finalInit() {
-        if (this.db.getSize() == this.loadedCollections) {
-            this.logger.info("setting up chat");
-            this.setupChat();
+        this.logger.info("setting up chat");
+        this.setupChat();
 
-            this.logger.info("setting up console");
-            this.setupConsole();
-        }
-
-        if (this.erroredCollections > 0 && this.db.getSize() == this.erroredCollections + this.loadedCollections) {
-            this.logger.error("Can not work without all databases loaded. Terminating.");
-            process.exitCode = 1;
-        }
+        this.logger.info("setting up console");
+        this.setupConsole();
     }
 
     private setupChat() {
