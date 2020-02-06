@@ -1,7 +1,7 @@
 import * as IMAP from "imap-simple";
 import { ILogger, LogManager } from "psst-log";
 
-import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext } from "../shared";
+import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -24,18 +24,19 @@ class PendingAlert {
 
 /** Perform actions (alerts) on events like "New Follower", "New Sub" ... */
 export class Alerts extends FeatureBase {
-    private db: IDatabase;
-    private logger: ILogger;
-    private connection: IMAP.ImapSimple | null = null;
-    private mediaPlayer: IMediaPlayer;
-    private obs: IObsController;
-    private alertConfig: IAlert;
-    private pendingAlerts: PendingAlert[] = [];
-    private timer: NodeJS.Timer | null = null;
-    private maxActions: number = 20; // TODO get from config
+    private readonly logger: ILogger;
+    private readonly mediaPlayer: IMediaPlayer;
+    private readonly obs: IObsController;
+    private readonly alertConfig: IAlert;
+    private readonly pendingAlerts: PendingAlert[] = [];
+    private readonly maxActions: number = 20; // TODO get from config
+    private readonly userDb: IUserCollection;
     // TODO action file horizontal or vertical
     // TODO action file separator for horizontal
     // TODO action file prefix
+
+    private timer: NodeJS.Timer | null = null;
+    private connection: IMAP.ImapSimple | null = null;
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
@@ -46,7 +47,10 @@ export class Alerts extends FeatureBase {
         }
 
         this.mediaPlayer = context.getMediaPlayer();
-        this.db = context.getDatabase();
+
+        const db = context.getDatabase();
+        this.userDb = <IUserCollection>db.get("Users");
+
         this.obs = context.getObs();
         this.alertConfig = this.config.getAlerts()[0]; // todo handle all alerts
 
@@ -110,7 +114,7 @@ export class Alerts extends FeatureBase {
     private performNewHostActions(hostFrom: string) {
 
         let newFollowerAlert = new PendingAlert(hostFrom, () => {
-            this.updateUserDatabase(hostFrom, "host");
+            this.userDb.newHostFrom(hostFrom);
             this.mediaPlayer.play(Sound.Bell);
             //this.setObsNewHostText(hostFrom);
             this.appendToViewerActionsHistory(hostFrom, "Host");
@@ -138,7 +142,7 @@ export class Alerts extends FeatureBase {
     private performNewFollowerActions(newFollower: string) {
 
         let newFollowerAlert = new PendingAlert(newFollower, () => {
-            this.updateUserDatabase(newFollower, "follow");
+            this.userDb.newFollowFrom(newFollower);
             this.setObsNewFollowerText(newFollower);
             this.appendToViewerActionsHistory(newFollower, null);
             this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
@@ -165,26 +169,6 @@ export class Alerts extends FeatureBase {
                 }
             }, (this.alertConfig.durationInSeconds + this.alertConfig.timeoutInSeconds) * 1000 + 1000); //1s if all is 0 is minimum
         }
-    }
-
-    // TODO make action an enum
-    private updateUserDatabase(newFollower: string, action: string) {
-        let now = new Date();
-        let nedbUpdate = null;
-        switch (action) {
-            case "host":
-                nedbUpdate = {
-                    $inc: { hostCount: 1 },
-                    $set: { lastHostDate: now, lastAction: "host", lastActionDate: now },
-                };
-                break;
-            case "follow":
-                nedbUpdate = { $set: { followDate: now, lastAction: "follow", lastActionDate: now } };
-                break;
-
-        }
-
-        this.db.users.update({ name: newFollower }, nedbUpdate, { upsert: true });
     }
 
     private setObsNewFollowerText(newFollower: string) {

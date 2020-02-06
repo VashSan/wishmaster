@@ -13,6 +13,8 @@ export interface ICollection {
 }
 
 export interface IUserCollection extends ICollection {
+    newFollowFrom(viewer: string): void;
+    newHostFrom(viewer: string): void;
 
 }
 
@@ -27,8 +29,9 @@ export interface IDatabase {
 }
 
 class Collection implements ICollection {
-    private readonly db: Nedb;
-    private readonly logger: ILogger;
+    protected readonly db: Nedb;
+    protected readonly logger: ILogger;
+    
     private readonly name: string;
 
     private initialized: boolean = false;
@@ -117,8 +120,8 @@ export class Database implements IDatabase {
         return new Promise((resolve, reject) => {
             let done = false;
             let start = Date.now();
-            
-            let interval = setInterval(()=>{
+
+            let interval = setInterval(() => {
                 done = true;
                 this.map.forEach(element => {
                     done = done && element.isInitialized();
@@ -131,7 +134,7 @@ export class Database implements IDatabase {
 
                 if (timedOut || done) {
                     clearInterval(interval);
-                    if (done){
+                    if (done) {
                         resolve();
                     } else {
                         reject("Timeout reached");
@@ -142,5 +145,36 @@ export class Database implements IDatabase {
         });
     }
 }
-export class UserCollection extends Collection { };
-export class LogCollection extends Collection { };
+
+export enum ViewerAction {
+    Host = "Host",
+    Follow = "Follow"
+}
+
+export class UserCollection extends Collection implements IUserCollection 
+{
+     
+
+    newFollowFrom(viewer: string): void {
+        const now = new Date();
+        const nedbUpdate = {
+            $inc: { hostCount: 1 },
+            $set: { lastHostDate: now, lastAction: ViewerAction.Host.toString(), lastActionDate: now },
+        };
+
+        this.updateOrInsert({ name: viewer }, nedbUpdate);
+    }    
+    
+    newHostFrom(viewer: string): void {
+        const now = new Date();
+        const nedbUpdate = { $set: { followDate: now, lastAction: ViewerAction.Follow.toString(), lastActionDate: now } };
+        this.updateOrInsert({ name: viewer }, nedbUpdate);
+    }
+ 
+    private updateOrInsert(query: any, updateQuery: any ) {
+        this.db.update(query, updateQuery, { upsert: true });
+    }
+};
+
+
+export class LogCollection extends Collection implements ILogCollection { };
