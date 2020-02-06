@@ -12,7 +12,14 @@ export interface ICollection {
     getName(): string;
 }
 
+export interface IUserAction {
+    name: string;
+    lastAction: ViewerAction;
+    lastActionDate: Date;
+}
+
 export interface IUserCollection extends ICollection {
+    findLastActions(maxActions: number): Promise<IUserAction[]>;
     newFollowFrom(viewer: string): void;
     newHostFrom(viewer: string): void;
 
@@ -31,7 +38,7 @@ export interface IDatabase {
 class Collection implements ICollection {
     protected readonly db: Nedb;
     protected readonly logger: ILogger;
-    
+
     private readonly name: string;
 
     private initialized: boolean = false;
@@ -150,10 +157,38 @@ export enum ViewerAction {
     Host = "Host",
     Follow = "Follow"
 }
+type NameAndActionArray = { name: string, lastAction: number, lastActionDate: Date }[];
+export class UserCollection extends Collection implements IUserCollection {
 
-export class UserCollection extends Collection implements IUserCollection 
-{
-     
+    findLastActions(maxActions: number): Promise<IUserAction[]> {
+        return new Promise((resolve, reject) => {
+            this.db.find({}, { name: 1, lastAction: 1, lastActionDate: 1 })
+                .sort({ lastActionDate: -1 })
+                .limit(maxActions)
+                .exec((err, docs) => {
+                    if (err != null) {
+                        reject(err);
+                    } else {
+                        let result = this.assembleResult(docs);
+                        resolve(result);
+                    }
+                });
+        });
+    }
+    private assembleResult(docs: { name: number, lastAction: number, lastActionDate: number }[]): IUserAction[] {
+        let result: IUserAction[] = [];
+        docs.forEach((element) => {
+            let action = element.lastAction.toString() as keyof typeof ViewerAction;
+            const userAction: IUserAction = {
+                name: element.name.toString(),
+                lastAction: ViewerAction[action],
+                lastActionDate: new Date(element.lastActionDate.toString())
+            };
+            result.push(userAction);
+        });
+        return result;
+    }
+
 
     newFollowFrom(viewer: string): void {
         const now = new Date();
@@ -163,15 +198,15 @@ export class UserCollection extends Collection implements IUserCollection
         };
 
         this.updateOrInsert({ name: viewer }, nedbUpdate);
-    }    
-    
+    }
+
     newHostFrom(viewer: string): void {
         const now = new Date();
         const nedbUpdate = { $set: { followDate: now, lastAction: ViewerAction.Follow.toString(), lastActionDate: now } };
         this.updateOrInsert({ name: viewer }, nedbUpdate);
     }
- 
-    private updateOrInsert(query: any, updateQuery: any ) {
+
+    private updateOrInsert(query: any, updateQuery: any) {
         this.db.update(query, updateQuery, { upsert: true });
     }
 };

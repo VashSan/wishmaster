@@ -1,7 +1,7 @@
 import * as IMAP from "imap-simple";
 import { ILogger, LogManager } from "psst-log";
 
-import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection } from "../shared";
+import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection, IUserAction } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -230,19 +230,22 @@ export class Alerts extends FeatureBase {
         const separator = "  ";
         const endSeparator = "---";
 
-        this.db.users.find({}, { name: 1, lastAction: 1 })
-            .sort({ lastActionDate: -1 })
-            .limit(this.maxActions)
-            .exec((err, docs) => {
-                let bannerText = "";
-                docs.forEach(element => {
+        let bannerText = "";
+
+        this.userDb.findLastActions(this.maxActions)
+            .then((result: IUserAction[]) => {
+                result.forEach(element => {
                     let name = this.alertConfig.bannerTextPattern.replace(AlertConst.ViewerPlaceholder, element.name.toString());
                     bannerText += name + separator;
                 });
-                bannerText += endSeparator + separator;
-
-                this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
+            })
+            .catch((err) => {
+                this.logger.error("Error finding last actions: " + err);
             });
+
+        bannerText += endSeparator + separator;
+
+        this.obs.setText(this.alertConfig.bannerTextSource, bannerText);
     }
 }
 
