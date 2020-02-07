@@ -4,7 +4,7 @@ import { Configuration, Context } from ".";
 import { Database } from "./Database";
 import { IObsController } from "./ObsController";
 import * as os from 'os';
-import { IEmail } from "./Email";
+import { IEmailAccess } from "./Email";
 
 function getContext() {
     let config = mock<Configuration>();
@@ -12,7 +12,7 @@ function getContext() {
     let logger = mock<ILogger>();
     let db = mock<Database>();
     let obs = mock<IObsController>();
-    let email = mock<IEmail>();
+    let email = mock<IEmailAccess>();
 
     return new Context(config, logger, db, obs, email);
 }

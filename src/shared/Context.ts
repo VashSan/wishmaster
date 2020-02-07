@@ -1,7 +1,7 @@
 import { ILogger } from "psst-log";
 import { IConfiguration, IDatabase, IObsController } from "./";
 import { MediaPlayer, IMediaPlayer } from "./MediaPlayer";
-import { IEmail } from "./Email";
+import { IEmailAccess } from "./Email";
 
 export interface IService {
     getServiceName(): string;
@@ -12,12 +12,12 @@ export interface IContext {
     getDatabase(): IDatabase;
     getMediaPlayer(): IMediaPlayer;
     getObs(): IObsController;
-    getEmail(): IEmail;
+    getEmail(): IEmailAccess;
 }
 
 export class Context implements IContext {
-    private readonly email: IEmail;
-    getEmail(): IEmail {
+    private readonly email: IEmailAccess;
+    getEmail(): IEmailAccess {
         return this.email;
     }
 
@@ -43,7 +43,7 @@ export class Context implements IContext {
         return this.obs;
     }
 
-    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController, email: IEmail) {
+    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController, email: IEmailAccess) {
         this.config = config;
         this.mediaPlayer = new MediaPlayer(this.config);
         this.logger = logger;

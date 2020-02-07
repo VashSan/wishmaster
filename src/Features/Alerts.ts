@@ -1,7 +1,6 @@
-import * as IMAP from "imap-simple";
 import { ILogger, LogManager } from "psst-log";
 
-import { IAlert, IEmailConfig, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection, IUserAction } from "../shared";
+import { IAlert, IEmailAccess, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection, IUserAction } from "../shared";
 import { IMessage } from "../ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
@@ -31,12 +30,13 @@ export class Alerts extends FeatureBase {
     private readonly pendingAlerts: PendingAlert[] = [];
     private readonly maxActions: number = 20; // TODO get from config
     private readonly userDb: IUserCollection;
+    private readonly email: IEmailAccess;
+    private readonly regex = /(.*) folgt dir jetzt auf Twitch$/g; // TODO configurable regex
     // TODO action file horizontal or vertical
     // TODO action file separator for horizontal
     // TODO action file prefix
 
     private timer: NodeJS.Timer | null = null;
-    private connection: IMAP.ImapSimple | null = null;
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
@@ -54,41 +54,11 @@ export class Alerts extends FeatureBase {
         this.obs = context.getObs();
         this.alertConfig = this.config.getAlerts()[0]; // todo handle all alerts
 
-        let email: IEmailConfig | null = this.config.getEmail();
-        if (email == null) {
-            this.logger.warn("Email configuration missing.");
-            return;
-        }
-
-
-        let that = this;
-
-        let config = {
-            imap: {
-                user: email.login,
-                password: email.password,
-                host: email.host,
-                port: email.port,
-                tls: email.tls,
-                authTimeout: 3000
-            },
-            onmail: function (numNewMail: number) {
-                that.newMail(true);
-            }
-        };
-
-        function connectionCallback(err: any): void {
-            that.logger.error(err);
-        }
-
-        IMAP.connect(config).then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
-            that.logger.log("Connected to IMAP");
-
-            that.connection = connection;
-
-            return that.newMail(false);
-        }, connectionCallback);
-
+        this.email = context.getEmail();
+        this.email.onNewMail({
+            subjectRegex: /(.*) folgt dir jetzt auf Twitch$/g,
+            callback: (mail) => { this.unreadMail(mail.subject); }
+        });
     }
 
     /** just check whether an alert was triggered manually */
@@ -103,6 +73,7 @@ export class Alerts extends FeatureBase {
             this.handleTwitchCommands(msg);
         }
     }
+    
     private isAlertCommand(msg: IMessage) {
         return msg.text.toLowerCase().startsWith("!alert");
     }
@@ -184,46 +155,6 @@ export class Alerts extends FeatureBase {
         this.obs.setText(this.alertConfig.sceneTextSource, text);
     }
 
-    private newMail(emitAlert: boolean): Promise<void | IMAP.ImapSimple> {
-        if (this.connection == null) {
-            return Promise.reject("connection is not set up");
-        }
-
-        let that = this;
-        let connection = this.connection;
-
-        return this.connection.openBox('INBOX').then(function () {
-            var searchCriteria = [
-                'UNSEEN'
-            ];
-
-            var fetchOptions = {
-                bodies: ['HEADER', 'TEXT'],
-                markSeen: true
-            };
-
-            return connection.search(searchCriteria, fetchOptions).then(function (results) {
-                var subjects = results.map(function (res) {
-                    return res.parts.filter(function (part) {
-                        return part.which === 'HEADER';
-                    })[0].body.subject[0];
-                });
-
-                that.unreadMails(subjects);
-            });
-        });
-    }
-
-    private unreadMails(subjectList: string[]) {
-        subjectList.forEach(subject => {
-            let regex = /(.*) folgt dir jetzt auf Twitch$/g; // TODO configurable regex
-            let result = regex.exec(subject);
-            if (result != null && result.length > 1) {
-                this.performNewFollowerActions(result[1]);
-            }
-        });
-    }
-
     private sendFollowerThanksToChat(newFollower: string) {
         let text = this.alertConfig.chatPattern.replace(AlertConst.ViewerPlaceholder, newFollower);
         let response = this.createResponse(text);
@@ -251,6 +182,13 @@ export class Alerts extends FeatureBase {
             .catch((err) => {
                 this.logger.error("Error finding last actions: " + err);
             });
+    }
+
+    private unreadMail(subject: string) {
+        let result = this.regex.exec(subject);
+        if (result != null && result.length > 1) {
+            this.performNewFollowerActions(result[1]);
+        }
     }
 }
 
