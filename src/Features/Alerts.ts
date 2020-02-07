@@ -56,7 +56,7 @@ export class Alerts extends FeatureBase {
 
         let email: IEmailConfig | null = this.config.getEmail();
         if (email == null) {
-            this.logger.error("Email configuration missing.");
+            this.logger.warn("Email configuration missing.");
             return;
         }
 
@@ -82,7 +82,7 @@ export class Alerts extends FeatureBase {
         }
 
         IMAP.connect(config).then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
-            that.logger.info("Connected to IMAP");
+            that.logger.log("Connected to IMAP");
 
             that.connection = connection;
 

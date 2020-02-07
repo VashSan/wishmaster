@@ -276,7 +276,7 @@ describe('TwitchChatClient', () => {
         client.connect("#channel");
 
         // Assert
-        expect(logger.error).toBeCalledTimes(1);
+        expect(logger.warn).toBeCalledTimes(1);
     });
 
     test('Unknown command is logged as error', () => {
@@ -292,7 +292,7 @@ describe('TwitchChatClient', () => {
         client.connect("#channel");
 
         // Assert
-        expect(logger.error).toBeCalledTimes(1);
+        expect(logger.warn).toBeCalledTimes(1);
     });
 
     test('Message of the day is parsed', () => {

@@ -109,7 +109,7 @@ export class TagReader {
                 this.userType = this.parseUserType(value);
                 break;
             default:
-                this.logger.error(`Unknown tag: '${name}' = '${value}'`);
+                this.logger.warn(`Unknown tag: '${name}' = '${value}'`);
         }
     }
 
@@ -127,7 +127,7 @@ export class TagReader {
                 return UserType.Staff;
         }
 
-        this.logger.error("Unknown UserType:", t);
+        this.logger.warn("Unknown UserType:", t);
         return UserType.Normal;
     }
 

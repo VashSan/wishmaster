@@ -68,7 +68,7 @@ export class ObsController implements IObsController {
 
                resolve();
             }).catch(err => {
-                this.log.error("Error connecting to OBS: " + err);
+                this.log.warn("Could not connect to OBS: " + err);
                 reject(err);
             });
         });
@@ -79,10 +79,10 @@ export class ObsController implements IObsController {
             this.obs.send('SetCurrentScene', {
                 'scene-name': sceneName
             }).catch(err => {
-                this.log.error(`Could not switch to scene ${sceneName}. ${err}`);
+                this.log.warn(`Could not switch to scene ${sceneName}. ${err}`);
             });
         } else {
-            this.log.error(`Could not switch to scene ${sceneName}. It must exist on bot startup.`);
+            this.log.warn(`Could not switch to scene ${sceneName}. It must exist on bot startup.`);
         }
     }
 
@@ -104,7 +104,7 @@ export class ObsController implements IObsController {
                     }, timeout);
                 }
             }).catch(err => {
-                this.log.error("Error toggling source: " + err);
+                this.log.warn("Error toggling source: " + err);
             });
     }
 
@@ -112,7 +112,7 @@ export class ObsController implements IObsController {
         let textProps = ObsController.Get_SetTextGDIPlusProperties(textSourceName, text);
         this.obs.send('SetTextGDIPlusProperties', textProps)
             .catch(err => {
-                this.log.error("Error toggling source: " + err);
+                this.log.warn("Error toggling source: " + err);
             });
     }
 

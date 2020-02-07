@@ -65,12 +65,12 @@ export class Startup {
             this.logger.warn("This program likely contains bugs in other OS than Windows. Please report bugs.");
         }
 
-        this.logger.info("connecting to OBS");
+        this.logger.log("connecting to OBS");
         this.obsController.connect()
             .then(() => this.logger.info("Connected to OBS"))
             .catch((e) => this.logger.info("Proceeding without OBS: " + e));
 
-        this.logger.info("setting up db");
+        this.logger.log("setting up db");
         this.setupDb()
             .then(() => this.finalInit())
             .catch((err) => {
@@ -88,10 +88,10 @@ export class Startup {
     }
 
     private finalInit() {
-        this.logger.info("setting up chat");
+        this.logger.log("setting up chat");
         this.setupChat();
 
-        this.logger.info("setting up console");
+        this.logger.log("setting up console");
         this.setupConsole();
     }
 

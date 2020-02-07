@@ -272,11 +272,11 @@ export class TwitchChatClient implements IChatClient {
 
             case "421": // err_unknowncommand
                 let errorText = `${message.command}: ${message.args.join(" ")}`;
-                this.logger.error("cmd: ", errorText);
+                this.logger.warn("cmd: ", errorText);
                 break;
 
             default:
-                this.logger.error(`Recieved unhandled message type: ${message.command}`);
+                this.logger.warn(`Recieved unhandled message type: ${message.command}`);
                 break;
         }
     }

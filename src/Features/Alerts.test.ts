@@ -49,7 +49,7 @@ test('construction', () => {
     expect(context.getDatabase().get("user")).toBe(userDb);
 
     expect(() => new Alerts(context, logger)).not.toThrow();
-    expect(logger.error).toBeCalledTimes(1);
+    expect(logger.warn).toBeCalledTimes(1);
 });
 
 test('handle alert command', (done) => {
