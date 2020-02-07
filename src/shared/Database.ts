@@ -36,6 +36,7 @@ export interface IDatabase {
     getSize(): number;
     createCollection<T extends ICollection>(type: { new(...args: any[]): T; }, name: string): T
     get(name: string): ICollection;
+    waitAllLoaded(timeout: Seconds): Promise<void>;
 }
 
 class Collection implements ICollection {

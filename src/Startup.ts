@@ -2,7 +2,7 @@
 import { LogManager, ILogger } from "psst-log";
 
 import { MessageProcessor, IFeature } from "./MessageProcessor";
-import { Configuration, Context, Database, UserCollection, ObsController, IConfiguration, IContext, Seconds, LogCollection, EmailAccess } from "./shared";
+import { Configuration, Context, Database, UserCollection, ObsController, IConfiguration, IContext, Seconds, LogCollection, EmailAccess, IDatabase, IObsController } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
 import { Harvest } from "./Features/Harvest";
@@ -17,8 +17,8 @@ export class Startup {
     private config: IConfiguration;
     private logger: ILogger;
     private msgProcessor: MessageProcessor;
-    private db: Database;
-    private obsController: ObsController;
+    private db: IDatabase;
+    private obsController: IObsController;
     private context: IContext;
 
     private loadedCollections = 0;
@@ -38,13 +38,15 @@ export class Startup {
             this.config = new Configuration();
         }
 
-        this.db = new Database(this.config);
-        this.obsController = new ObsController(this.config.getObs());
-
         if (context) {
             this.context = context;
+            this.db = context.getDatabase();
+            this.obsController = context.getObs();
         } else {
-            const email = new EmailAccess();
+            this.db = new Database(this.config);
+            this.obsController = new ObsController(this.config.getObs());
+            
+            const email = new EmailAccess(this.config);
             this.context = new Context(this.config, this.logger, this.db, this.obsController, email);
         }
 

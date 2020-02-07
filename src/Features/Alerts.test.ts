@@ -1,4 +1,4 @@
-import { IAlert, IConfiguration, IContext, IUserCollection, IDatabase, IObsController, ViewerAction } from "../shared";
+import { IAlert, IConfiguration, IContext, IUserCollection, IDatabase, IObsController, ViewerAction, IEmail, IEmailAccess } from "../shared";
 import { mock, MockProxy } from "jest-mock-extended";
 import Alerts from "./Alerts";
 import { ILogger } from "psst-log";
@@ -30,7 +30,10 @@ function getContextMock(): MockProxy<IContext> & IContext {
 
     let db = getDatabaseMock();
     context.getDatabase.mockReturnValue(db);
-    
+
+    let email = mock<IEmailAccess>();
+    context.getEmail.mockReturnValue(email);
+
     context.getObs.mockReturnValue(obs);
 
     return context;
@@ -49,7 +52,6 @@ test('construction', () => {
     expect(context.getDatabase().get("user")).toBe(userDb);
 
     expect(() => new Alerts(context, logger)).not.toThrow();
-    expect(logger.warn).toBeCalledTimes(1);
 });
 
 test('handle alert command', (done) => {
