@@ -1,6 +1,7 @@
 export * from "./Context"
 export * from "./Configuration"
 export * from "./Database"
+export * from "./Email"
 export * from "./FileSystem"
 export * from "./Helper"
 export * from "./MediaPlayer"
