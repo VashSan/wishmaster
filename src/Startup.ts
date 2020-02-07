@@ -21,8 +21,6 @@ export class Startup {
     private obsController: IObsController;
     private context: IContext;
 
-    private loadedCollections = 0;
-    private erroredCollections = 0;
 
     constructor(context?: IContext, config?: IConfiguration, logger?: ILogger) {
         if (logger) {
@@ -45,8 +43,9 @@ export class Startup {
         } else {
             this.db = new Database(this.config);
             this.obsController = new ObsController(this.config.getObs());
-            
+
             const email = new EmailAccess(this.config);
+            email.connect();
             this.context = new Context(this.config, this.logger, this.db, this.obsController, email);
         }
 
