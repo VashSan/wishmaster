@@ -2,7 +2,7 @@
 import { LogManager, ILogger } from "psst-log";
 
 import { MessageProcessor, IFeature } from "./MessageProcessor";
-import { Configuration, Context, Database, UserCollection, ObsController, IConfiguration, IContext, Seconds, LogCollection } from "./shared";
+import { Configuration, Context, Database, UserCollection, ObsController, IConfiguration, IContext, Seconds, LogCollection, Email } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
 import { Harvest } from "./Features/Harvest";
@@ -44,7 +44,8 @@ export class Startup {
         if (context) {
             this.context = context;
         } else {
-            this.context = new Context(this.config, this.logger, this.db, this.obsController);
+            const email = new Email();
+            this.context = new Context(this.config, this.logger, this.db, this.obsController, email);
         }
 
         this.msgProcessor = new MessageProcessor(this.context);

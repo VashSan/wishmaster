@@ -4,6 +4,7 @@ import { Configuration, Context } from ".";
 import { Database } from "./Database";
 import { IObsController } from "./ObsController";
 import * as os from 'os';
+import { IEmail } from "./Email";
 
 function getContext() {
     let config = mock<Configuration>();
@@ -11,8 +12,9 @@ function getContext() {
     let logger = mock<ILogger>();
     let db = mock<Database>();
     let obs = mock<IObsController>();
+    let email = mock<IEmail>();
 
-    return new Context(config, logger, db, obs);
+    return new Context(config, logger, db, obs, email);
 }
 
 test('construction', () => {
@@ -25,6 +27,7 @@ test('get context methods', () => {
     expect(context.getDatabase()).toBeTruthy();
     expect(context.getMediaPlayer()).toBeTruthy();
     expect(context.getObs()).toBeTruthy();
+    expect(context.getEmail()).toBeTruthy();
 });
 
 test('isDeveloper', () => {

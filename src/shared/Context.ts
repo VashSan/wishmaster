@@ -1,6 +1,7 @@
 import { ILogger } from "psst-log";
 import { IConfiguration, IDatabase, IObsController } from "./";
 import { MediaPlayer, IMediaPlayer } from "./MediaPlayer";
+import { IEmail } from "./Email";
 
 export interface IService {
     getServiceName(): string;
@@ -11,9 +12,15 @@ export interface IContext {
     getDatabase(): IDatabase;
     getMediaPlayer(): IMediaPlayer;
     getObs(): IObsController;
+    getEmail(): IEmail;
 }
 
 export class Context implements IContext {
+    private readonly email: IEmail;
+    getEmail(): IEmail {
+        return this.email;
+    }
+
     public readonly config: IConfiguration;
     getConfiguration(): IConfiguration {
         return this.config;
@@ -36,12 +43,13 @@ export class Context implements IContext {
         return this.obs;
     }
 
-    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController) {
+    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController, email: IEmail) {
         this.config = config;
         this.mediaPlayer = new MediaPlayer(this.config);
         this.logger = logger;
         this.db = db;
         this.obs = obs;
+        this.email = email;
     }
 
     public isDeveloper(): boolean {
