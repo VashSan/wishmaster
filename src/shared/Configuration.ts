@@ -18,6 +18,18 @@ export enum AlertAction {
     WriteTextMessage = "WriteTextMessage"
 }
 
+export enum DefeatableFeature {
+    Alerts = "Alerts",
+    Bets = "Bets",
+    EmailConnection = "EmailConnection", // used by alerts, ...
+    MediaPlayer = "MediaPlayer", // used by alerts, ...
+    ObsController = "ObsController", // used by alerts, ...
+    SongRequest = "SongRequest",
+    StaticAnswers = "StaticAnswers",
+    Stomt = "Stomt",
+    UrlFilter = "UrlFilter",
+}
+
 export interface IAlert {
     trigger: AlertTrigger;
     action: AlertAction;
@@ -82,6 +94,9 @@ export interface IMessageProcessorConfig {
 }
 
 export interface IConfiguration extends IService {
+    /** get enabled features */
+    getEnabledFeatures(): DefeatableFeature[];
+
     /** get the host name of the IRC server to connect to  */
     getServer(): string;
 
@@ -192,6 +207,11 @@ export class Configuration implements IConfiguration {
         (<any>Object).assign(this, configObj);
 
         this.rootPath = path.dirname(process.argv[1]);
+    }
+
+    enabledFeatures:  DefeatableFeature[] = [];
+    getEnabledFeatures(): DefeatableFeature[] {
+        return this.enabledFeatures;
     }
 
     server: string = "";

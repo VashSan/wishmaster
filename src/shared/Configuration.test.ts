@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { ILogger } from "psst-log";
-import { Configuration, IConfiguration } from "./Configuration";
+import { Configuration, IConfiguration, DefeatableFeature } from "./Configuration";
 import { mock, MockProxy } from "jest-mock-extended";
 import { IFileSystem } from "./FileSystem";
 
@@ -76,6 +76,7 @@ test('properties', () => {
     let logger = mock<ILogger>();
     fileSystem.exists.mockReturnValue(true);
     fileSystem.readAll.mockReturnValueOnce(`{ 
+        "enabledFeatures": ["Alerts"],
         "server": "a", 
         "nickname": "b", 
 	    "password": "c",
@@ -123,4 +124,6 @@ test('properties', () => {
     expect(c.getUrlWhiteList()).toStrictEqual([]);
     expect(c.getStaticAnswers()).toStrictEqual([]);
     expect(c.getAlerts()).toStrictEqual([]);
+    
+    expect(c.getEnabledFeatures()).toStrictEqual([DefeatableFeature.Alerts]);
 })
