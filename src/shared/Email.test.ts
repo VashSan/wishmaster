@@ -7,7 +7,7 @@ jest.mock("imap-simple");
 import IMAP = require("imap-simple");
 import { IEmailConfig } from "./Configuration";
 import { mocked } from "ts-jest/utils";
-import { Message } from "../ChatClient";
+import { Message } from "./ChatClient";
 
 let config: MockProxy<IConfiguration> & IConfiguration;
 let emailConfig: MockProxy<IEmailConfig> & IEmailConfig;

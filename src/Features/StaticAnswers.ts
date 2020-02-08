@@ -1,7 +1,7 @@
 import { ILogger, LogManager } from "psst-log";
 
 import { IStaticAnswer, IContext, IgnoreDuringTimeout, Seconds, IMediaPlayer } from "../shared";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
 type StaticAnswerTimeout = IgnoreDuringTimeout<IStaticAnswer>;

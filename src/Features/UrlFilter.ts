@@ -2,7 +2,7 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext, TagReader } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 
 /** clears a users chat when posting a not white listed url */
 export class UrlFilter extends FeatureBase {

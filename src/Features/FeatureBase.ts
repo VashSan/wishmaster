@@ -1,6 +1,6 @@
-import { IFeatureResponse, ResponseCallback, IFeature } from "../MessageProcessor";
+import { IFeatureResponse, ResponseCallback, IFeature } from "../shared/MessageProcessor";
 import { IConfiguration } from "../shared";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 
 export abstract class FeatureBase implements IFeature {
     private sendResponseCallback: ResponseCallback | null = null;

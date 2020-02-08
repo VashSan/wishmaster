@@ -2,7 +2,7 @@ import Startup from "./Startup";
 import { IFileSystem, IConfiguration, IContext, IEmailAccess, IEmail, IDatabase } from "./shared";
 import { mock, MockProxy } from "jest-mock-extended";
 import { ILogger } from "psst-log";
-import { IMessageProcessor } from "./MessageProcessor";
+import { IMessageProcessor } from "./shared/MessageProcessor";
 
 let fs: MockProxy<IFileSystem> & IFileSystem;
 let config: MockProxy<IConfiguration> & IConfiguration;

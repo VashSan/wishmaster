@@ -1,7 +1,7 @@
 import { ILogger, LogManager } from "psst-log";
 
 import { IAlert, IEmailAccess, IObsController, AlertAction, IMediaPlayer, Sound, IDatabase, IContext, IUserCollection, IUserAction } from "../shared";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 import { FeatureBase } from "./FeatureBase";
 
 class AlertConst {

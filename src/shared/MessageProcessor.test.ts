@@ -1,7 +1,6 @@
 import { MessageProcessor, IFeature, ResponseCallback } from "./MessageProcessor";
-import { IContext, IConfiguration } from "./shared";
+import { IContext, IConfiguration, IChatClient, IMessage } from ".";
 import { mock, MockProxy } from "jest-mock-extended";
-import { IChatClient, IMessage } from "./ChatClient";
 import { ILogger } from "psst-log";
 
 describe('MessageProcessor', () => {

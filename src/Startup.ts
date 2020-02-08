@@ -1,7 +1,7 @@
 
 import { LogManager, ILogger } from "psst-log";
 
-import { MessageProcessor, IFeature, IMessageProcessor } from "./MessageProcessor";
+import { MessageProcessor, IFeature, IMessageProcessor } from "./shared/MessageProcessor";
 import {
     Configuration, Context, Database, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
     IConfiguration, IContext, IDatabase, IObsController, IEmailAccess, DefeatableFeature

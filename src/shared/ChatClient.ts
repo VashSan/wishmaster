@@ -1,4 +1,4 @@
-///<reference path="./sub/irc-types/irc.d.ts" />
+///<reference path="../sub/irc-types/irc.d.ts" />
 
 import { isNullOrUndefined } from "util";
 import * as IRC from "irc";

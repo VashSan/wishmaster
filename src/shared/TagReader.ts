@@ -1,4 +1,4 @@
-import { ITags } from "../ChatClient";
+import { ITags } from "./ChatClient";
 import { ILogger, LogManager } from "psst-log";
 
 export enum UserType {

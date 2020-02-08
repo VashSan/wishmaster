@@ -1,7 +1,9 @@
 import { isNullOrUndefined } from "util";
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IConfiguration, IMessageProcessorConfig, Seconds } from "./shared";
-import { TwitchChatClient, IChatClient, IMessage } from "./ChatClient";
+import {
+    TwitchChatClient, Seconds,
+    IChatClient, IMessage, IContext, IConfiguration, IMessageProcessorConfig
+} from ".";
 
 export type ResponseCallback = (error: string | null, response: IFeatureResponse) => void;
 

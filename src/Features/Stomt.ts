@@ -3,7 +3,7 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 
 /** Just for testing purposes this Feature replys all messages when triggered. */
 export class Stomt extends FeatureBase {

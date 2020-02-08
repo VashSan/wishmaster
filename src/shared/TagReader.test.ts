@@ -1,7 +1,7 @@
 import { mock } from "jest-mock-extended";
 import { ILogger } from "psst-log";
 import { TagReader, Emote, UserType } from "./TagReader";
-import { Tags, ITags } from "../ChatClient";
+import { Tags, ITags } from "./ChatClient";
 
 test('construction', () => {
     let logger = mock<ILogger>();

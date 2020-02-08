@@ -2,7 +2,7 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 
 enum State {
     Idle,

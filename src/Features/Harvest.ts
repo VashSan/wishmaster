@@ -2,8 +2,8 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext, IUserCollection, ILogCollection } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IFeature } from "../MessageProcessor";
-import { IMessage } from "../ChatClient";
+import { IFeature } from "../shared/MessageProcessor";
+import { IMessage } from "../shared/ChatClient";
 
 /** Pushes information into the database */
 export class Harvest extends FeatureBase implements IFeature {

@@ -4,10 +4,10 @@ import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import { ILogger } from "psst-log";
 
-import * as mp from "../MessageProcessor";
+import * as mp from "../shared/MessageProcessor";
 import { Context, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "../shared/ChatClient";
 
 class SpotifyState {
     accessToken: string = "";

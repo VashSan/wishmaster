@@ -3,7 +3,7 @@ import { isNullOrUndefined } from "util";
 import { IConfiguration } from "./Configuration";
 import { ILogger, LogManager } from "psst-log";
 import { Seconds } from "./Helper";
-import { IMessage } from "../ChatClient";
+import { IMessage } from "./ChatClient";
 import { TagReader } from ".";
 
 type CollectionMap = Map<string, ICollection>;

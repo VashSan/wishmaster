@@ -1,7 +1,7 @@
 import * as IRC from "irc";
 import { mock, MockProxy } from "jest-mock-extended"
 import { ILogger } from "psst-log";
-import { TwitchChatClient, IChatClient, IMessage, Tags } from "./ChatClient";
+import { TwitchChatClient, IChatClient, IMessage, Tags } from "../shared";
 
 describe('Tags', () => {
     test('construction', () => {
