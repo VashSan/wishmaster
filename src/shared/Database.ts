@@ -161,7 +161,7 @@ export enum ViewerAction {
     Host = "Host",
     Follow = "Follow"
 }
-type NameAndActionArray = { name: string, lastAction: number, lastActionDate: Date }[];
+
 export class UserCollection extends Collection implements IUserCollection {
     newMessage(message: IMessage): void {
         if (!message.tags){
