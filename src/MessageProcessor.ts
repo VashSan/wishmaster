@@ -15,8 +15,12 @@ export interface IFeatureResponse {
     message: IMessage;
 }
 
+export interface IMessageProcessor {
+    connect(): void;
+}
+
 /** Takes care of distributing chat messages to the Feature classes */
-export class MessageProcessor {
+export class MessageProcessor implements IMessageProcessor {
     private featureMap = new Map<string, Set<IFeature>>();
     private client: IChatClient;
     private context: IContext;
@@ -66,11 +70,11 @@ export class MessageProcessor {
 
     public connect() {
         let timersToCreate = [
-            {method: this.resetMessageCount, timeout: this.myConfig.responseIntervalInMilliseconds},
-            {method: this.processDelayedMessages, timeout: this.myConfig.delayIntervalInMilliseconds}
+            { method: this.resetMessageCount, timeout: this.myConfig.responseIntervalInMilliseconds },
+            { method: this.processDelayedMessages, timeout: this.myConfig.delayIntervalInMilliseconds }
         ];
-        
-        timersToCreate.forEach((t)=>{
+
+        timersToCreate.forEach((t) => {
             let timer = setInterval(t.method.bind(this), t.timeout);
             this.timerHandles.push(timer);
         });
@@ -79,7 +83,7 @@ export class MessageProcessor {
     }
 
     public disconnect() {
-        this.timerHandles.forEach((timer)=>{
+        this.timerHandles.forEach((timer) => {
             clearInterval(timer);
         });
         // TODO this.client.disconnect
