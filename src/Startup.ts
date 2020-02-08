@@ -137,31 +137,40 @@ export class Startup {
 
     private getEnabledFeatures() {
         const set = new Set<IFeature>();
+        const log = this.logger.log;
 
         set.add(new Harvest(this.context));
 
         if (this.features.has(DefeatableFeature.Alerts)) {
+            log("Alerts enabled");
             set.add(new Alerts(this.context));
         }
 
         if (this.features.has(DefeatableFeature.StaticAnswers)) {
+            log("Static Answers enabled");
             set.add(new StaticAnswers(this.context));
         }
 
         if (this.features.has(DefeatableFeature.UrlFilter)) {
+            log("URL Filter enabled");
             set.add(new UrlFilter(this.context));
         }
 
         if (this.features.has(DefeatableFeature.Bets)) {
+            log("Bets enabled");
             set.add(new Bets(this.context));
         }
 
         if (this.features.has(DefeatableFeature.Stomt)) {
+            // log("Stomt enabled");
             // set.add(new Stomt(this.context));
         }
 
         if (this.features.has(DefeatableFeature.SongRequest)) {
-            set.add(new SongRequest(this.context));
+            log("Song Request enabled");
+            const sr = new SongRequest(this.context);
+            set.add(sr);
+            sr.connect();
         }
 
         return set;
