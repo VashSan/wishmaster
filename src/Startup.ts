@@ -1,7 +1,7 @@
 
 import { LogManager, ILogger } from "psst-log";
 
-import { MessageProcessor, IFeature } from "./MessageProcessor";
+import { MessageProcessor, IFeature, IMessageProcessor } from "./MessageProcessor";
 import {
     Configuration, Context, Database, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
     IConfiguration, IContext, IDatabase, IObsController, IEmailAccess, DefeatableFeature
@@ -19,7 +19,7 @@ import { UrlFilter } from "./Features/UrlFilter";
 export class Startup {
     private config: IConfiguration;
     private logger: ILogger;
-    private msgProcessor: MessageProcessor;
+    private msgProcessor: IMessageProcessor;
     private db: IDatabase;
     private email: IEmailAccess;
     private obsController: IObsController;
@@ -27,7 +27,7 @@ export class Startup {
     private readonly features: Set<DefeatableFeature>;
 
 
-    constructor(context?: IContext, config?: IConfiguration, logger?: ILogger, email?: IEmailAccess) {
+    constructor(context?: IContext, config?: IConfiguration, logger?: ILogger, msgProcessor?: IMessageProcessor) {
         if (logger) {
             this.logger = logger;
         } else {
@@ -43,12 +43,6 @@ export class Startup {
 
         this.features = new Set<DefeatableFeature>(this.config.getEnabledFeatures());
 
-        if (email) {
-            this.email = email;
-        } else {
-            this.email = new EmailAccess(this.config);
-        }
-
         if (context) {
             this.context = context;
             this.db = context.getDatabase();
@@ -57,10 +51,15 @@ export class Startup {
         } else {
             this.db = new Database(this.config);
             this.obsController = new ObsController(this.config.getObs());
+            this.email = new EmailAccess(this.config);
             this.context = new Context(this.config, this.logger, this.db, this.obsController, this.email);
         }
 
-        this.msgProcessor = new MessageProcessor(this.context);
+        if (msgProcessor) {
+            this.msgProcessor = msgProcessor;
+        } else {
+            this.msgProcessor = new MessageProcessor(this.context);
+        }
     }
 
     public main(): number {
@@ -124,32 +123,56 @@ export class Startup {
         this.logger.log("Connecting to Twitch Chat");
         this.setupChat();
 
-        this.logger.log("Console will listen to your commands");
         this.setupConsole();
     }
 
     private setupChat() {
+        let featureList = this.getEnabledFeatures();
 
-        let featureList = new Set<IFeature>([
-            new Alerts(this.context),
-            new Harvest(this.context),
-            new StaticAnswers(this.context),
-            new UrlFilter(this.context),
-            // new Stomt(context),
-            // new SongRequest(context),
-            new Bets(this.context)
-        ]);
-
-        this.msgProcessor = new MessageProcessor(this.context);
         this.msgProcessor.connect();
         for (const f of featureList) {
             this.msgProcessor.registerFeature(f);
         }
     }
 
+    private getEnabledFeatures() {
+        const set = new Set<IFeature>();
+
+        set.add(new Harvest(this.context));
+
+        if (this.features.has(DefeatableFeature.Alerts)) {
+            set.add(new Alerts(this.context));
+        }
+
+        if (this.features.has(DefeatableFeature.StaticAnswers)) {
+            set.add(new StaticAnswers(this.context));
+        }
+
+        if (this.features.has(DefeatableFeature.UrlFilter)) {
+            set.add(new UrlFilter(this.context));
+        }
+
+        if (this.features.has(DefeatableFeature.Bets)) {
+            set.add(new Bets(this.context));
+        }
+
+        if (this.features.has(DefeatableFeature.Stomt)) {
+            // set.add(new Stomt(this.context));
+        }
+
+        if (this.features.has(DefeatableFeature.SongRequest)) {
+            // set.add(new SongRequest(this.context));
+        }
+
+        return set;
+    }
+
     private setupConsole() {
-        var stdin = process.openStdin();
-        stdin.addListener("data", this.consoleCallback.bind(this));
+        if (this.features.has(DefeatableFeature.Console)) {
+            this.logger.log("Console will listen to your commands");
+            var stdin = process.openStdin();
+            stdin.addListener("data", this.consoleCallback.bind(this));
+        }
     }
 
     private consoleCallback(d: object) {
