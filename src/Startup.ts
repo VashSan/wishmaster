@@ -161,7 +161,7 @@ export class Startup {
         }
 
         if (this.features.has(DefeatableFeature.SongRequest)) {
-            // set.add(new SongRequest(this.context));
+            set.add(new SongRequest(this.context));
         }
 
         return set;

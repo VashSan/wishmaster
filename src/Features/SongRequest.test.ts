@@ -1,24 +1,20 @@
-import * as os from "os";
-import * as path from "path";
-
 import { mock } from "jest-mock-extended";
-import { Context, Configuration, IFileSystem, IEmailAccess, IDatabase, IObsController } from "../shared";
+import { IConfiguration, IContext, ISongRequestConfig } from "../shared";
 import { SongRequest } from "./SongRequest";
 import { ILogger } from "psst-log";
 
 
 test('construction with no init', () => {
-    // Arrange
-    let configDir = path.join(process.env.localappdata || os.homedir(), '.wishmaster');
-    let fs = mock<IFileSystem>();
-    fs.exists.mockReturnValue(true);
-    fs.readAll.mockReturnValueOnce("{}");
+    // Arrange   
+    let logger = mock<ILogger>();
+    let songConfig = mock<ISongRequestConfig>();
+
+    let config = mock<IConfiguration>();
+    config.getSongRequest.mockReturnValue(songConfig);
     
-    let configuration = new Configuration(configDir, fs);
-    configuration.songRequest = null;
-    
-    let context = new Context(configuration, mock<ILogger>(), mock<IDatabase>(), mock<IObsController>(), mock<IEmailAccess>());
-    
+    let context = mock<IContext>();
+    context.getConfiguration.mockReturnValue(config);
+
     // Act & Assert
-    expect(() => new SongRequest(context)).not.toThrow();
+    expect(() => new SongRequest(context, logger)).not.toThrow();
 });

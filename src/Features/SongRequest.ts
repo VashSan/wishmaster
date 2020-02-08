@@ -2,12 +2,15 @@ import * as express from "express";
 import * as request from "request";
 import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
-import { ILogger } from "psst-log";
+import { ILogger, LogManager } from "psst-log";
 
-import * as mp from "../shared/MessageProcessor";
-import { Context, ISpotifyConfig } from "../shared";
+import { IContext, IMessage, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { IMessage } from "../shared/ChatClient";
+
+export interface ISongRequest {
+    /** Invoke first to initialize the connection to spotify api */
+    connect(): void;
+}
 
 class SpotifyState {
     accessToken: string = "";
@@ -15,11 +18,13 @@ class SpotifyState {
 }
 
 /** Enqueue songs to a playlist */
-export class SongRequest extends FeatureBase implements mp.IFeature {
-    private spotifyConfig: ISpotifyConfig;
-    private spotify: SpotifyState = new SpotifyState();
-    private logger: ILogger;
-    private app: express.Express;
+export class SongRequest extends FeatureBase implements ISongRequest {
+    private readonly spotifyConfig: ISpotifyConfig;
+    private readonly spotify: SpotifyState = new SpotifyState();
+    private readonly logger: ILogger;
+    private readonly app: express.Express;
+
+    private isConnected: boolean = false;
 
     private get isSpotifyEnabled(): boolean {
         return this.spotifyConfig.listenPort > 0
@@ -29,9 +34,14 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
             && this.spotifyConfig.secretKey != "";
     }
 
-    constructor(context: Context) {
-        super(context.config);
-        this.logger = context.logger;
+    constructor(context: IContext, logger?: ILogger) {
+        super(context.getConfiguration());
+
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = LogManager.getLogger();
+        }
 
         this.spotifyConfig = {
             listenPort: 0,
@@ -43,8 +53,13 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
 
         this.app = express();
         let songRequestConfig = this.config.getSongRequest();
-        if ( songRequestConfig != null) {
+        if (songRequestConfig != null) {
             this.spotifyConfig = songRequestConfig.spotify;
+        }
+    }
+
+    public connect(): void {
+        if (!this.isConnected && this.isSpotifyEnabled) {
             this.initServer();
         }
     }
@@ -172,6 +187,7 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
 
         this.logger.info(`Songrequest listening on ${this.spotifyConfig.listenPort}`);
         this.app.listen(this.spotifyConfig.listenPort);
+        this.isConnected = true;
     }
 
     /**
@@ -179,7 +195,7 @@ export class SongRequest extends FeatureBase implements mp.IFeature {
      * @param  {number} length The length of the string
      * @return {string} The generated string
      */
-    private generateRandomString(length: number) {
+    private generateRandomString(length: number): string {
         var text = '';
         var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
