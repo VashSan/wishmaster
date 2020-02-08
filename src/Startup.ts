@@ -137,7 +137,7 @@ export class Startup {
 
     private getEnabledFeatures() {
         const set = new Set<IFeature>();
-        const log = this.logger.log;
+        const log = this.logger.log.bind(this.logger);
 
         set.add(new Harvest(this.context));
 

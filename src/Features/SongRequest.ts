@@ -61,6 +61,12 @@ export class SongRequest extends FeatureBase implements ISongRequest {
     public connect(): void {
         if (!this.isConnected && this.isSpotifyEnabled) {
             this.initServer();
+        } else {
+            if (this.isConnected)
+                this.logger.warn("Spotify is already connected");
+            else {
+                this.logger.warn("Spotify is not configured correctly");
+            }
         }
     }
 
