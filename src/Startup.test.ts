@@ -1,5 +1,5 @@
 import Startup from "./Startup";
-import { IFileSystem, IConfiguration, IContext } from "./shared";
+import { IFileSystem, IConfiguration, IContext, IEmailAccess } from "./shared";
 import { mock } from "jest-mock-extended";
 import { ILogger } from "psst-log";
 
@@ -16,5 +16,7 @@ test('construction', ()=>{
     let context = mock<IContext>();
     context.getConfiguration.mockReturnValue(config);
 
-    expect(()=>new Startup(context, config, logger)).not.toThrow();
+    let email = mock<IEmailAccess>();
+
+    expect(()=>new Startup(context, config, logger, email)).not.toThrow();
 });
