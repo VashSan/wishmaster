@@ -58,7 +58,9 @@ export class EmailAccess implements IEmailAccess {
         };
 
         function connectionCallback(err: any): void {
-            that.logger.error(err);
+            if (err) {
+                that.logger.warn("Email connection error, some features may not work: " + err);
+            }
         }
 
         IMAP.connect(config)
