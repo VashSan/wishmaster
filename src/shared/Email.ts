@@ -1,4 +1,4 @@
-import * as IMAP from "imap-simple";
+import IMAP = require("imap-simple");
 import { ILogger, LogManager } from "psst-log";
 import { IConfiguration, IEmailConfig } from ".";
 
@@ -61,13 +61,17 @@ export class EmailAccess implements IEmailAccess {
             that.logger.error(err);
         }
 
-        IMAP.connect(config).then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
-            that.logger.log("Connected to IMAP");
+        IMAP.connect(config)
+            .then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
+                that.logger.log("Connected to IMAP");
 
-            that.connection = connection;
+                that.connection = connection;
 
-            return that.newMail(false);
-        }, connectionCallback);
+                return that.newMail(false);
+            }, connectionCallback)
+            .catch((reason) => {
+                this.logger.warn("Could not connect to IMAP server", reason);
+            });
     }
 
     private triggerList: IEmailTrigger[] = [];
