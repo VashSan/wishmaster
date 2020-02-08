@@ -17,6 +17,7 @@ export interface IFeatureResponse {
 
 export interface IMessageProcessor {
     connect(): void;
+    registerFeature(plugin: IFeature): void;
 }
 
 /** Takes care of distributing chat messages to the Feature classes */

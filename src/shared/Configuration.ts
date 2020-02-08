@@ -28,6 +28,7 @@ export enum DefeatableFeature {
     StaticAnswers = "StaticAnswers",
     Stomt = "Stomt",
     UrlFilter = "UrlFilter",
+    Console = "Console"
 }
 
 export interface IAlert {
