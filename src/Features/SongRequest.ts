@@ -4,7 +4,7 @@ import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import { ILogger, LogManager } from "psst-log";
 
-import { IContext, IMessage, ISpotifyConfig } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Generate } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 
 export interface ISongRequest {
@@ -90,7 +90,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
 
         this.app.get('/login', function (req, res) {
 
-            var state = that.generateRandomString(16);
+            var state = Generate.RandomString(16);
             res.cookie(stateKey, state);
 
             // your application requests authorization
@@ -196,18 +196,5 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         this.isConnected = true;
     }
 
-    /**
-     * Generates a random string containing numbers and letters
-     * @param  {number} length The length of the string
-     * @return {string} The generated string
-     */
-    private generateRandomString(length: number): string {
-        var text = '';
-        var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-        for (var i = 0; i < length; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
-    };
+    
 }
