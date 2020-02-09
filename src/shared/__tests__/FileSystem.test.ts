@@ -15,7 +15,7 @@ describe('path functions', () => {
     // jest.mock('path');
     // const pathMock = mocked(path, true);
 
-    test('resolve', () => {
+    test('joinPaths', () => {
         const file = new FileSystem() as IFileSystem;
 
         let pathA = "/test";
@@ -50,13 +50,33 @@ describe('file functions', () => {
     });
 
     test('read all', () => {
+        // Arrange
         const file = new FileSystem() as IFileSystem;
         const existingFile = tmp.fileSync();
         const testData = "ABC123";
         fs.writeFileSync(existingFile.name, testData);
 
+        // Act
         const result = file.readAll(existingFile.name);
         existingFile.removeCallback();
+
+        // Assert
+        expect(result).toBe(testData);
+    });
+
+    test('write all', () => {
+        // Arrange
+        const file = new FileSystem() as IFileSystem;
+        const existingFile = tmp.fileSync();
+        const testData = "ABC123";
+        
+        // Act
+        file.writeAll(existingFile.name, testData);
+        existingFile.removeCallback();
+
+        // Assert
+        let buffer: Buffer = fs.readFileSync(existingFile.name);
+        let result = buffer.toString();
 
         expect(result).toBe(testData);
     });
