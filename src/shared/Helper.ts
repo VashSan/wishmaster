@@ -55,4 +55,9 @@ export class Generate {
         }
         return text;
     };
+
+    public static Base64(source: string): string {
+        const buffer = Buffer.from(source);
+        return buffer.toString('base64');
+    }
 }

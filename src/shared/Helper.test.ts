@@ -1,5 +1,5 @@
 import { IgnoreDuringTimeout, Seconds, Generate } from "./";
-import "./__tests__/custom-matcher";
+import "./custom-matcher";
 
 describe('seconds', () => {
     test('milliseconds', () => {
@@ -59,5 +59,10 @@ describe('Generate', () => {
         }
 
         expect(results).toBeDistinct();
+    });
+
+    test('Base64', () => {
+        const result = Generate.Base64("Wishmaster");
+        expect(result).toBe("V2lzaG1hc3Rlcg==");
     });
 });
