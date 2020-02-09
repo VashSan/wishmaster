@@ -2,38 +2,61 @@ import * as request from "request";
 import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import * as express from "express";
-import { ISpotifyConfig, Generate } from "../../shared";
+import { ISpotifyConfig, Generate, Hours } from "../../shared";
+import * as open from "open";
 
-export interface IAccessToken {
-    refreshToken: string;
-    accessToken: string;
+export interface IWebAuth {
+    getAccessToken(): string;
 }
 
 export class SpotifyAuth {
     private readonly stateKey = 'spotify_auth_state';
 
+    private readonly refresh = "refresh_token";
+    private readonly redirect = "callback";
+    private readonly login = "login";
+
     private readonly app: express.Express;
     private readonly config: ISpotifyConfig;
+
+    private accessTokenDate: Date = new Date(0);
     private accessToken: string = "";
     private refreshToken: string = "";
+    
 
     constructor(config: ISpotifyConfig) {
         this.config = config;
         this.app = express();
+        this.startServer();
     }
 
-    public getToken(): IAccessToken {
-        return {
-            accessToken: this.accessToken,
-            refreshToken: this.refreshToken
-        };
+    public getAccessToken(): string {
+        if (this.isTokenExpired()){
+            //refresh
+        }
+        return this.accessToken;
+    }
+
+    private isTokenExpired(): boolean {
+        return Date.now() > 
+            this.accessTokenDate.getTime() + new Hours(1).inMilliseconds();
     }
 
     public authenticate() {
-        
+        open(this.getBaseUrl());
     }
 
-    public startServer() {
+    private getBaseUrl() {
+        const c = this.config;
+        const url = `${c.authProtocol}://${c.authHost}:${c.authPort}`;
+        return url;
+    }
+    
+    private getRedirectUrl() {
+        return `${this.getBaseUrl()}/${this.redirect}`;
+    }
+
+    private startServer() {
         this.initHttpServer();
 
         this.defineLoginRedirect();
@@ -42,7 +65,7 @@ export class SpotifyAuth {
 
         this.defineRefreshToken();
 
-        this.app.listen(this.config.listenPort);
+        this.app.listen(this.config.authPort);
     }
 
     private getEncodedClientIdAndKey(): string {
@@ -60,7 +83,7 @@ export class SpotifyAuth {
 
     /** requests authorization from spotify */
     private defineLoginRedirect() {
-        this.app.get('/login', (req, res) => {
+        this.app.get('/' + this.login, (req, res) => {
             var state = Generate.RandomString(16);
             res.cookie(this.stateKey, state);
 
@@ -70,7 +93,7 @@ export class SpotifyAuth {
                     response_type: 'code',
                     client_id: this.config.clientId,
                     scope: scope,
-                    redirect_uri: this.config.redirectUri,
+                    redirect_uri: this.getRedirectUrl(),
                     state: state
                 }));
         });
@@ -78,7 +101,7 @@ export class SpotifyAuth {
 
     /** The callback address for spotify */
     private defineCallbackAddress() {
-        this.app.get('/callback', (req, res) => {
+        this.app.get('/' + this.redirect, (req, res) => {
             // your application requests refresh and access tokens
             // after checking the state parameter
             var code = req.query.code || null;
@@ -95,7 +118,7 @@ export class SpotifyAuth {
                     url: 'https://accounts.spotify.com/api/token',
                     form: {
                         code: code,
-                        redirect_uri: this.config.redirectUri,
+                        redirect_uri: this.getRedirectUrl(),
                         grant_type: 'authorization_code'
                     },
                     headers: {
@@ -136,7 +159,7 @@ export class SpotifyAuth {
 
     /** requesting access token from refresh token */
     private defineRefreshToken() {
-        this.app.get('/refresh_token', (req, res) => {
+        this.app.get('/' + this.refresh, (req, res) => {
 
             var refresh_token = req.query.refresh_token;
             var authOptions = {
