@@ -6,10 +6,18 @@ import { ISpotifyConfig, Generate, Hours } from "../../shared";
 import * as open from "open";
 
 export interface IWebAuth {
-    getAccessToken(): string;
+    /**
+     * Open the authentication 'app'
+     */
+    authenticate(): void;
+
+    /**
+     * Get a valid token to authenticate the app against.
+     */
+    getAccessToken(): Promise<string>;
 }
 
-export class SpotifyAuth {
+export class SpotifyAuth implements IWebAuth {
     private readonly stateKey = 'spotify_auth_state';
 
     private readonly refresh = "refresh_token";
@@ -22,7 +30,7 @@ export class SpotifyAuth {
     private accessTokenDate: Date = new Date(0);
     private accessToken: string = "";
     private refreshToken: string = "";
-    
+
 
     constructor(config: ISpotifyConfig) {
         this.config = config;
@@ -30,20 +38,25 @@ export class SpotifyAuth {
         this.startServer();
     }
 
-    public getAccessToken(): string {
-        if (this.isTokenExpired()){
-            //refresh
-        }
-        return this.accessToken;
+    public authenticate() {
+        open(this.getBaseUrl());
+    }
+
+    public getAccessToken(): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            if (this.isTokenExpired()) {
+                this.refreshAccessToken(this.refreshToken)
+                    .then(() => resolve(this.accessToken))
+                    .catch((reason) => reject(reason));
+            } else {
+                resolve(this.accessToken);
+            }
+        });
     }
 
     private isTokenExpired(): boolean {
-        return Date.now() > 
+        return Date.now() >
             this.accessTokenDate.getTime() + new Hours(1).inMilliseconds();
-    }
-
-    public authenticate() {
-        open(this.getBaseUrl());
     }
 
     private getBaseUrl() {
@@ -51,7 +64,7 @@ export class SpotifyAuth {
         const url = `${c.authProtocol}://${c.authHost}:${c.authPort}`;
         return url;
     }
-    
+
     private getRedirectUrl() {
         return `${this.getBaseUrl()}/${this.redirect}`;
     }
@@ -162,25 +175,43 @@ export class SpotifyAuth {
         this.app.get('/' + this.refresh, (req, res) => {
 
             var refresh_token = req.query.refresh_token;
+            this.refreshAccessToken(refresh_token)
+                .then(() => {
+                    res.send({
+                        'access_token': this.accessToken
+                    });
+                })
+                .catch((reason) => {
+                    res.redirect('/#' +
+                        querystring.stringify({
+                            error: reason
+                        }));
+                });
+
+        });
+    }
+
+
+    private refreshAccessToken(currentRefreshToken: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             var authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 headers: { 'Authorization': 'Basic ' + this.getEncodedClientIdAndKey() },
                 form: {
                     grant_type: 'refresh_token',
-                    refresh_token: refresh_token
+                    refresh_token: currentRefreshToken
                 },
                 json: true
             };
-
             request.post(authOptions, (error, response, body) => {
                 if (!error && response.statusCode === 200) {
                     this.accessToken = body.access_token;
-                    res.send({
-                        'access_token': this.accessToken
-                    });
+                    resolve();
+                } else {
+                    reject(`Status ${response.statusCode}: ${error}`);
                 }
             });
         });
-    }
 
+    }
 }
