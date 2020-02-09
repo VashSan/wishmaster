@@ -2,6 +2,8 @@ import { ILogger } from "psst-log";
 import { IConfiguration, IDatabase, IObsController } from "./";
 import { MediaPlayer, IMediaPlayer } from "./MediaPlayer";
 import { IEmailAccess } from "./Email";
+import { IFileSystem } from "./FileSystem";
+import { textSpanIntersectsWith } from "typescript";
 
 export interface IService {
     getServiceName(): string;
@@ -13,12 +15,18 @@ export interface IContext {
     getMediaPlayer(): IMediaPlayer;
     getObs(): IObsController;
     getEmail(): IEmailAccess;
+    getFileSystem(): IFileSystem;
 }
 
 export class Context implements IContext {
     private readonly email: IEmailAccess;
     getEmail(): IEmailAccess {
         return this.email;
+    }
+
+    private readonly fileSystem: IFileSystem;
+    getFileSystem(): IFileSystem {
+        return this.fileSystem;
     }
 
     public readonly config: IConfiguration;
@@ -43,13 +51,14 @@ export class Context implements IContext {
         return this.obs;
     }
 
-    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController, email: IEmailAccess) {
+    constructor(config: IConfiguration, logger: ILogger, db: IDatabase, obs: IObsController, email: IEmailAccess, fs: IFileSystem) {
         this.config = config;
         this.mediaPlayer = new MediaPlayer(this.config);
         this.logger = logger;
         this.db = db;
         this.obs = obs;
         this.email = email;
+        this.fileSystem = fs;
     }
 
     public isDeveloper(): boolean {
