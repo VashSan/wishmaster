@@ -76,11 +76,13 @@ export interface ISongRequestConfig {
 }
 
 export interface ISpotifyConfig {
-    listenPort: number;
+    authProtocol: string;
+    authHost: string;
+    authPort: number;
+    tokenExpiresInHours: number;
     secretKey: string;
     clientId: string;
     scopes: string[];
-    redirectUri: string;
 }
 
 export interface IMessageProcessorConfig {

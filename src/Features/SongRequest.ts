@@ -2,7 +2,7 @@
 
 import { ILogger, LogManager } from "psst-log";
 
-import { IContext, IMessage, ISpotifyConfig, Generate } from "../shared";
+import { IContext, IMessage, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { SpotifyAuth } from "./SongRequest/SpotifyAuth";
 
@@ -20,9 +20,11 @@ export class SongRequest extends FeatureBase implements ISongRequest {
     private isConnected: boolean = false;
 
     private get isSpotifyEnabled(): boolean {
-        return this.spotifyConfig.listenPort > 0
+        return this.spotifyConfig.authPort > 0
+            && this.spotifyConfig.authHost != ""
+            && this.spotifyConfig.authProtocol != ""
+            && this.spotifyConfig.tokenExpiresInHours > 0
             && this.spotifyConfig.clientId != ""
-            && this.spotifyConfig.redirectUri != ""
             && this.spotifyConfig.scopes.length > 0
             && this.spotifyConfig.secretKey != "";
     }
@@ -37,11 +39,13 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         }
 
         this.spotifyConfig = {
-            listenPort: 0,
+            authProtocol: "",
+            authHost: "",
+            authPort: 0,
+            tokenExpiresInHours: 0,
             secretKey: "",
             clientId: "",
             scopes: [],
-            redirectUri: ""
         };
 
         let songRequestConfig = this.config.getSongRequest();
@@ -62,7 +66,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
             }
         }
 
-        this.logger.info(`Songrequest listening on ${this.spotifyConfig.listenPort}`);
+        //this.logger.info(`Songrequest listening on ${this.spotifyConfig.listenPort}`);
         this.isConnected = true; // TODO wait for authentication
     }
 
@@ -76,6 +80,6 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         this.sendResponse(response);
     }
 
- 
+
 
 }
