@@ -3,8 +3,8 @@ import { LogManager, ILogger } from "psst-log";
 
 import { MessageProcessor, IFeature, IMessageProcessor } from "./shared/MessageProcessor";
 import {
-    Configuration, Context, Database, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
-    IConfiguration, IContext, IDatabase, IObsController, IEmailAccess, DefeatableFeature
+    Configuration, Context, Database, DefeatableFeature, FileSystem, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
+    IConfiguration, IContext, IDatabase, IObsController, IEmailAccess, IFileSystem
 } from "./shared";
 import { Alerts } from "./Features/Alerts";
 import { Bets } from "./Features/Bets";
@@ -25,6 +25,7 @@ export class Startup {
     private obsController: IObsController;
     private context: IContext;
     private readonly features: Set<DefeatableFeature>;
+    private readonly fs: IFileSystem;
 
 
     constructor(context?: IContext, config?: IConfiguration, logger?: ILogger, msgProcessor?: IMessageProcessor) {
@@ -48,11 +49,13 @@ export class Startup {
             this.db = context.getDatabase();
             this.obsController = context.getObs();
             this.email = context.getEmail();
+            this.fs = context.getFileSystem();
         } else {
             this.db = new Database(this.config);
             this.obsController = new ObsController(this.config.getObs());
             this.email = new EmailAccess(this.config);
-            this.context = new Context(this.config, this.logger, this.db, this.obsController, this.email);
+            this.fs = new FileSystem();
+            this.context = new Context(this.config, this.logger, this.db, this.obsController, this.email, this.fs);
         }
 
         if (msgProcessor) {
