@@ -16,6 +16,7 @@ export interface ISongRequest {
 export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
+    private readonly api: SpotifyWebApi;
 
     private spotifyAuth: SpotifyAuth | undefined;
     private token: string = "";
@@ -38,6 +39,8 @@ export class SongRequest extends FeatureBase implements ISongRequest {
             clientId: "",
             scopes: [],
         };
+
+        this.api = new SpotifyWebApi();
 
         let songRequestConfig = this.config.getSongRequest();
         if (songRequestConfig != null) {
@@ -89,20 +92,45 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         if (this.token == "") {
             return;
         }
+        const splits = msg.text.split(" ");
+        const cmd = splits[0].toLowerCase();
+        const request = splits.slice(1).join(" ");
 
-        if (msg.text.trim().toLowerCase() == "#info") {
-            const s = new SpotifyWebApi();
-            s.setAccessToken(this.token);
+        if (cmd == "!sr" || cmd == "!songrequest") {
+            this.spotifyAuth?.getAccessToken().then((token) => {
+                this.api.setAccessToken(token);
 
-            s.getMyCurrentPlayingTrack().then((result) => {
-                const v = result.body.item?.name.toString();
-                const trackName = v || "";
-
-                if (trackName != "") {
-                    const r = this.createResponse(trackName);
-                    this.sendResponse(r);
-                }
+                this.api.getMyCurrentPlaybackState().then((state) => {
+                    if (!state.body.is_playing) {
+                        return this.api.searchTracks(request);
+                    }
+                }).then((result) => {
+                    if (result != undefined) {
+                        return result.body.tracks?.items[0].uri;
+                    }
+                }).then((trackid) => {
+                    if (trackid) {
+                        this.api.play({ uris: [trackid] });
+                    }
+                });
             });
+        } else if (cmd == "!song") {
+            this.spotifyAuth?.getAccessToken().then((token) => {
+                this.api.setAccessToken(token);
+
+                this.api.getMyCurrentPlayingTrack().then((result) => {
+
+                    const v = result.body.item?.name.toString();
+                    const trackName = v || "";
+
+                    if (trackName != "") {
+                        const r = this.createResponse(trackName);
+                        this.sendResponse(r);
+                    }
+                });
+            });
+
+
         }
     }
 
