@@ -1,4 +1,5 @@
-import { IgnoreDuringTimeout, Seconds } from "./";
+import { IgnoreDuringTimeout, Seconds, Generate } from "./";
+import "./__tests__/custom-matcher";
 
 describe('seconds', () => {
     test('milliseconds', () => {
@@ -43,4 +44,20 @@ describe('IgnoreDuringTimeout', () => {
 
     });
 
+});
+
+describe('Generate', () => {
+    test('RandomString', () => {
+
+        const numberOfTests = 100;
+        const lengthOfSubject = 10;
+
+        let results: string[] = [];
+        for (let i = 0; i < numberOfTests; i++) {
+            const randomString = Generate.RandomString(lengthOfSubject);
+            results.push(randomString);
+        }
+
+        expect(results).toBeDistinct();
+    });
 });
