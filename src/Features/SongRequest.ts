@@ -15,9 +15,11 @@ export interface ISongRequest {
 export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
-
+    
 
     private isConnected: boolean = false;
+    private spotifyAuth: SpotifyAuth | undefined;
+    
 
     private get isSpotifyEnabled(): boolean {
         return this.spotifyConfig.authPort > 0
@@ -51,17 +53,23 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         let songRequestConfig = this.config.getSongRequest();
         if (songRequestConfig != null) {
             this.spotifyConfig = songRequestConfig.spotify;
-            const spotifyAuth = new SpotifyAuth(this.spotifyConfig);
+
+            const fs = context.getFileSystem();
+            const configDir = this.config.getConfigDir();
+            const pathToTokenFile = fs.joinPaths(configDir, "spotifyToken.dat");
+            this.spotifyAuth = new SpotifyAuth(this.spotifyConfig, pathToTokenFile, fs);
         }
     }
 
     public connect(): void {
-        if (!this.isConnected && this.isSpotifyEnabled) {
-            //this.initServer();
+        if (!this.isConnected && this.isSpotifyEnabled && this.spotifyAuth) {
+            this.spotifyAuth.authenticate(()=> this.isConnected = true);
         } else {
-            if (this.isConnected)
+            if (!this.spotifyAuth) {
+                this.logger.error("Spotify authentication is not possible. Please file a problem report.");
+            } else if (this.isConnected) {
                 this.logger.warn("Spotify is already connected");
-            else {
+            } else {
                 this.logger.warn("Spotify is not configured correctly");
             }
         }

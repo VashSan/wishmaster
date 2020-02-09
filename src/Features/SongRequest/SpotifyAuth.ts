@@ -2,14 +2,14 @@ import * as request from "request";
 import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import * as express from "express";
-import { ISpotifyConfig, Generate, Hours } from "../../shared";
+import { ISpotifyConfig, Generate, Hours, IFileSystem, FileSystem } from "../../shared";
 import * as open from "open";
 
 export interface IWebAuth {
     /**
      * Open the authentication 'app'
      */
-    authenticate(): void;
+    authenticate(authCallback: () => void): void;
 
     /**
      * Get a valid token to authenticate the app against.
@@ -26,30 +26,70 @@ export class SpotifyAuth implements IWebAuth {
 
     private readonly app: express.Express;
     private readonly config: ISpotifyConfig;
+    private readonly fs: IFileSystem;
+    private readonly tokenFile: string;
 
     private accessTokenDate: Date = new Date(0);
-    private accessToken: string = "";
-    private refreshToken: string = "";
+    private _accessToken: string = "";
 
-
-    constructor(config: ISpotifyConfig) {
-        this.config = config;
-        this.app = express();
-        this.startServer();
+    public get accessToken(): string {
+        return this._accessToken;
+    }
+    public set accessToken(v: string) {
+        this.accessTokenDate = new Date(0);
+        this._accessToken = v;
     }
 
-    public authenticate() {
-        open(this.getBaseUrl());
+    private refreshToken: string = "";
+
+    private isStarting: boolean = false;
+    private hasStarted: boolean = false;
+    private isAuthenticated: boolean = false;
+    private onAuthentication: (() => void) | null = null;
+
+
+    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem) {
+        this.config = config;
+        this.tokenFile = tokenFile;
+        this.fs = fs;
+        this.app = express();
+    }
+
+    public authenticate(onAuthentication: () => void) {
+        this.onAuthentication = onAuthentication;
+
+        this.startServer()
+            .then(() => {
+                if (this.fs.exists(this.tokenFile)) {
+                    // We have an access token already? 
+                    // Then Use it without forcing to open the browser
+                    this.refreshToken = this.fs.readAll(this.tokenFile);
+                    this.getAccessToken().then(() => onAuthentication());
+                } else {
+                    // Else the user needs to log on to spotify once
+                    open(this.getBaseUrl());
+                    this.hasStarted = true;
+                }
+            })
+            .catch(() => {
+                this.isStarting = false;
+                this.hasStarted = false;
+            });
     }
 
     public getAccessToken(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
+            if (!this.hasStarted) {
+                reject("Call authenticate() first");
+                return;
+            }
+
             if (this.isTokenExpired()) {
                 this.refreshAccessToken(this.refreshToken)
-                    .then(() => resolve(this.accessToken))
+                    .then(() => resolve(this._accessToken))
                     .catch((reason) => reject(reason));
             } else {
-                resolve(this.accessToken);
+                resolve(this._accessToken);
             }
         });
     }
@@ -69,16 +109,29 @@ export class SpotifyAuth implements IWebAuth {
         return `${this.getBaseUrl()}/${this.redirect}`;
     }
 
-    private startServer() {
-        this.initHttpServer();
+    private startServer(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            if (this.isStarting) {
+                reject("Call me once only");
+                return;
+            }
+            this.isStarting = true;
+            this.initHttpServer();
+            this.defineLoginRedirect();
+            this.defineCallbackAddress();
+            this.defineRefreshToken();
 
-        this.defineLoginRedirect();
+            this.app.listen(this.config.authPort, (args) => {
+                console.log(args);
+                this.hasStarted = true;
+                resolve();
+            });
+        });
+    }
 
-        this.defineCallbackAddress();
-
-        this.defineRefreshToken();
-
-        this.app.listen(this.config.authPort);
+    private persistRefreshToken() {
+        //let token = this.fs.readAll(this.tokenFile);
+        this.fs.writeAll(this.tokenFile, this.refreshToken);
     }
 
     private getEncodedClientIdAndKey(): string {
@@ -141,21 +194,27 @@ export class SpotifyAuth implements IWebAuth {
                 };
                 request.post(authOptions, (error, response, body) => {
                     if (!error && response.statusCode === 200) {
-                        this.accessToken = body.access_token;
+                        this._accessToken = body.access_token;
                         this.refreshToken = body.refresh_token;
-                        var options = {
-                            url: 'https://api.spotify.com/v1/me',
-                            headers: { 'Authorization': 'Bearer ' + this.accessToken },
-                            json: true
-                        };
-                        // use the access token to access the Spotify Web API
-                        request.get(options, function (error, response, body) {
-                            console.log(body);
-                        });
+                        this.persistRefreshToken();
+
+                        if (this.onAuthentication != null) {
+                            this.isAuthenticated = true;
+                            this.onAuthentication();
+                        }
+                        // var options = {
+                        //     url: 'https://api.spotify.com/v1/me',
+                        //     headers: { 'Authorization': 'Bearer ' + this.accessToken },
+                        //     json: true
+                        // };
+                        // // use the access token to access the Spotify Web API
+                        // request.get(options, function (error, response, body) {
+                        //     console.log(body);
+                        // });
                         // we can also pass the token to the browser to make requests from there
                         res.redirect('/#' +
                             querystring.stringify({
-                                access_token: this.accessToken,
+                                access_token: this._accessToken,
                                 refresh_token: this.refreshToken
                             }));
                     }
@@ -178,7 +237,7 @@ export class SpotifyAuth implements IWebAuth {
             this.refreshAccessToken(refresh_token)
                 .then(() => {
                     res.send({
-                        'access_token': this.accessToken
+                        'access_token': this._accessToken
                     });
                 })
                 .catch((reason) => {
@@ -205,7 +264,7 @@ export class SpotifyAuth implements IWebAuth {
             };
             request.post(authOptions, (error, response, body) => {
                 if (!error && response.statusCode === 200) {
-                    this.accessToken = body.access_token;
+                    this._accessToken = body.access_token;
                     resolve();
                 } else {
                     reject(`Status ${response.statusCode}: ${error}`);
