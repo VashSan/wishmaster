@@ -1,6 +1,7 @@
 
-
+import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
+
 
 import { IContext, IMessage, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
@@ -15,11 +16,12 @@ export interface ISongRequest {
 export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
-    
+
 
     private isConnected: boolean = false;
     private spotifyAuth: SpotifyAuth | undefined;
-    
+    private token: string = "";
+
 
     private get isSpotifyEnabled(): boolean {
         return this.spotifyConfig.authPort > 0
@@ -63,7 +65,11 @@ export class SongRequest extends FeatureBase implements ISongRequest {
 
     public connect(): void {
         if (!this.isConnected && this.isSpotifyEnabled && this.spotifyAuth) {
-            this.spotifyAuth.authenticate(()=> this.isConnected = true);
+            this.spotifyAuth.authenticate(() => {
+                this.spotifyAuth?.getAccessToken().then((token) => {
+                    this.token = token;
+                });
+            });
         } else {
             if (!this.spotifyAuth) {
                 this.logger.error("Spotify authentication is not possible. Please file a problem report.");
@@ -80,12 +86,24 @@ export class SongRequest extends FeatureBase implements ISongRequest {
 
     /** Enqueue the requested song to the playlist */
     public act(msg: IMessage): void {
-        if (!this.isSpotifyEnabled) {
+        if (this.token == "") {
             return;
         }
 
-        let response = this.createResponse('SongRequest Loopback' + msg.toString());
-        this.sendResponse(response);
+        if (msg.text.trim().toLowerCase() == "#info") {
+            const s = new SpotifyWebApi();
+            s.setAccessToken(this.token);
+
+            s.getMyCurrentPlayingTrack().then((result) => {
+                const v = result.body.item?.name.toString();
+                const trackName = v || "";
+
+                if (trackName != "") {
+                    const r = this.createResponse(trackName);
+                    this.sendResponse(r);
+                }
+            });
+        }
     }
 
 
