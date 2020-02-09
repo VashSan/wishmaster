@@ -9,6 +9,16 @@ export class Seconds {
     }
 }
 
+export class Hours {
+    private hours: number;
+    constructor(n: number) {
+        this.hours = n;
+    }
+    inMilliseconds() {
+        return this.hours * 60 * 60 * 1000;
+    } 
+}
+
 /** calls a handler only if the timeout expired */
 export class IgnoreDuringTimeout<T> {
     private readonly timeout: Seconds;
