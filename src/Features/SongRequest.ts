@@ -17,21 +17,8 @@ export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
 
-
-    private isConnected: boolean = false;
     private spotifyAuth: SpotifyAuth | undefined;
     private token: string = "";
-
-
-    private get isSpotifyEnabled(): boolean {
-        return this.spotifyConfig.authPort > 0
-            && this.spotifyConfig.authHost != ""
-            && this.spotifyConfig.authProtocol != ""
-            && this.spotifyConfig.tokenExpiresInHours > 0
-            && this.spotifyConfig.clientId != ""
-            && this.spotifyConfig.scopes.length > 0
-            && this.spotifyConfig.secretKey != "";
-    }
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
@@ -63,8 +50,10 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         }
     }
 
+
+
     public connect(): void {
-        if (!this.isConnected && this.isSpotifyEnabled && this.spotifyAuth) {
+        if (!this.isSpotifyConnected() && this.spotifyAuth) {
             this.spotifyAuth.authenticate(() => {
                 this.spotifyAuth?.getAccessToken().then((token) => {
                     this.token = token;
@@ -73,15 +62,26 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         } else {
             if (!this.spotifyAuth) {
                 this.logger.error("Spotify authentication is not possible. Please file a problem report.");
-            } else if (this.isConnected) {
+            } else if (this.isSpotifyConnected()) {
                 this.logger.warn("Spotify is already connected");
             } else {
                 this.logger.warn("Spotify is not configured correctly");
             }
         }
+    }
 
-        //this.logger.info(`Songrequest listening on ${this.spotifyConfig.listenPort}`);
-        this.isConnected = true; // TODO wait for authentication
+    private isSpotifyConnected(): boolean {
+        return this.isSpotifyEnabled() && this.token != "";
+    }
+
+    private isSpotifyEnabled(): boolean {
+        return this.spotifyConfig.authPort > 0
+            && this.spotifyConfig.authHost != ""
+            && this.spotifyConfig.authProtocol != ""
+            && this.spotifyConfig.tokenExpiresInHours > 0
+            && this.spotifyConfig.clientId != ""
+            && this.spotifyConfig.scopes.length > 0
+            && this.spotifyConfig.secretKey != "";
     }
 
     /** Enqueue the requested song to the playlist */
