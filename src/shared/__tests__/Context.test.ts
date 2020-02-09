@@ -1,10 +1,10 @@
 import { ILogger } from "psst-log";
 import { mock } from "jest-mock-extended";
-import { Configuration, Context } from ".";
-import { Database } from "./Database";
-import { IObsController } from "./ObsController";
+import { Configuration, Context } from "..";
+import { Database } from "../Database";
+import { IObsController } from "../ObsController";
 import * as os from 'os';
-import { IEmailAccess } from "./Email";
+import { IEmailAccess } from "../Email";
 
 function getContext() {
     let config = mock<Configuration>();

@@ -1,7 +1,7 @@
 
 import { mock, MockProxy } from "jest-mock-extended";
-import { IContext, IConfiguration, Seconds, IMediaPlayer } from "../shared";
-import { StaticAnswers } from "./StaticAnswers";
+import { IContext, IConfiguration, Seconds, IMediaPlayer } from "../../shared";
+import { StaticAnswers } from "../StaticAnswers";
 import { ILogger } from "psst-log";
 
 let logger: MockProxy<ILogger> & ILogger;

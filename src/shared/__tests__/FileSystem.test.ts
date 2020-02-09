@@ -5,7 +5,7 @@ import * as rmdir from "rimraf";
 import * as fs from "fs";
 
 import { mocked } from "ts-jest/utils";
-import { IFileSystem, FileSystem } from ".";
+import { IFileSystem, FileSystem } from "..";
 
 import * as path from "path";
 

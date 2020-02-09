@@ -1,6 +1,6 @@
 import { mock } from "jest-mock-extended";
-import { IConfiguration, IContext, ISongRequestConfig } from "../shared";
-import { SongRequest } from "./SongRequest";
+import { IConfiguration, IContext, ISongRequestConfig } from "../../shared";
+import { SongRequest } from "../SongRequest";
 import { ILogger } from "psst-log";
 
 

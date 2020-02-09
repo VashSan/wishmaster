@@ -1,8 +1,8 @@
-import Bets from "./Bets";
-import { IConfiguration, IContext } from "../shared";
+import Bets from "../Bets";
+import { IConfiguration, IContext } from "../../shared";
 import { mock, MockProxy } from "jest-mock-extended";
 import { ILogger } from "psst-log";
-import { ResponseCallback, IFeatureResponse } from "../shared/MessageProcessor";
+import { ResponseCallback, IFeatureResponse } from "../../shared/MessageProcessor";
 
 describe('Bets', () => {
     const testChannel = "#test";

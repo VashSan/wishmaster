@@ -1,9 +1,9 @@
-import { Database, UserCollection, LogCollection } from "./Database";
+import { Database, UserCollection, LogCollection } from "../Database";
 
 import { MockProxy, mock } from "jest-mock-extended";
-import { IConfiguration } from "./Configuration";
+import { IConfiguration } from "../Configuration";
 import { ILogger } from "psst-log";
-import { Seconds } from "./Helper";
+import { Seconds } from "../Helper";
 
 jest.mock('nedb');
 import Nedb = require("nedb");

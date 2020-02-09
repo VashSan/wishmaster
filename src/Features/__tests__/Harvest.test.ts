@@ -1,7 +1,7 @@
 
 import { mock } from "jest-mock-extended";
-import { IContext, IDatabase, IUserCollection, ILogCollection } from "../shared";
-import Harvest from "./Harvest";
+import { IContext, IDatabase, IUserCollection, ILogCollection } from "../../shared";
+import Harvest from "../Harvest";
 
 
 test('construction with no init', () => {

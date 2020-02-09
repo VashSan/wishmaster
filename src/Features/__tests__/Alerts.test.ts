@@ -1,6 +1,6 @@
-import { IAlert, IConfiguration, IContext, IUserCollection, IDatabase, IObsController, ViewerAction, IEmail, IEmailAccess, IMediaPlayer } from "../shared";
+import { IAlert, IConfiguration, IContext, IUserCollection, IDatabase, IObsController, ViewerAction, IEmail, IEmailAccess, IMediaPlayer } from "../../shared";
 import { mock, MockProxy } from "jest-mock-extended";
-import Alerts from "./Alerts";
+import Alerts from "../Alerts";
 import { ILogger } from "psst-log";
 
 const bob = "bob";

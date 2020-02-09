@@ -1,8 +1,8 @@
-import { FeatureBase } from "./FeatureBase";
-import { Configuration } from "../shared";
+import { FeatureBase } from "../FeatureBase";
+import { Configuration } from "../../shared";
 import { mock } from "jest-mock-extended";
-import { IFeatureResponse } from "../shared/MessageProcessor";
-import { IMessage } from "../shared/ChatClient";
+import { IFeatureResponse } from "../../shared/MessageProcessor";
+import { IMessage } from "../../shared/ChatClient";
 
 class FeatureBaseImpl extends FeatureBase {
     constructor(config: Configuration) {

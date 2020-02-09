@@ -1,5 +1,5 @@
-import { MessageProcessor, IFeature, ResponseCallback } from "./MessageProcessor";
-import { IContext, IConfiguration, IChatClient, IMessage } from ".";
+import { MessageProcessor, IFeature, ResponseCallback } from "../MessageProcessor";
+import { IContext, IConfiguration, IChatClient, IMessage } from "..";
 import { mock, MockProxy } from "jest-mock-extended";
 import { ILogger } from "psst-log";
 

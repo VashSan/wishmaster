@@ -1,5 +1,5 @@
-import { IgnoreDuringTimeout, Seconds, Generate } from "./";
-import "./custom-matcher";
+import { IgnoreDuringTimeout, Seconds, Generate } from "..";
+import "../custom-matcher";
 
 describe('seconds', () => {
     test('milliseconds', () => {

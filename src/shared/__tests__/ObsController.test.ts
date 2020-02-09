@@ -1,8 +1,8 @@
 import * as OBSWebSocket from 'obs-websocket-js';
-import { ObsController } from './ObsController';
+import { ObsController } from '../ObsController';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ILogger } from 'psst-log';
-import { IObsConfig } from './Configuration';
+import { IObsConfig } from '../Configuration';
 
 const TestSceneName = 'testScene';
 

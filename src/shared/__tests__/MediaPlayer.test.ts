@@ -1,6 +1,6 @@
 
 import { mocked } from 'ts-jest/utils'
-import { MediaPlayer, IConfiguration, Sound } from "./";
+import { MediaPlayer, IConfiguration, Sound } from "..";
 
 import { execFile } from "child_process";
 import { mock, MockProxy } from 'jest-mock-extended';
