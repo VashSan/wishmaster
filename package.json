@@ -12,6 +12,7 @@
     "moment": "^2.24.0",
     "nedb": "^1.8.0",
     "obs-websocket-js": "^4.0.1",
+    "open": "^7.0.2",
     "psst-log": "0.0.8",
     "querystring": "^0.2.0",
     "request": "^2.88.0",
