@@ -5,7 +5,7 @@ import { ILogger, LogManager } from "psst-log";
 
 import { IContext, IMessage, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { SpotifyAuth } from "./SongRequest/SpotifyAuth";
+import { SpotifyAuth, IAccessToken } from "./SongRequest/SpotifyAuth";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -19,7 +19,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly api: SpotifyWebApi;
 
     private spotifyAuth: SpotifyAuth | undefined;
-    private token: string = "";
+    private token: IAccessToken | undefined;
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
@@ -53,14 +53,10 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         }
     }
 
-
-
     public connect(): void {
         if (!this.isSpotifyConnected() && this.spotifyAuth) {
             this.spotifyAuth.authenticate(() => {
-                this.spotifyAuth?.getAccessToken().then((token) => {
-                    this.token = token;
-                });
+                this.token = this.spotifyAuth?.getAccessToken();
             });
         } else {
             if (!this.spotifyAuth) {
@@ -74,7 +70,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
     }
 
     private isSpotifyConnected(): boolean {
-        return this.isSpotifyEnabled() && this.token != "";
+        return this.isSpotifyEnabled() && this.token != undefined;
     }
 
     private isSpotifyEnabled(): boolean {
@@ -96,41 +92,45 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         const cmd = splits[0].toLowerCase();
         const request = splits.slice(1).join(" ");
 
+        if (!this.spotifyAuth) {
+            return;
+        }
+
+        const token = this.token?.toString() || "";
+        if (this.token == "") {
+            return;
+        }
+
         if (cmd == "!sr" || cmd == "!songrequest") {
-            this.spotifyAuth?.getAccessToken().then((token) => {
-                this.api.setAccessToken(token);
+            this.api.setAccessToken(token);
 
-                this.api.getMyCurrentPlaybackState().then((state) => {
-                    if (!state.body.is_playing) {
-                        return this.api.searchTracks(request);
-                    }
-                }).then((result) => {
-                    if (result != undefined) {
-                        return result.body.tracks?.items[0].uri;
-                    }
-                }).then((trackid) => {
-                    if (trackid) {
-                        this.api.play({ uris: [trackid] });
-                    }
-                });
+            this.api.getMyCurrentPlaybackState().then((state) => {
+                if (!state.body.is_playing) {
+                    return this.api.searchTracks(request);
+                }
+            }).then((result) => {
+                if (result != undefined) {
+                    return result.body.tracks?.items[0].uri;
+                }
+            }).then((trackid) => {
+                if (trackid) {
+                    this.api.play({ uris: [trackid] });
+                }
             });
+
         } else if (cmd == "!song") {
-            this.spotifyAuth?.getAccessToken().then((token) => {
-                this.api.setAccessToken(token);
+            this.api.setAccessToken(token);
 
-                this.api.getMyCurrentPlayingTrack().then((result) => {
+            this.api.getMyCurrentPlayingTrack().then((result) => {
 
-                    const v = result.body.item?.name.toString();
-                    const trackName = v || "";
+                const v = result.body.item?.name.toString();
+                const trackName = v || "";
 
-                    if (trackName != "") {
-                        const r = this.createResponse(trackName);
-                        this.sendResponse(r);
-                    }
-                });
+                if (trackName != "") {
+                    const r = this.createResponse(trackName);
+                    this.sendResponse(r);
+                }
             });
-
-
         }
     }
 

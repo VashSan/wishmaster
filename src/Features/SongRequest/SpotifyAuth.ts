@@ -2,8 +2,9 @@ import * as request from "request";
 import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import * as express from "express";
-import { ISpotifyConfig, Generate, Hours, IFileSystem, FileSystem } from "../../shared";
+import { ISpotifyConfig, Generate, Hours, IFileSystem, FileSystem, Seconds, Minutes } from "../../shared";
 import * as open from "open";
+import { ILogger, LogManager } from "psst-log";
 
 export interface IWebAuth {
     /**
@@ -14,7 +15,83 @@ export interface IWebAuth {
     /**
      * Get a valid token to authenticate the app against.
      */
-    getAccessToken(): Promise<string>;
+    getAccessToken(): IAccessToken;
+
+    /**
+     * Force a refresh of the token
+     */
+    refreshAccessToken(token?: string): Promise<ITokenAndExpiry>;
+}
+
+export interface IAccessToken {
+    toString(): string;
+}
+
+interface IUpdateableAccessToken extends IAccessToken {
+    setRefreshedToken(tokenObj: ITokenAndExpiry): void;
+}
+
+interface ITokenAndExpiry {
+    token: string;
+    expires: Date;
+}
+
+class AccessToken implements IUpdateableAccessToken {
+    private expiryThreshold: Seconds = new Seconds(60);
+    private token: string;
+    private expires: Date;
+    private auth: IWebAuth;
+    private refreshTimeout: NodeJS.Timer | undefined;
+
+    constructor(tokenObj: ITokenAndExpiry, auth: IWebAuth, expiryThreshold?: Seconds) {
+        this.token = tokenObj.token;
+        this.expires = this.getExpiryDate(tokenObj.expires);
+        this.auth = auth;
+        if (expiryThreshold) {
+            this.expiryThreshold = expiryThreshold;
+        }
+    }
+
+    public setRefreshedToken(tokenObj: ITokenAndExpiry): void {
+        this.clearUpdateTimer();
+        this.token = tokenObj.token;
+        this.expires = this.getExpiryDate(tokenObj.expires);
+        this.setUpdateTimer();
+    }
+
+    private setUpdateTimer() {
+        const alertTime = this.expires.getTime() - this.expiryThreshold.inMilliseconds();
+
+        const now = Date.now();
+        let timeout = alertTime - now;
+        if (alertTime < now) {
+            timeout = 0;
+        }
+
+        this.refreshTimeout = setTimeout(() => {
+            this.auth.refreshAccessToken().then((token: ITokenAndExpiry) => {
+                this.setRefreshedToken(token);
+            });
+        }, timeout);
+    }
+
+    private clearUpdateTimer() {
+        if (this.refreshTimeout) {
+            clearTimeout(this.refreshTimeout);
+        }
+    }
+
+    private getExpiryDate(expires: Date | undefined): Date {
+        if (expires) {
+            return expires;
+        }
+        let expiresIn = Date.now() + this.expiryThreshold.inMilliseconds();
+        return new Date(expiresIn);
+    }
+
+    public toString = (): string => {
+        return this.token;
+    }
 }
 
 export class SpotifyAuth implements IWebAuth {
@@ -24,35 +101,37 @@ export class SpotifyAuth implements IWebAuth {
     private readonly redirect = "callback";
     private readonly login = "login";
 
-    private readonly app: express.Express;
+    private readonly app: express.Application;
     private readonly config: ISpotifyConfig;
     private readonly fs: IFileSystem;
     private readonly tokenFile: string;
 
-    private accessTokenDate: Date = new Date(0);
-    private _accessToken: string = "";
+    private _accessToken: IUpdateableAccessToken;
 
-    public get accessToken(): string {
+    private get accessToken(): IUpdateableAccessToken {
         return this._accessToken;
     }
-    public set accessToken(v: string) {
-        this.accessTokenDate = new Date(0);
+    private set accessToken(v: IUpdateableAccessToken) {
         this._accessToken = v;
     }
 
     private refreshToken: string = "";
 
     private isStarting: boolean = false;
-    private hasStarted: boolean = false;
-    private isAuthenticated: boolean = false;
     private onAuthentication: (() => void) | null = null;
 
 
-    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem) {
+    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application) {
         this.config = config;
-        this.tokenFile = tokenFile;
+        this.tokenFile = tokenFile; this.app = express();
         this.fs = fs;
-        this.app = express();
+        this._accessToken = new AccessToken({ token: "", expires: new Date() }, this);
+
+        if (ex) {
+            this.app = ex;
+        } else {
+            this.app = express();
+        }
     }
 
     public authenticate(onAuthentication: () => void) {
@@ -64,39 +143,22 @@ export class SpotifyAuth implements IWebAuth {
                     // We have an access token already? 
                     // Then Use it without forcing to open the browser
                     this.refreshToken = this.fs.readAll(this.tokenFile);
-                    this.getAccessToken().then(() => onAuthentication());
+                    this.refreshAccessToken(this.refreshToken).then((newToken) => {
+                        this.accessToken.setRefreshedToken(newToken);
+                        onAuthentication();
+                    });
                 } else {
                     // Else the user needs to log on to spotify once
                     open(this.getBaseUrl());
-                    this.hasStarted = true;
                 }
             })
             .catch(() => {
                 this.isStarting = false;
-                this.hasStarted = false;
             });
     }
 
-    public getAccessToken(): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            if (!this.hasStarted) {
-                reject("Call authenticate() first");
-                return;
-            }
-
-            if (this.isTokenExpired()) {
-                this.refreshAccessToken(this.refreshToken)
-                    .then(() => resolve(this._accessToken))
-                    .catch((reason) => reject(reason));
-            } else {
-                resolve(this._accessToken);
-            }
-        });
-    }
-
-    private isTokenExpired(): boolean {
-        return Date.now() >
-            this.accessTokenDate.getTime() + new Hours(1).inMilliseconds();
+    public getAccessToken(): IAccessToken {
+        return this.accessToken;
     }
 
     private getBaseUrl() {
@@ -123,14 +185,12 @@ export class SpotifyAuth implements IWebAuth {
 
             this.app.listen(this.config.authPort, (args) => {
                 console.log(args);
-                this.hasStarted = true;
                 resolve();
             });
         });
     }
 
     private persistRefreshToken() {
-        //let token = this.fs.readAll(this.tokenFile);
         this.fs.writeAll(this.tokenFile, this.refreshToken);
     }
 
@@ -194,12 +254,13 @@ export class SpotifyAuth implements IWebAuth {
                 };
                 request.post(authOptions, (error, response, body) => {
                     if (!error && response.statusCode === 200) {
-                        this._accessToken = body.access_token;
                         this.refreshToken = body.refresh_token;
                         this.persistRefreshToken();
 
+                        let newToken = this.createTokenAndExpiry(body.access_token, body.expires_in);
+                        this.accessToken.setRefreshedToken(newToken);
+
                         if (this.onAuthentication != null) {
-                            this.isAuthenticated = true;
                             this.onAuthentication();
                         }
                         // var options = {
@@ -214,7 +275,7 @@ export class SpotifyAuth implements IWebAuth {
                         // we can also pass the token to the browser to make requests from there
                         res.redirect('/#' +
                             querystring.stringify({
-                                access_token: this._accessToken,
+                                access_token: this.accessToken,
                                 refresh_token: this.refreshToken
                             }));
                     }
@@ -237,7 +298,7 @@ export class SpotifyAuth implements IWebAuth {
             this.refreshAccessToken(refresh_token)
                 .then(() => {
                     res.send({
-                        'access_token': this._accessToken
+                        'access_token': this.accessToken
                     });
                 })
                 .catch((reason) => {
@@ -251,8 +312,13 @@ export class SpotifyAuth implements IWebAuth {
     }
 
 
-    private refreshAccessToken(currentRefreshToken: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+    public refreshAccessToken(token?: string): Promise<ITokenAndExpiry> {
+        let currentRefreshToken = this.refreshToken;
+        if (token) {
+            currentRefreshToken = token;
+        }
+
+        return new Promise<ITokenAndExpiry>((resolve, reject) => {
             var authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 headers: { 'Authorization': 'Basic ' + this.getEncodedClientIdAndKey() },
@@ -264,13 +330,21 @@ export class SpotifyAuth implements IWebAuth {
             };
             request.post(authOptions, (error, response, body) => {
                 if (!error && response.statusCode === 200) {
-                    this._accessToken = body.access_token;
-                    resolve();
+                    let newToken = this.createTokenAndExpiry(body.access_token, body.expires_in);
+                    resolve(newToken);
                 } else {
                     reject(`Status ${response.statusCode}: ${error}`);
                 }
             });
         });
 
+    }
+
+    private createTokenAndExpiry(token: string, expiresInSeconds: number): ITokenAndExpiry {
+        const expires = new Seconds(expiresInSeconds);
+        const absoluteExpiryTime = Date.now() + expires.inMilliseconds();
+        const expiryDate = new Date(absoluteExpiryTime);
+        let newToken = { token: token, expires: expiryDate };
+        return newToken;
     }
 }
