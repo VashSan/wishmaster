@@ -114,22 +114,34 @@ export class SongRequest extends FeatureBase implements ISongRequest {
                 }
             }).then((trackid) => {
                 if (trackid) {
-                    this.api.play({ uris: [trackid] });
+                    return this.api.play({ uris: [trackid] });
                 }
+            }).catch((err) => {
+                this.logger.warn("[!sr] Could not retrieve song info.", JSON.stringify(err), JSON.stringify(msg));
+                const r = this.createResponse(`Sorry @${msg.from} - your song was not found!`)
+                this.sendResponse(r);
             });
 
         } else if (cmd == "!song") {
             this.api.setAccessToken(token);
 
-            this.api.getMyCurrentPlayingTrack().then((result) => {
-
-                const v = result.body.item?.name.toString();
-                const trackName = v || "";
-
-                if (trackName != "") {
-                    const r = this.createResponse(trackName);
-                    this.sendResponse(r);
+            this.api.getMyCurrentPlaybackState().then((state) => {
+                if (state.body.is_playing) {
+                    return this.api.getMyCurrentPlayingTrack();
                 }
+            }).then((result) => {
+                if (result) {
+                    const v = result.body.item?.name.toString();
+                    const trackName = v || "";
+
+                    if (trackName != "") {
+                        const r = this.createResponse(`Current song: ${trackName}`);
+                        this.sendResponse(r);
+                    }
+                }
+            }).catch((err) => {
+                // What could possibly go wrong?
+                this.logger.error("[!song] Could not retrieve song info.", JSON.stringify(err), JSON.stringify(msg));
             });
         }
     }
