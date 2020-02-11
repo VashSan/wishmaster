@@ -27,7 +27,7 @@ export interface IAccessToken {
     toString(): string;
 }
 
-interface IUpdateableAccessToken extends IAccessToken {
+export interface IUpdateableAccessToken extends IAccessToken {
     setRefreshedToken(tokenObj: ITokenAndExpiry): void;
 }
 
@@ -106,14 +106,7 @@ export class SpotifyAuth implements IWebAuth {
     private readonly fs: IFileSystem;
     private readonly tokenFile: string;
 
-    private _accessToken: IUpdateableAccessToken;
-
-    private get accessToken(): IUpdateableAccessToken {
-        return this._accessToken;
-    }
-    private set accessToken(v: IUpdateableAccessToken) {
-        this._accessToken = v;
-    }
+    private accessToken: IUpdateableAccessToken;
 
     private refreshToken: string = "";
 
@@ -121,11 +114,16 @@ export class SpotifyAuth implements IWebAuth {
     private onAuthentication: (() => void) | null = null;
 
 
-    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application) {
+    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application, token?: IUpdateableAccessToken) {
         this.config = config;
         this.tokenFile = tokenFile; this.app = express();
         this.fs = fs;
-        this._accessToken = new AccessToken({ token: "", expires: new Date() }, this);
+
+        if (token) {
+            this.accessToken = token;
+        } else {
+            this.accessToken = new AccessToken({ token: "", expires: new Date() }, this);
+        }
 
         if (ex) {
             this.app = ex;
