@@ -164,7 +164,7 @@ export enum ViewerAction {
 
 export class UserCollection extends Collection implements IUserCollection {
     newMessage(message: IMessage): void {
-        if (!message.tags){
+        if (!message.tags) {
             return;
         }
         let that = this;
@@ -247,11 +247,21 @@ export class UserCollection extends Collection implements IUserCollection {
     private assembleResult(docs: { name: number, lastAction: number, lastActionDate: number }[]): IUserAction[] {
         let result: IUserAction[] = [];
         docs.forEach((element) => {
-            let action = element.lastAction.toString() as keyof typeof ViewerAction;
+            let lastAction = ViewerAction["Follow"];
+            if (element.lastAction) {
+                let action = element.lastAction.toString() as keyof typeof ViewerAction;
+                lastAction = ViewerAction[action];
+            }
+
+            let lastActionDate = new Date(2020, 0, 1);
+            if (element.lastActionDate) {
+                lastActionDate = new Date(element.lastActionDate);
+            }
+
             const userAction: IUserAction = {
                 name: element.name.toString(),
-                lastAction: ViewerAction[action],
-                lastActionDate: new Date(element.lastActionDate.toString())
+                lastAction: lastAction,
+                lastActionDate: lastActionDate
             };
             result.push(userAction);
         });
