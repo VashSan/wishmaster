@@ -1,11 +1,18 @@
 import { IgnoreDuringTimeout, Seconds, Generate } from "..";
 import "../custom-matcher";
-import { Hours } from "../Helper";
+import { Hours, Minutes } from "../Helper";
 
 describe('seconds', () => {
     test('milliseconds', () => {
         let result = new Seconds(1).inMilliseconds();
         expect(result).toBe(1000);
+    });
+});
+
+describe('minutes', () => {
+    test('milliseconds', () => {
+        let result = new Minutes(1).inMilliseconds();
+        expect(result).toBe(60000);
     });
 });
 

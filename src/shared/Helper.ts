@@ -9,6 +9,16 @@ export class Seconds {
     }
 }
 
+export class Minutes {
+    private minutes: number;
+    constructor(n: number) {
+        this.minutes = n;
+    }
+    inMilliseconds() {
+        return this.minutes * 60 * 1000;
+    }
+}
+
 export class Hours {
     private hours: number;
     constructor(n: number) {
