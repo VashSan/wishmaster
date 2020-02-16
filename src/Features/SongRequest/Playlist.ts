@@ -38,6 +38,7 @@ export class Playlist implements IPlaylist {
 
     private currentSong: ISongInfo | null = null;
     private timer: NodeJS.Timer | undefined = undefined;
+    private shouldUpdateAt: Date = new Date();
 
     constructor(apiWrapper: IApiWrapper) {
         this.api = apiWrapper;
@@ -76,6 +77,9 @@ export class Playlist implements IPlaylist {
 
     public skip(): void {
         this.playNextSong();
+        setTimeout(() => {
+            this.shouldUpdateAt = new Date(0);
+        }, new Seconds(1).inMilliseconds());
     }
 
     public start(): void {
@@ -96,13 +100,35 @@ export class Playlist implements IPlaylist {
     }
 
     private update() {
+        const tolerance = 100;
+        if (this.list.length == 0) {
+            return;
+        }
+
+        if (Date.now() < this.shouldUpdateAt.getTime()) {
+            return;
+        }
+
         this.api
-            .isPausedOrStopped()
-            .then((isStopped: boolean) => {
-                if (isStopped) {
+            .getRemainingTrackTime()
+            .then((remaining: Seconds) => {
+                const remainingMs = remaining.inMilliseconds();
+                if (remainingMs < tolerance) {
                     this.playNextSong();
+                } else {
+                    const updateAtMs = Date.now() + (remainingMs / 2) + tolerance;
+                    this.shouldUpdateAt = new Date(updateAtMs);
                 }
+
             });
+
+        // this.api
+        //     .isPausedOrStopped()
+        //     .then((isStopped: boolean) => {
+        //         if (isStopped) {
+        //             this.playNextSong();
+        //         }
+        //     });
         // TODO we should catch but we need the logger
     }
 

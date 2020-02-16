@@ -3,7 +3,7 @@ import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
 
 
-import { IContext, IMessage, ISpotifyConfig } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds, TagReader } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { SpotifyAuth, IAccessToken } from "./SongRequest/SpotifyAuth";
 import { Playlist, IPlaylist, ISongInfo, MediaLibrary } from "./SongRequest/PlayList";
@@ -24,6 +24,7 @@ export interface IApiWrapper {
     requestSong(request: string, msg: IMessage): void;
     requestCurrentSongInfo(msg: IMessage): void;
 
+    getRemainingTrackTime(): Promise<Seconds>;
     isPausedOrStopped(): Promise<boolean>;
     playNow(uri: string): void;
 }
@@ -182,6 +183,28 @@ class SpotifyApiWrapper implements IApiWrapper {
         }
     }
 
+    public async getRemainingTrackTime(): Promise<Seconds> {
+        const state = await this.api.getMyCurrentPlaybackState();
+
+        if (state.body.is_playing == undefined) {
+            return Promise.reject("Unknown playback state");
+        } else {
+            const duration = state.body.item?.duration_ms || -1;
+            const progress = state.body.progress_ms || - 1;
+            if (duration < 0 || progress < 0) {
+                return Promise.resolve(new Seconds(0));
+            }
+
+            let remainingSeconds = (duration - progress) / 1000;
+            if (state.body.is_playing) {
+                const seconds = new Seconds(remainingSeconds);
+                return Promise.resolve(seconds);
+            }
+
+            return Promise.resolve(new Seconds(0));
+        }
+    }
+
     public playNow(uri: string): void {
         this.api.play({ uris: [uri] });
     }
@@ -284,6 +307,17 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             this.api.requestSong(request, msg);
         } else if (cmd == "!song") {
             this.api.requestCurrentSongInfo(msg);
+        } else if (cmd == "!skip" && msg.tags) {
+            if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
+                this.playlist.skip();
+                return;
+            }
+
+            const tr = new TagReader(msg.tags); // TODO so ugly need to improve soon
+            const canSkip = tr.isMod || tr.isBroadcaster();
+            if (canSkip) {
+                this.playlist.skip();
+            }
         }
     }
 
