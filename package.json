@@ -15,8 +15,8 @@
     "open": "^7.0.2",
     "psst-log": "0.0.8",
     "querystring": "^0.2.0",
-    "request": "^2.88.0",
-    "rimraf": "^3.0.1",
+    "request": "^2.88.2",
+    "rimraf": "^3.0.2",
     "spotify-web-api-node": "^4.0.0",
     "tmp": "^0.1.0",
     "utf-8-validate": "^5.0.2"
