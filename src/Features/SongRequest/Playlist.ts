@@ -99,6 +99,18 @@ export class Playlist implements IPlaylist {
         }
     }
 
+    private playNextSong() {
+        if (this.isRunning()) {
+            const nextSong = this.list.shift();
+            if (nextSong) {
+                this.currentSong = nextSong;
+                this.api.playNow(nextSong.uri);
+            } else {
+                this.currentSong = null;
+            }
+        }
+    }
+
     private update() {
         const tolerance = 100;
         if (this.list.length == 0) {
@@ -116,32 +128,11 @@ export class Playlist implements IPlaylist {
                 if (remainingMs < tolerance) {
                     this.playNextSong();
                 } else {
-                    const updateAtMs = Date.now() + (remainingMs / 2) + tolerance;
-                    this.shouldUpdateAt = new Date(updateAtMs);
+                    this.shouldUpdateAt = new Date((remainingMs / 2) + tolerance);
                 }
 
             });
 
-        // this.api
-        //     .isPausedOrStopped()
-        //     .then((isStopped: boolean) => {
-        //         if (isStopped) {
-        //             this.playNextSong();
-        //         }
-        //     });
         // TODO we should catch but we need the logger
     }
-
-    private playNextSong() {
-        if (this.isRunning()) {
-            const nextSong = this.list.shift();
-            if (nextSong) {
-                this.currentSong = nextSong;
-                this.api.playNow(nextSong.uri);
-            } else {
-                this.currentSong = null;
-            }
-        }
-    }
-
 }
