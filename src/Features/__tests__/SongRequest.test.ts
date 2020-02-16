@@ -1,17 +1,27 @@
-import { mock } from "jest-mock-extended";
+import { mock, MockProxy } from "jest-mock-extended";
 import { IConfiguration, IContext, ISongRequestConfig, IFileSystem } from "../../shared";
-import { SongRequest } from "../SongRequest";
+import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
+import { IPlaylist } from "../SongRequest/PlayList";
+
+let api: MockProxy<IApiWrapper> & IApiWrapper;
+let logger: MockProxy<ILogger> & ILogger;
+let playlist: MockProxy<IPlaylist> & IPlaylist;
+
+beforeEach(() => {
+    api = mock<IApiWrapper>();
+    logger = mock<ILogger>();
+    playlist = mock<IPlaylist>();
+});
 
 
 test('construction with no init', () => {
     // Arrange
-    let logger = mock<ILogger>();
     let songConfig = mock<ISongRequestConfig>();
 
     let config = mock<IConfiguration>();
     config.getSongRequest.mockReturnValue(songConfig);
-    
+
     let fs = mock<IFileSystem>();
 
     let context = mock<IContext>();
@@ -19,5 +29,5 @@ test('construction with no init', () => {
     context.getFileSystem.mockReturnValue(fs);
 
     // Act & Assert
-    expect(() => new SongRequest(context, logger)).not.toThrow();
+    expect(() => new SongRequest(context, api, playlist, logger)).not.toThrow();
 });
