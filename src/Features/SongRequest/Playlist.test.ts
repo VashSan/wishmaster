@@ -1,5 +1,13 @@
 import { Playlist } from "./PlayList";
+import { mock, MockProxy } from "jest-mock-extended";
+import { IApiWrapper } from "../SongRequest";
+
+let api: MockProxy<IApiWrapper> & IApiWrapper;
+
+beforeEach(() => {
+    api = mock<IApiWrapper>();
+});
 
 test('construction', () => {
-    expect(() => { new Playlist() }).not.toThrow();
+    expect(() => { new Playlist(api) }).not.toThrow();
 });

@@ -6,7 +6,7 @@ import { ILogger, LogManager } from "psst-log";
 import { IContext, IMessage, ISpotifyConfig } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { SpotifyAuth, IAccessToken } from "./SongRequest/SpotifyAuth";
-import { Playlist, IPlaylist } from "./SongRequest/PlayList";
+import { Playlist, IPlaylist, ISongInfo, MediaLibrary } from "./SongRequest/PlayList";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -14,6 +14,12 @@ export interface ISongRequest {
 }
 
 export interface IApiWrapper {
+    /**
+     * Instead of directly playing requested songs, the API will use the provided
+     * instance to enqueue songs.
+     * @param playlist 
+     */
+    usePlaylist(playlist: IPlaylist): void;
     updateApiToken(token: string): void;
     requestSong(request: string, msg: IMessage): void;
     requestCurrentSongInfo(msg: IMessage): void;
@@ -23,11 +29,25 @@ interface ICanReply {
     reply(text: string): void;
 }
 
-class SpotifyApiWrapper implements IApiWrapper {
+class SongInfo implements ISongInfo {
+    constructor(track: SpotifyApi.TrackObjectFull) {
+        this.uri = track.uri;
+        this.source = MediaLibrary.Spotify;
+        this.title = track.name;
+        this.artist = track.artists[0].name;
+    }
 
+    uri: string;
+    source: MediaLibrary;
+    title: string;
+    artist: string;
+}
+
+class SpotifyApiWrapper implements IApiWrapper {
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
     private readonly chat: ICanReply;
+    private playlist: IPlaylist | undefined;
 
     constructor(chat: ICanReply, api?: SpotifyWebApi, logger?: ILogger) {
         this.chat = chat;
@@ -35,7 +55,11 @@ class SpotifyApiWrapper implements IApiWrapper {
         this.logger = logger ? logger : LogManager.getLogger();
     }
 
-    updateApiToken(token: string): void {
+    public usePlaylist(playlist: IPlaylist) {
+        this.playlist = playlist;
+    }
+
+    public updateApiToken(token: string): void {
         this.api.setAccessToken(token);
     }
 
@@ -58,11 +82,13 @@ class SpotifyApiWrapper implements IApiWrapper {
                 }
             })
             .then((result) => {
-                if (result != undefined) {
-                    return result.body.tracks?.items[0].uri;
+                const track = result?.body.tracks?.items[0];
+                if (track != undefined) {
+                    const song = new SongInfo(track);
+                    return this.playOrEnqueueTrack(song);
                 }
             })
-            .then((trackid) => this.playTrack(trackid))
+            //.then((trackid) => this.playOrEnqueueTrack(trackid))
             .catch((err) => this.handleRequestError(msg, err));
     }
 
@@ -73,13 +99,25 @@ class SpotifyApiWrapper implements IApiWrapper {
                     return this.api.getTrack(songId);
                 }
             })
-            .then((track) => this.playTrack(track?.body.uri))
+            .then((track) => {
+                if (track && track.body) {
+                    const song = new SongInfo(track.body);
+                    return this.playOrEnqueueTrack(song);
+                }
+            })
             .catch((err) => this.handleRequestError(msg, err));
     }
 
-    private playTrack(uri?: string) {
-        if (uri) {
-            return this.api.play({ uris: [uri] });
+    private playOrEnqueueTrack(song: ISongInfo): Promise<void> | PromiseLike<void | undefined> {
+        if (this.playlist) {
+            this.playlist.enqueue(song);
+            return Promise.resolve();
+        } else {
+            // API has an own response type I cannot use, so translate with this thingy
+            return this.api
+                .play({ uris: [song.uri] })
+                .then(() => Promise.resolve())
+                .catch((err) => Promise.reject(err));
         }
     }
 
@@ -127,23 +165,11 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     constructor(context: IContext, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger) {
         super(context.getConfiguration());
 
-        if (logger) {
-            this.logger = logger;
-        } else {
-            this.logger = LogManager.getLogger();
-        }
+        this.logger = logger ? logger : LogManager.getLogger();
+        this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
+        this.playlist = playlist ? playlist : new Playlist(this.api);
 
-        if (apiWrapper) {
-            this.api = apiWrapper;
-        } else {
-            this.api = new SpotifyApiWrapper(this);
-        }
-
-        if (playlist) {
-            this.playlist = playlist;
-        } else {
-            this.playlist = new Playlist(this.api);
-        }
+        //this.api.usePlaylist(this.playlist);
 
         this.spotifyConfig = {
             authProtocol: "",

@@ -1,3 +1,4 @@
+import { IApiWrapper } from "../SongRequest";
 
 export enum MediaLibrary {
     Spotify,
@@ -5,7 +6,7 @@ export enum MediaLibrary {
 }
 
 export interface ISongInfo {
-    id: string;
+    uri: string;
     source: MediaLibrary;
     title: string;
     artist: string;
@@ -24,6 +25,12 @@ export class Playlist implements IPlaylist {
     //TODO make configurable
     private readonly maxQueueLength = 20;
     private readonly maxEntriesPerUser = 5;
+
+    private readonly api: IApiWrapper;
+
+    constructor(apiWrapper: IApiWrapper) {
+        this.api = apiWrapper;
+    }
 
     enqueue(song: ISongInfo): void {
         throw new Error("Method not implemented.");
