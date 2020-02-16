@@ -15,7 +15,11 @@ export interface ISongInfo {
 }
 
 export interface IPlaylist {
-    enqueue(song: ISongInfo): void;
+    /**
+     * Adds a song to the queue. Will return false if queue is full
+     * @param song the song request
+     */
+    enqueue(song: ISongInfo): boolean;
     getCurrent(): ISongInfo | null;
     skip(): void;
     start(): void;
@@ -43,9 +47,27 @@ export class Playlist implements IPlaylist {
         return this.timer != undefined;
     }
 
-    public enqueue(song: ISongInfo): void {
-        // TODO only enqueue if less than max queue length or entries per user
-        this.list.push(song);
+    public enqueue(song: ISongInfo): boolean {
+        if (this.canEnqueue(song.requestedBy)) {
+            this.list.push(song);
+            return true;
+        }
+        return false;
+    }
+
+    public canEnqueue(user: string): boolean {
+        const maxLimitExceeded = this.list.length > this.maxQueueLength;
+        if (maxLimitExceeded) {
+            return false
+        };
+
+        const tracksFromUser = this.list.filter((s) => s.requestedBy == user);
+        const tracksPerUserExceeded = tracksFromUser.length > this.maxEntriesPerUser;
+        if (tracksPerUserExceeded) {
+            return false;
+        }
+
+        return true;
     }
 
     public getCurrent(): ISongInfo | null {

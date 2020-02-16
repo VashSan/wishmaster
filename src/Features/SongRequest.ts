@@ -127,9 +127,13 @@ class SpotifyApiWrapper implements IApiWrapper {
             .catch((err) => this.handleRequestError(msg, err));
     }
 
-    private playOrEnqueueTrack(song: ISongInfo): Promise<void> | PromiseLike<void | undefined> {
+    private playOrEnqueueTrack(song: ISongInfo): Promise<void> | PromiseLike<void> | undefined {
         if (this.playlist) {
-            this.playlist.enqueue(song);
+            if (this.playlist.enqueue(song)) {
+                this.chat.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
+            } else {
+                this.chat.reply(`Sorry @${song.requestedBy}, you can not add more songs to the playlist.`);
+            }
             return Promise.resolve();
         } else {
             // API has an own response type I cannot use, so translate with this thingy
@@ -282,7 +286,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             this.api.requestCurrentSongInfo(msg);
         }
     }
-    
+
     private updateApiToken() {
         const token = this.token?.toString() || "";
         if (this.token == "") {
