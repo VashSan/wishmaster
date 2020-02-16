@@ -166,11 +166,13 @@ export class SongRequest extends FeatureBase implements ISongRequest {
             }
         }).then((result) => {
             if (result) {
-                const v = result.body.item?.name.toString();
-                const trackName = v || "";
+                const trackNameOpt = result.body.item?.name.toString();
+                const trackName = trackNameOpt || "";
+                const artistOpt = result.body.item?.artists[0].name.toString();
+                const artist = artistOpt || "";
 
                 if (trackName != "") {
-                    const r = this.createResponse(`Current song: ${trackName}`);
+                    const r = this.createResponse(`Current song: '${trackName}' from ${artist}`);
                     this.sendResponse(r);
                 }
             }
