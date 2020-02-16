@@ -1,4 +1,4 @@
-import { Playlist } from "./PlayList";
+import { Playlist } from "./Playlist";
 import { mock, MockProxy } from "jest-mock-extended";
 import { IApiWrapper } from "../SongRequest";
 
