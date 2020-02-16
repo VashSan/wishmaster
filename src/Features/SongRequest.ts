@@ -23,6 +23,9 @@ export interface IApiWrapper {
     updateApiToken(token: string): void;
     requestSong(request: string, msg: IMessage): void;
     requestCurrentSongInfo(msg: IMessage): void;
+
+    isPausedOrStopped(): Promise<boolean>;
+    playNow(uri: string): void;
 }
 
 interface ICanReply {
@@ -30,20 +33,23 @@ interface ICanReply {
 }
 
 class SongInfo implements ISongInfo {
-    constructor(track: SpotifyApi.TrackObjectFull) {
+    constructor(track: SpotifyApi.TrackObjectFull, requestBy: string) {
         this.uri = track.uri;
         this.source = MediaLibrary.Spotify;
         this.title = track.name;
         this.artist = track.artists[0].name;
+        this.requestedBy = requestBy;
     }
 
     uri: string;
     source: MediaLibrary;
     title: string;
     artist: string;
+    requestedBy: string;
 }
 
 class SpotifyApiWrapper implements IApiWrapper {
+
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
     private readonly chat: ICanReply;
@@ -75,20 +81,33 @@ class SpotifyApiWrapper implements IApiWrapper {
     }
 
     private requestSongByName(request: string, msg: IMessage) {
-        this.api.getMyCurrentPlaybackState()
-            .then((state) => {
-                if (!state.body.is_playing) {
-                    return this.api.searchTracks(request);
-                }
-            })
+
+        const pl = this.playlist;
+        const api = this.api;
+        function searchTracks() {
+            if (pl) {
+                return api.searchTracks(request);
+            } else {
+                return api
+                    .getMyCurrentPlaybackState()
+                    .then((state) => {
+                        if (!state.body.is_playing) {
+                            return api.searchTracks(request);
+                        } else {
+                            return Promise.reject("Currently only one song is allowed in the queue.");
+                        }
+                    });
+            }
+        }
+
+        searchTracks()
             .then((result) => {
                 const track = result?.body.tracks?.items[0];
                 if (track != undefined) {
-                    const song = new SongInfo(track);
+                    const song = new SongInfo(track, msg.from);
                     return this.playOrEnqueueTrack(song);
                 }
             })
-            //.then((trackid) => this.playOrEnqueueTrack(trackid))
             .catch((err) => this.handleRequestError(msg, err));
     }
 
@@ -101,7 +120,7 @@ class SpotifyApiWrapper implements IApiWrapper {
             })
             .then((track) => {
                 if (track && track.body) {
-                    const song = new SongInfo(track.body);
+                    const song = new SongInfo(track.body, msg.from);
                     return this.playOrEnqueueTrack(song);
                 }
             })
@@ -148,7 +167,20 @@ class SpotifyApiWrapper implements IApiWrapper {
         });
     }
 
+    public async isPausedOrStopped(): Promise<boolean> {
+        const state = await this.api.getMyCurrentPlaybackState();
 
+        if (state.body.is_playing == undefined) {
+            return Promise.reject("Unknown playback state");
+        }
+        else {
+            return Promise.resolve(!state.body.is_playing);
+        }
+    }
+
+    public playNow(uri: string): void {
+        this.api.play({ uris: [uri] });
+    }
 }
 
 /** Enqueue songs to a playlist */
@@ -169,7 +201,8 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
         this.playlist = playlist ? playlist : new Playlist(this.api);
 
-        //this.api.usePlaylist(this.playlist);
+        // if no playlist is used, then songs are played immediately
+        this.api.usePlaylist(this.playlist);
 
         this.spotifyConfig = {
             authProtocol: "",
@@ -201,6 +234,8 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         if (!this.isSpotifyConnected() && this.spotifyAuth) {
             this.spotifyAuth.authenticate(() => {
                 this.token = this.spotifyAuth?.getAccessToken();
+                this.updateApiToken();
+                this.playlist.start();
             });
         } else {
             if (!this.spotifyAuth) {
@@ -240,17 +275,21 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             return;
         }
 
+        this.updateApiToken();
+        if (cmd == "!sr" || cmd == "!songrequest") {
+            this.api.requestSong(request, msg);
+        } else if (cmd == "!song") {
+            this.api.requestCurrentSongInfo(msg);
+        }
+    }
+    
+    private updateApiToken() {
         const token = this.token?.toString() || "";
         if (this.token == "") {
             return;
         }
 
         this.api.updateApiToken(token);
-        if (cmd == "!sr" || cmd == "!songrequest") {
-            this.api.requestSong(request, msg);
-        } else if (cmd == "!song") {
-            this.api.requestCurrentSongInfo(msg);
-        }
     }
 
 }
