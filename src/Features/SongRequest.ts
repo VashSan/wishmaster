@@ -314,7 +314,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             }
 
             const tr = new TagReader(msg.tags); // TODO so ugly need to improve soon
-            const canSkip = tr.isMod || tr.isBroadcaster();
+            const canSkip = tr.isMod_obsolete || tr.isBroadcaster();
             if (canSkip) {
                 this.playlist.skip();
             }

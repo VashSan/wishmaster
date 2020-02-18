@@ -204,7 +204,7 @@ export class UserCollection extends Collection implements IUserCollection {
                 emoteOnlyCount: emoteOnlyCount,
                 messageCount: messageCount,
                 totalBits: totalBits,
-                isMod: tr.isMod,
+                isMod: tr.isMod_obsolete,
                 isSubscriber: tr.isSubscriber,
                 isTurbo: tr.isTurbo,
                 lastRoomSeen: tr.roomId,

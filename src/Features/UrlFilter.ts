@@ -40,7 +40,7 @@ export class UrlFilter extends FeatureBase {
     private shallCheckDomain(message: IMessage): boolean {
         if (message.tags) {
             let tagReader = new TagReader(message.tags);
-            if (tagReader.isMod || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
+            if (tagReader.isMod_obsolete || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
                 return false;
             }
         }

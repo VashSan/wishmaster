@@ -15,8 +15,13 @@ export class Emote {
     end: number = 0;
 }
 
-export class TagReader {
+export interface ITagReader extends ITags {
+    isBroadcaster(): boolean;
+    isMod(): boolean;
+    isSubscriber(): boolean;
+}
 
+export class TagReader implements ITags, ITagReader {
     private readonly tags: ITags;
     private readonly logger: ILogger;
 
@@ -25,9 +30,9 @@ export class TagReader {
     public isEmoteOnly: boolean = false;
     public emoteList: Set<Emote> = new Set<Emote>();
     public messageId: string = "";
-    public isMod: boolean = false;
+    public isMod_obsolete: boolean = false;
     public roomId: number = 0;
-    public isSubscriber: boolean = false;
+    public isSubscriber_obsoloete: boolean = false;
     public serverReceivedMsgTime: number = 0;
     public isTurbo: boolean = false;
     public userId: number = 0;
@@ -45,9 +50,29 @@ export class TagReader {
         this.assignValues();
     }
 
+    getAvailableTags(): IterableIterator<string> {
+        return this.tags.getAvailableTags();
+    }
+
+    get(name: string): string {
+        return this.tags.get(name);
+    }
+
     public isBroadcaster(): boolean {
+        return this.hasBadge("broadcaster");
+    }
+
+    public isMod(): boolean {
+        return this.hasBadge("moderator");
+    }
+
+    public isSubscriber(): boolean {
+        return this.hasBadge("subscriber");
+    }
+
+    private hasBadge(badgeName: string): boolean {
         for (const badge of this.badgeList) {
-            if (badge.toLowerCase() == "broadcaster") {
+            if (badge.toLowerCase() == badgeName.toLowerCase()) {
                 return true;
             }
         }
@@ -85,13 +110,13 @@ export class TagReader {
                 this.messageId = value;
                 break;
             case "mod":
-                this.isMod = this.parseBool(value);
+                this.isMod_obsolete = this.parseBool(value);
                 break;
             case "room-id":
                 this.roomId = this.parseInt(value);
                 break;
             case "subscriber":
-                this.isSubscriber = this.parseBool(value);
+                this.isSubscriber_obsoloete = this.parseBool(value);
                 break;
             case "sent-ts":
                 this.logger.log("Unknow tag sent-ts received");

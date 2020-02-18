@@ -3,6 +3,7 @@
 import { isNullOrUndefined } from "util";
 import * as IRC from "irc";
 import { ILogger, LogManager } from "psst-log";
+import { TagReader, ITagReader } from "./TagReader";
 
 
 export interface ITags {
@@ -14,7 +15,7 @@ export interface IMessage {
     from: string;
     channel: string;
     text: string;
-    tags?: ITags;
+    tags?: ITagReader;
 }
 
 export interface IChatClient {
@@ -30,10 +31,10 @@ export class Message implements IMessage {
     from: string = "";
     /** Channel starts with # otherwise it is a whisper or system notice I guess */
     channel: string = "";
-    tags?: ITags;
+    tags?: ITagReader;
 
 
-    constructor(init: Partial<Message>, tags?: ITags) {
+    constructor(init: Partial<Message>, tags?: ITagReader) {
         (<any>Object).assign(this, init);
         if (!isNullOrUndefined(tags)) {
             this.tags = tags;
@@ -230,7 +231,8 @@ export class TwitchChatClient implements IChatClient {
                 this.logger.error("Could not parse 'to' from meta data");
             } else {
                 let text = payload.substring(separatorPos + 1);
-                let tags = new Tags(tagString, this.logger);
+                let plainTags = new Tags(tagString, this.logger);
+                let tags = new TagReader(plainTags);
 
                 let message: IMessage = {
                     from: from,

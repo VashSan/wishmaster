@@ -38,7 +38,7 @@ test('tag parsings', () => {
     // Assert
     expect(tr.displayName).toBe('Vash');
     expect(tr.color).toBe('#000000');
-    expect(tr.isMod).toBe(true);
+    expect(tr.isMod_obsolete).toBe(true);
     expect(tr.isEmoteOnly).toBe(true);
     expect(tr.roomId).toBe(12345);
     expect(tr.userId).toBe(666);
@@ -76,4 +76,6 @@ test('isBroadcaster', () => {
 
     // Assert
     expect(tr.isBroadcaster()).toBe(true);
+    expect(tr.isMod()).toBe(false);
+    expect(tr.isSubscriber()).toBe(false);
 });
