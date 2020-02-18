@@ -42,8 +42,8 @@ export class IgnoreDuringTimeout<T> {
         this.handler = handler;
     }
 
-    handle(): void {
-        if (this.hasTimeoutExpired()) {
+    handle(overrideTimeout?: boolean): void {
+        if (overrideTimeout || this.hasTimeoutExpired()) {
             this.lastCall = new Date();
             this.handler(this.argument);
         }

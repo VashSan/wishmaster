@@ -59,6 +59,27 @@ describe('IgnoreDuringTimeout', () => {
 
     });
 
+    test('handler timeout can be overridden', (done) => {
+        // Arrange
+        let handlerInvokeCount = 0;
+        let handler = new IgnoreDuringTimeout(new Seconds(0.3), null, () => {
+            handlerInvokeCount += 1;
+        });
+
+        // Act
+        handler.handle();
+        handler.handle(true); // will be overridden
+
+        setTimeout(() => {
+            handler.handle(); 
+
+            // Assert
+            expect(handlerInvokeCount).toBe(3);
+            done();
+        }, new Seconds(0.4).inMilliseconds());
+
+    });
+
 });
 
 describe('Generate', () => {
