@@ -1,5 +1,6 @@
 import { IApiWrapper } from "../SongRequest";
 import { Seconds } from "../../shared";
+import { ILogger, LogManager } from "psst-log";
 
 export enum MediaLibrary {
     Spotify,
@@ -12,6 +13,12 @@ export interface ISongInfo {
     title: string;
     artist: string;
     requestedBy: string;
+}
+
+export interface IPlaylistConfig {
+    updateIntervalInSeconds: number;
+    maxQueueLength: number;
+    maxEntriesPerUser: number;
 }
 
 export interface IPlaylist {
@@ -28,20 +35,23 @@ export interface IPlaylist {
 
 export class Playlist implements IPlaylist {
 
-    //TODO make configurable
-    private readonly maxQueueLength = 20;
-    private readonly maxEntriesPerUser = 5;
-    private readonly refreshTimer = new Seconds(2);
-
     private readonly list: ISongInfo[] = [];
     private readonly api: IApiWrapper;
+    private readonly config: IPlaylistConfig;
+    private readonly logger: ILogger;
 
     private currentSong: ISongInfo | null = null;
     private timer: NodeJS.Timer | undefined = undefined;
     private shouldUpdateAt: Date = new Date();
 
-    constructor(apiWrapper: IApiWrapper) {
+    constructor(apiWrapper: IApiWrapper, config?: IPlaylistConfig, logger?: ILogger) {
         this.api = apiWrapper;
+        this.logger = logger ? logger : LogManager.getLogger();
+        this.config = config ? config : {
+            updateIntervalInSeconds: 2,
+            maxQueueLength: 20,
+            maxEntriesPerUser: 4
+        };
     }
 
     public isRunning(): boolean {
@@ -51,19 +61,24 @@ export class Playlist implements IPlaylist {
     public enqueue(song: ISongInfo): boolean {
         if (this.canEnqueue(song.requestedBy)) {
             this.list.push(song);
+            this.resetNextUpdate();
             return true;
         }
         return false;
     }
 
     public canEnqueue(user: string): boolean {
-        const maxLimitExceeded = this.list.length > this.maxQueueLength;
+        if (this.timer == undefined) {
+            return false;
+        }
+
+        const maxLimitExceeded = this.list.length > this.config.maxQueueLength;
         if (maxLimitExceeded) {
             return false
         };
 
         const tracksFromUser = this.list.filter((s) => s.requestedBy == user);
-        const tracksPerUserExceeded = tracksFromUser.length > this.maxEntriesPerUser;
+        const tracksPerUserExceeded = tracksFromUser.length > this.config.maxEntriesPerUser;
         if (tracksPerUserExceeded) {
             return false;
         }
@@ -77,6 +92,10 @@ export class Playlist implements IPlaylist {
 
     public skip(): void {
         this.playNextSong();
+        this.resetNextUpdate();
+    }
+
+    private resetNextUpdate() {
         setTimeout(() => {
             this.shouldUpdateAt = new Date(0);
         }, new Seconds(1).inMilliseconds());
@@ -87,9 +106,10 @@ export class Playlist implements IPlaylist {
             return;
         }
 
+        const update = new Seconds(this.config.updateIntervalInSeconds);
         this.timer = setInterval(() => {
             this.update();
-        }, this.refreshTimer.inMilliseconds());
+        }, update.inMilliseconds());
     }
 
     public stop(): void {
@@ -104,6 +124,7 @@ export class Playlist implements IPlaylist {
             const nextSong = this.list.shift();
             if (nextSong) {
                 this.currentSong = nextSong;
+                this.logger.log(`Playlist.playNextSong: play now (${nextSong.uri})`);
                 this.api.playNow(nextSong.uri);
             } else {
                 this.currentSong = null;
@@ -128,11 +149,12 @@ export class Playlist implements IPlaylist {
                 if (remainingMs < tolerance) {
                     this.playNextSong();
                 } else {
-                    this.shouldUpdateAt = new Date((remainingMs / 2) + tolerance);
+                    this.shouldUpdateAt = new Date(remainingMs);
                 }
 
+            })
+            .catch((err) => {
+                this.logger.warn("Playlist.update: Could not fetch remaining track time.");
             });
-
-        // TODO we should catch but we need the logger
     }
 }
