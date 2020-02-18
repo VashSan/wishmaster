@@ -168,7 +168,7 @@ export class UserCollection extends Collection implements IUserCollection {
             return;
         }
         let that = this;
-        let tr = new TagReader(message.tags, this.logger);
+        let tr = message.tags as TagReader; // TODO remove dependency
         this.db.findOne({ $or: [{ twitchid: tr.userId }, { name: tr.displayName }] }, function (err: Error, doc: any) {
             if (err != null) {
                 that.logger.error(err);
@@ -185,7 +185,7 @@ export class UserCollection extends Collection implements IUserCollection {
             let messageCount = 0;
             if (doc != null) {
                 totalBits = doc.totalBits + tr.bits;
-                emoteOnlyCount = doc.emoteOnlyCount + tr.isEmoteOnly ? 1 : 0;
+                emoteOnlyCount = doc.emoteOnlyCount + tr.isEmoteOnly_ ? 1 : 0;
                 messageCount = doc.messageCount + 1;
             }
             let followDate = new Date(0);
@@ -194,7 +194,7 @@ export class UserCollection extends Collection implements IUserCollection {
             }
 
             // TODO New Tags? flags, badge-info
-            let tagReader = new TagReader(message.tags);
+            let tagReader = message.tags;
             let user = {
                 twitchid: tr.userId,
                 name: tr.displayName,

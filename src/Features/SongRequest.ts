@@ -3,7 +3,7 @@ import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
 
 
-import { IContext, IMessage, ISpotifyConfig, Seconds, TagReader } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { SpotifyAuth, IAccessToken } from "./SongRequest/SpotifyAuth";
 import { Playlist, IPlaylist, ISongInfo, MediaLibrary } from "./SongRequest/Playlist";
@@ -313,8 +313,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 return;
             }
 
-            const tr = new TagReader(msg.tags); // TODO so ugly need to improve soon
-            const canSkip = tr.isMod_obsolete || tr.isBroadcaster();
+            const canSkip = msg.tags.isMod() || msg.tags.isBroadcaster();
             if (canSkip) {
                 this.playlist.skip();
             }

@@ -1,6 +1,6 @@
 import { ILogger, LogManager } from "psst-log";
 
-import { IContext, TagReader } from "../shared";
+import { IContext } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { IMessage } from "../shared/ChatClient";
 
@@ -39,8 +39,8 @@ export class UrlFilter extends FeatureBase {
 
     private shallCheckDomain(message: IMessage): boolean {
         if (message.tags) {
-            let tagReader = new TagReader(message.tags);
-            if (tagReader.isMod_obsolete || tagReader.isEmoteOnly || tagReader.isBroadcaster()) {
+            let tags = message.tags;
+            if (tags.isMod() || tags.isEmoteOnly() || tags.isBroadcaster()) {
                 return false;
             }
         }

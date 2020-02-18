@@ -1,6 +1,6 @@
 import { mock } from "jest-mock-extended";
 import { UrlFilter } from "../UrlFilter";
-import { Tags, ResponseCallback, IContext, IConfiguration, TagReader, ITagReader } from "../../shared";
+import { Tags, ResponseCallback, IContext, IConfiguration,  ITagReader } from "../../shared";
 import { ILogger } from "psst-log";
 
 const config = mock<IConfiguration>();
@@ -11,8 +11,10 @@ context.getConfiguration.mockReturnValue(config);
 
 const logger = mock<ILogger>();
 
-function createTags(tags: string): ITagReader {
-    return new TagReader(new Tags(tags));
+function createTags(isMod: boolean): ITagReader {
+    let tags = mock<ITagReader>();
+    tags.isMod.mockReturnValue(isMod);
+    return tags;
 }
 
 test('construction', () => {
@@ -29,7 +31,7 @@ test('mods are not timed out', () => {
     };
     filter.setup(cb.bind(filter));
 
-    let message = { text: "http://someweirdsite.com", from: "goodguy", channel: "#channel", tags: createTags("@mod=1") };
+    let message = { text: "http://someweirdsite.com", from: "goodguy", channel: "#channel", tags: createTags(true) };
     filter.act(message);
 
     expect(timeoutSent).toBe(false);
@@ -44,7 +46,7 @@ test('users are timed out', () => {
     };
     filter.setup(cb.bind(filter));
 
-    let message = { text: "http://someweirdsite.com", from: "badguy", channel: "#channel", tags: createTags("@mod=0") };
+    let message = { text: "http://someweirdsite.com", from: "badguy", channel: "#channel", tags: createTags(false) };
     filter.act(message);
 
     expect(timeoutSent).toBe(true);
@@ -59,7 +61,7 @@ test('Whitelisted domains are ignored', () => {
     };
     filter.setup(cb.bind(filter));
 
-    let message = { text: "https://twitch.tv/vash1080", from: "badguy", channel: "#channel", tags: createTags("@mod=0") };
+    let message = { text: "https://twitch.tv/vash1080", from: "badguy", channel: "#channel", tags: createTags(false) };
     filter.act(message);
 
     expect(timeoutSent).toBe(false);

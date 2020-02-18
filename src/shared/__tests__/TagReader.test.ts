@@ -39,7 +39,7 @@ test('tag parsings', () => {
     expect(tr.displayName).toBe('Vash');
     expect(tr.color).toBe('#000000');
     expect(tr.isMod_obsolete).toBe(true);
-    expect(tr.isEmoteOnly).toBe(true);
+    expect(tr.isEmoteOnly()).toBe(true);
     expect(tr.roomId).toBe(12345);
     expect(tr.userId).toBe(666);
     expect(tr.userType).toBe(UserType.Moderator);

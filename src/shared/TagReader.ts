@@ -19,6 +19,7 @@ export interface ITagReader extends ITags {
     isBroadcaster(): boolean;
     isMod(): boolean;
     isSubscriber(): boolean;
+    isEmoteOnly(): boolean;
 }
 
 export class TagReader implements ITags, ITagReader {
@@ -27,7 +28,7 @@ export class TagReader implements ITags, ITagReader {
 
     public color: string = "";
     public displayName: string = "";
-    public isEmoteOnly: boolean = false;
+    public isEmoteOnly_: boolean = false;
     public emoteList: Set<Emote> = new Set<Emote>();
     public messageId: string = "";
     public isMod_obsolete: boolean = false;
@@ -70,6 +71,10 @@ export class TagReader implements ITags, ITagReader {
         return this.hasBadge("subscriber");
     }
 
+    public isEmoteOnly(): boolean {
+        return this.isEmoteOnly_;
+    }
+
     private hasBadge(badgeName: string): boolean {
         for (const badge of this.badgeList) {
             if (badge.toLowerCase() == badgeName.toLowerCase()) {
@@ -101,7 +106,7 @@ export class TagReader implements ITags, ITagReader {
                 this.displayName = value;
                 break;
             case "emote-only":
-                this.isEmoteOnly = this.parseBool(value);
+                this.isEmoteOnly_ = this.parseBool(value);
                 break;
             case "emotes":
                 this.parseEmotes(value);
