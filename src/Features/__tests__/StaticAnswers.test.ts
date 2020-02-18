@@ -17,6 +17,7 @@ beforeEach(() => {
 
     config = mock<IConfiguration>();
     config.getStaticAnswers.mockReturnValue([]);
+    config.getStaticAnswersGlobalTimeout.mockReturnValue(0);
 
     context = mock<IContext>();
     context.getConfiguration.mockReturnValue(config);
@@ -83,8 +84,8 @@ test('respects empty timeout', (done) => {
 
 });
 
-test('respects timeout', (done) => {
-    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text", timeoutInSeconds: 0.2 }]);
+test('respects global timeout', (done) => {
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text" }]);
 
     const impl = new StaticAnswers(context, logger);
 
@@ -93,11 +94,32 @@ test('respects timeout', (done) => {
 
     impl.act(someMessage);
     impl.act(someMessage);
+    impl.act(someMessage);
+
+    setTimeout(() => {
+        expect(callbackInvokedTimes).toBe(3);
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+
+});
+
+test('respects timeout', (done) => {
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text" }]);
+    config.getStaticAnswersGlobalTimeout.mockReturnValue(0.2);
+
+    const impl = new StaticAnswers(context, logger);
+
+    let callbackInvokedTimes = 0;
+    impl.setup(() => callbackInvokedTimes += 1);
+
+    impl.act(someMessage);
+    impl.act(someMessage);
+
     setTimeout(() => {
         impl.act(someMessage);
         expect(callbackInvokedTimes).toBe(2);
         done();
-    }, new Seconds(0.4).inMilliseconds());
+    }, new Seconds(0.3).inMilliseconds());
 });
 
 test('sound', () => {

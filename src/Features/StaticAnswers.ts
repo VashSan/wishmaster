@@ -8,17 +8,17 @@ type StaticAnswerTimeout = IgnoreDuringTimeout<IStaticAnswer>;
 
 /** When a command the answer command listens to is found, a text message is replied. */
 export class StaticAnswers extends FeatureBase {
-    private answers: Map<string, StaticAnswerTimeout> = new Map<string, StaticAnswerTimeout>();
-    private logger: ILogger;
+    private readonly globalTimeout: Seconds;
+    private readonly answers: Map<string, StaticAnswerTimeout> = new Map<string, StaticAnswerTimeout>();
+    private readonly logger: ILogger;
     private readonly mediaPlayer: IMediaPlayer;
+
+    private nextTime: number = 0;
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
-        if (logger) {
-            this.logger = logger;
-        } else {
-            this.logger = LogManager.getLogger();
-        }
+        this.logger = logger ? logger : LogManager.getLogger();
+        this.globalTimeout = new Seconds(this.config.getStaticAnswersGlobalTimeout());
 
         this.mediaPlayer = context.getMediaPlayer();
 
@@ -43,7 +43,11 @@ export class StaticAnswers extends FeatureBase {
     public act(msg: IMessage): void {
         const firstWord = this.getFirstWord(msg);
         let timedHandler = this.answers.get(firstWord);
-        timedHandler?.handle();
+        
+        if (timedHandler && Date.now() >= this.nextTime) {
+            this.nextTime = Date.now() + this.globalTimeout.inMilliseconds();
+            timedHandler.handle();
+        }
     }
 
     private getFirstWord(msg: IMessage): string {

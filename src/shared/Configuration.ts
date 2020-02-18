@@ -139,6 +139,9 @@ export interface IConfiguration extends IService {
     /** URL patterns that the URL filter allows to be posted to the chat */
     getUrlWhiteList(): string[];
 
+    /** The minimum time to wait in between any static answer. */
+    getStaticAnswersGlobalTimeout(): number;
+
     /** Chat reactions upons certain commands */
     getStaticAnswers(): IStaticAnswer[];
 
@@ -280,6 +283,11 @@ export class Configuration implements IConfiguration {
     urlWhiteList: string[] = [];
     getUrlWhiteList(): string[] {
         return this.urlWhiteList;
+    }
+
+    staticAnswersGlobalTimeout: number = 15;
+    getStaticAnswersGlobalTimeout(): number {
+        return this.staticAnswersGlobalTimeout;
     }
 
     staticAnswers: IStaticAnswer[] = [];
