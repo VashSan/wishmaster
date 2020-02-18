@@ -1,6 +1,6 @@
 
 import { mock, MockProxy } from "jest-mock-extended";
-import { IContext, IConfiguration, Seconds, IMediaPlayer } from "../../shared";
+import { IContext, IConfiguration, Seconds, IMediaPlayer, ITagReader } from "../../shared";
 import { StaticAnswers } from "../StaticAnswers";
 import { ILogger } from "psst-log";
 
@@ -105,7 +105,7 @@ test('respects global timeout', (done) => {
 
 test('respects timeout', (done) => {
     config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text" }]);
-    config.getStaticAnswersGlobalTimeout.mockReturnValue(0.2);
+    config.getStaticAnswersGlobalTimeout.mockReturnValue(0.1);
 
     const impl = new StaticAnswers(context, logger);
 
@@ -119,7 +119,30 @@ test('respects timeout', (done) => {
         impl.act(someMessage);
         expect(callbackInvokedTimes).toBe(2);
         done();
-    }, new Seconds(0.3).inMilliseconds());
+    }, new Seconds(0.2).inMilliseconds());
+});
+
+
+test('boradcaster overrides timeout', (done) => {
+    const tags = mock<ITagReader>();
+    tags.isBroadcaster.mockReturnValue(true);
+    const broadcasterMessage = { channel: "#c", from: "someguy", text: "!x", tags: tags };
+
+    config.getStaticAnswers.mockReturnValue([{ trigger: "!x", "answer": "text" }]);
+    config.getStaticAnswersGlobalTimeout.mockReturnValue(0.2);
+
+    const impl = new StaticAnswers(context, logger);
+
+    let callbackInvokedTimes = 0;
+    impl.setup(() => callbackInvokedTimes += 1);
+
+    impl.act(someMessage);
+    impl.act(broadcasterMessage);
+
+    setTimeout(() => {
+        expect(callbackInvokedTimes).toBe(2);
+        done();
+    }, new Seconds(0.1).inMilliseconds());
 });
 
 test('sound', () => {

@@ -43,11 +43,16 @@ export class StaticAnswers extends FeatureBase {
     public act(msg: IMessage): void {
         const firstWord = this.getFirstWord(msg);
         let timedHandler = this.answers.get(firstWord);
-        
-        if (timedHandler && Date.now() >= this.nextTime) {
+        const overrideTimeout = msg.tags?.isBroadcaster();
+
+        if (timedHandler && (this.isReady() || overrideTimeout)) {
             this.nextTime = Date.now() + this.globalTimeout.inMilliseconds();
-            timedHandler.handle();
+            timedHandler.handle(overrideTimeout);
         }
+    }
+
+    private isReady() {
+        return Date.now() >= this.nextTime;
     }
 
     private getFirstWord(msg: IMessage): string {
