@@ -115,3 +115,34 @@ test('skip', (done) => {
         done();
     }, 200);
 });
+
+test('remove last song', (done) => {
+    // Arrange
+    const alice = "alice";
+    api.getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
+    api.getRemainingTrackTime.mockResolvedValue(new Seconds(3));
+
+    song.requestedBy = alice;
+    song.title = "1";
+    song2.requestedBy = alice;
+    song2.title = "2";
+    let initialSong = mock<ISongInfo>();
+    initialSong.requestedBy = "anyone";
+
+    playlist.start();
+  
+    // Act    
+    playlist.enqueue(initialSong);
+    playlist.enqueue(song);
+    playlist.enqueue(song2);
+    playlist.removeLastSongFromUser(alice);
+    playlist.skip(); // skip the first song, so alice next song should be active
+
+    setTimeout(() => {
+        const currentSong = playlist.getCurrent();
+
+        // Assert
+        expect(currentSong?.title).toBe("1");
+        done();
+    }, 200);
+});

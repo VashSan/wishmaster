@@ -307,16 +307,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             this.api.requestSong(request, msg);
         } else if (cmd == "!song") {
             this.api.requestCurrentSongInfo(msg);
-        } else if (cmd == "!skip" && msg.tags) {
-            if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
-                this.playlist.skip();
-                return;
-            }
-
-            const canSkip = msg.tags.isMod() || msg.tags.isBroadcaster();
-            if (canSkip) {
-                this.playlist.skip();
-            }
+        } else if (cmd == "!skip") {
+            this.skipCurrentSong(msg);
+        } else if (msg.text == "!rs") {
+            this.removeMyLastRequest(msg.from);
         }
     }
 
@@ -329,4 +323,19 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.api.updateApiToken(token);
     }
 
+    private skipCurrentSong(msg: IMessage) {
+        if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
+            this.playlist.skip();
+            return;
+        }
+
+        const canSkip = msg.tags?.isMod() || msg.tags?.isBroadcaster();
+        if (canSkip) {
+            this.playlist.skip();
+        }
+    }
+
+    private removeMyLastRequest(user: string) {
+        this.playlist.removeLastSongFromUser(user);
+    }
 }

@@ -31,6 +31,7 @@ export interface IPlaylist {
     skip(): void;
     start(): void;
     stop(): void;
+    removeLastSongFromUser(username: string): void;
 }
 
 export class Playlist implements IPlaylist {
@@ -117,6 +118,14 @@ export class Playlist implements IPlaylist {
             clearInterval(this.timer);
             this.timer = undefined;
         }
+    }
+
+    public removeLastSongFromUser(username: string): void {
+        [...this.list].reverse().forEach((item, index, theList) => {
+            if (item.requestedBy.toLowerCase() == username.toLowerCase()){
+                theList.splice(index, 1);
+            }
+        });
     }
 
     private playNextSong() {
