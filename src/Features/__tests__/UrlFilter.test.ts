@@ -1,6 +1,6 @@
 import { mock } from "jest-mock-extended";
 import { UrlFilter } from "../UrlFilter";
-import { Tags, ResponseCallback, IContext, IConfiguration,  ITagReader } from "../../shared";
+import { ResponseCallback, IContext, IConfiguration, ITagReader } from "../../shared";
 import { ILogger } from "psst-log";
 
 const config = mock<IConfiguration>();
