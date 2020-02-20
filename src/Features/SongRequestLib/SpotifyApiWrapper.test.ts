@@ -1,4 +1,4 @@
-import { SpotifyApiWrapper } from "./SpotifyApiWrapper";
+import { SpotifyApiWrapper } from ".";
 import { ICanReply } from "../SongRequest";
 import { mock, MockProxy } from "jest-mock-extended";
 import SpotifyWebApi = require("spotify-web-api-node");
@@ -15,6 +15,5 @@ beforeEach(() => {
 });
 
 test('construction', () => {
-
     expect(() => { new SpotifyApiWrapper(chat, api, logger) }).not.toThrow();
 });

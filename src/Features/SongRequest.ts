@@ -2,9 +2,7 @@
 import { ILogger, LogManager } from "psst-log";
 import { IContext, IMessage, ISpotifyConfig, Seconds } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { SpotifyAuth, IAccessToken } from "./SongRequest/SpotifyAuth";
-import { Playlist, IPlaylist } from "./SongRequest/Playlist";
-import { SpotifyApiWrapper } from "./SongRequest/SpotifyApiWrapper";
+import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken } from "./SongRequestLib";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -161,3 +159,5 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.playlist.removeLastSongFromUser(user);
     }
 }
+
+export default SongRequest;

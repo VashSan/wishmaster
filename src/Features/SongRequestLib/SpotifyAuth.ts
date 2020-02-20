@@ -2,9 +2,8 @@ import * as request from "request";
 import * as cookieParser from "cookie-parser";
 import * as querystring from "querystring";
 import * as express from "express";
-import { ISpotifyConfig, Generate, Hours, IFileSystem, FileSystem, Seconds, Minutes } from "../../shared";
 import * as open from "open";
-import { ILogger, LogManager } from "psst-log";
+import { ISpotifyConfig, Generate, IFileSystem, Seconds } from "../../shared";
 
 export interface IWebAuth {
     /**

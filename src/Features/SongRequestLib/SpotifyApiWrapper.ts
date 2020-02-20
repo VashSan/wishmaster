@@ -180,3 +180,5 @@ export class SpotifyApiWrapper implements IApiWrapper {
         this.api.play({ uris: [uri] });
     }
 }
+
+export default SpotifyApiWrapper;

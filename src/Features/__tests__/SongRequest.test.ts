@@ -2,7 +2,7 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader } from "../../shared";
 import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
-import { IPlaylist, ISongInfo } from "../SongRequest/PlayList";
+import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
 
 let api: MockProxy<IApiWrapper> & IApiWrapper;
 let logger: MockProxy<ILogger> & ILogger;
