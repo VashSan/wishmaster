@@ -4,20 +4,25 @@ import { IApiWrapper, ICanReply } from "../SongRequest";
 import { IPlaylist, ISongInfo, MediaLibrary } from "./Playlist";
 import { IMessage, Seconds } from "../../shared";
 
-class SongInfo implements ISongInfo {
-    constructor(track: SpotifyApi.TrackObjectFull, requestBy: string) {
-        this.uri = track.uri;
-        this.source = MediaLibrary.Spotify;
-        this.title = track.name;
-        this.artist = track.artists[0].name;
-        this.requestedBy = requestBy;
+export class SongInfo implements ISongInfo {
+    constructor(track: SpotifyApi.TrackObjectFull, requestBy: string, logger?: ILogger) {
+        try {
+            this.uri = track.uri;
+            this.source = MediaLibrary.Spotify;
+            this.title = track.name;
+            this.artist = track.artists[0].name;
+            this.requestedBy = requestBy;
+        } catch (err) {
+            const log = logger ? logger : LogManager.getLogger();
+            log.error(err);
+        }
     }
 
-    uri: string;
-    source: MediaLibrary;
-    title: string;
-    artist: string;
-    requestedBy: string;
+    uri: string = "";
+    source: MediaLibrary = MediaLibrary.Unknown;
+    title: string = "";
+    artist: string = "";
+    requestedBy: string = "";
 }
 
 export class SpotifyApiWrapper implements IApiWrapper {
@@ -42,6 +47,11 @@ export class SpotifyApiWrapper implements IApiWrapper {
     }
 
     public requestSong(request: string, msg: IMessage) {
+        if (!this.playlist) {
+            this.logger.error("requestSong: No playlist initialized.");
+            return;
+        }
+
         const spotifyRegex = /spotify:track:([A-Za-z0-9]+)|https:\/\/open\.spotify\.com\/track\/([A-Za-z0-9]+)/;
         const result = spotifyRegex.exec(request);
         if (result != null && result.length > 1) {
@@ -53,26 +63,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
     }
 
     private requestSongByName(request: string, msg: IMessage) {
-
-        const pl = this.playlist;
-        const api = this.api;
-        function searchTracks() {
-            if (pl) {
-                return api.searchTracks(request);
-            } else {
-                return api
-                    .getMyCurrentPlaybackState()
-                    .then((state) => {
-                        if (!state.body.is_playing) {
-                            return api.searchTracks(request);
-                        } else {
-                            return Promise.reject("Currently only one song is allowed in the queue.");
-                        }
-                    });
-            }
-        }
-
-        searchTracks()
+        this.api.searchTracks(request)
             .then((result) => {
                 const track = result?.body.tracks?.items[0];
                 if (track != undefined) {
@@ -84,12 +75,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
     }
 
     private requestSongById(songId: string, msg: IMessage) {
-        this.api.getMyCurrentPlaybackState()
-            .then((state) => {
-                if (!state.body.is_playing) {
-                    return this.api.getTrack(songId);
-                }
-            })
+        this.api.getTrack(songId)
             .then((track) => {
                 if (track && track.body) {
                     const song = new SongInfo(track.body, msg.from);

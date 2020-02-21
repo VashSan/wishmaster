@@ -3,6 +3,7 @@ import { Seconds } from "../../shared";
 import { ILogger, LogManager } from "psst-log";
 
 export enum MediaLibrary {
+    Unknown,
     Spotify,
     YouTube
 }
