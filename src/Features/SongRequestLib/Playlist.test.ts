@@ -130,7 +130,7 @@ test('remove last song', (done) => {
     initialSong.requestedBy = "anyone";
 
     playlist.start();
-  
+
     // Act    
     playlist.enqueue(initialSong);
     playlist.enqueue(song);
@@ -145,4 +145,30 @@ test('remove last song', (done) => {
         expect(currentSong?.title).toBe("1");
         done();
     }, 200);
+});
+
+test('isInQueue', (done) => {
+    // Arrange
+    playlist.start();
+
+    // Act
+    const isInQueue1 = playlist.isInQueue(song);
+
+    playlist.enqueue(song);
+    playlist.enqueue(song2);
+
+
+    // Assert
+    expect(isInQueue1).toBe(false);
+
+    setTimeout(() => { // check after some time to ensure the current song is set
+        const isInQueue2 = playlist.isInQueue(song2);
+        const isInQueue3 = playlist.isInQueue(song);
+
+        expect(isInQueue2).toBe(true);
+        expect(isInQueue3).toBe(true);
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+
+
 });

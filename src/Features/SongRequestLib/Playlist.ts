@@ -29,6 +29,7 @@ export interface IPlaylist {
      */
     enqueue(song: ISongInfo): boolean;
     getCurrent(): ISongInfo | null;
+    isInQueue(song: ISongInfo): boolean;
     skip(): void;
     start(): void;
     stop(): void;
@@ -92,6 +93,20 @@ export class Playlist implements IPlaylist {
         return this.currentSong;
     }
 
+    public isInQueue(song: ISongInfo): boolean {
+        for (let item of this.list) {
+            if (item.uri == song.uri) {
+                return true;
+            }
+        }
+
+        if (this.currentSong?.uri == song.uri) {
+            return true;
+        }
+
+        return false;
+    }
+
     public skip(): void {
         this.playNextSong();
         this.resetNextUpdate();
@@ -123,7 +138,7 @@ export class Playlist implements IPlaylist {
 
     public removeLastSongFromUser(username: string): void {
         [...this.list].reverse().forEach((item, index, theList) => {
-            if (item.requestedBy.toLowerCase() == username.toLowerCase()){
+            if (item.requestedBy.toLowerCase() == username.toLowerCase()) {
                 theList.splice(index, 1);
             }
         });
