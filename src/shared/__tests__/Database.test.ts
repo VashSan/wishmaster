@@ -7,6 +7,9 @@ import { Seconds } from "../Helper";
 
 jest.mock('nedb');
 import Nedb = require("nedb");
+import { mocked } from "ts-jest/utils";
+import { IMessage } from "../ChatClient";
+import TagReader from "../TagReader";
 
 let config: MockProxy<IConfiguration> & IConfiguration;
 let logger: MockProxy<ILogger> & ILogger;
@@ -80,5 +83,35 @@ describe('Database', () => {
 
         // Assert
         await expect(db.waitAllLoaded(new Seconds(0.1))).resolves.toBe(undefined);
+    });
+});
+
+describe('UserCollection', () => {
+    test('newMessage', () => {
+        const logger = mock<ILogger>();
+        const ndb = mock<Nedb>();
+
+        let docWithNoFollowDate: any = {
+            totalBits: 1,
+            emoteOnlyCount: 1,
+            messageCount: 1
+        };
+
+        ndb.findOne.mockImplementation((query, callback) => {
+            callback(null, docWithNoFollowDate);
+        });
+        let uc = new UserCollection("test", ndb, logger);
+        const msg: IMessage = {
+            channel: "#chan",
+            from: "bob",
+            text: "Hi",
+            tags: mock<TagReader>()
+        };
+
+        const act = () => { uc.newMessage(msg); };
+
+        expect(() => act()).not.toThrow();
+        expect(ndb.update).toBeCalledTimes(1);
+        expect(logger.error).toBeCalledTimes(0);
     });
 });
