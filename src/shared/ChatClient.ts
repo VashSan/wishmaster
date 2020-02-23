@@ -1,5 +1,3 @@
-///<reference path="../sub/irc-types/irc.d.ts" />
-
 import { isNullOrUndefined } from "util";
 import * as IRC from "irc";
 import { ILogger, LogManager } from "psst-log";
