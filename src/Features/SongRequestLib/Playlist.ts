@@ -33,7 +33,7 @@ export interface IPlaylist {
     skip(): void;
     start(): void;
     stop(): void;
-    removeLastSongFromUser(username: string): void;
+    removeLastSongFromUser(username: string): ISongInfo | null;
 }
 
 export class Playlist implements IPlaylist {
@@ -136,12 +136,15 @@ export class Playlist implements IPlaylist {
         }
     }
 
-    public removeLastSongFromUser(username: string): void {
+    public removeLastSongFromUser(username: string): ISongInfo | null {
+        let removedSong: ISongInfo | null = null;
         [...this.list].reverse().forEach((item, index, theList) => {
             if (item.requestedBy.toLowerCase() == username.toLowerCase()) {
-                theList.splice(index, 1);
+                const removedOnes = theList.splice(index, 1);
+                removedSong = removedOnes[0];
             }
         });
+        return removedSong;
     }
 
     private playNextSong() {

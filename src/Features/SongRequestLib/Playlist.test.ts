@@ -4,6 +4,7 @@ import { IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { Seconds } from "../../shared";
 
+const waitTime = new Seconds(0.1);
 let api: MockProxy<IApiWrapper> & IApiWrapper;
 let logger: MockProxy<ILogger> & ILogger;
 let song: MockProxy<ISongInfo> & ISongInfo;
@@ -88,7 +89,7 @@ test('getCurrent', (done) => {
         expect(api.playNow).toBeCalledTimes(1);
         expect(currentSong).toBe(song);
         done();
-    }, 200);
+    }, waitTime.inMilliseconds());
 });
 
 test('skip', (done) => {
@@ -113,7 +114,7 @@ test('skip', (done) => {
         expect(api.playNow).toBeCalledTimes(2);
         expect(secondSong).toBe(song2);
         done();
-    }, 200);
+    }, waitTime.inMilliseconds());
 });
 
 test('remove last song', (done) => {
@@ -132,19 +133,24 @@ test('remove last song', (done) => {
     playlist.start();
 
     // Act    
+    const removed1 = playlist.removeLastSongFromUser(alice);
+
     playlist.enqueue(initialSong);
     playlist.enqueue(song);
     playlist.enqueue(song2);
-    playlist.removeLastSongFromUser(alice);
+
+    const removed2 = playlist.removeLastSongFromUser(alice);
+
+    // Assert
     playlist.skip(); // skip the first song, so alice next song should be active
-
     setTimeout(() => {
-        const currentSong = playlist.getCurrent();
+        expect(removed1).toBeNull();
+        expect(removed2).toBe(song2);
 
-        // Assert
+        const currentSong = playlist.getCurrent();
         expect(currentSong?.title).toBe("1");
         done();
-    }, 200);
+    }, waitTime.inMilliseconds());
 });
 
 test('isInQueue', (done) => {
@@ -157,7 +163,6 @@ test('isInQueue', (done) => {
     playlist.enqueue(song);
     playlist.enqueue(song2);
 
-
     // Assert
     expect(isInQueue1).toBe(false);
 
@@ -168,7 +173,5 @@ test('isInQueue', (done) => {
         expect(isInQueue2).toBe(true);
         expect(isInQueue3).toBe(true);
         done();
-    }, new Seconds(0.1).inMilliseconds());
-
-
+    }, waitTime.inMilliseconds());
 });
