@@ -48,7 +48,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
         this.playlist = playlist ? playlist : new Playlist(this.api);
 
-        // if no playlist is used, then songs are played immediately
         this.api.usePlaylist(this.playlist);
 
         this.spotifyConfig = {
@@ -123,14 +122,19 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         }
 
         this.updateApiToken();
-        if (cmd == "!sr" || cmd == "!songrequest") {
-            this.api.requestSong(request, msg);
-        } else if (cmd == "!song") {
-            this.api.requestCurrentSongInfo(msg);
-        } else if (cmd == "!skip") {
-            this.skipCurrentSong(msg);
-        } else if (msg.text == "!rs") {
-            this.removeMyLastRequest(msg.from);
+
+        const commandMap = new Map<string, () => void>();
+        commandMap.set("!sr", () => this.api.requestSong(request, msg));
+        commandMap.set("!songrequest", () => this.api.requestSong(request, msg));
+        commandMap.set("!song", () => this.api.requestCurrentSongInfo(msg));
+        commandMap.set("!skip", () => this.skipCurrentSong(msg));
+        commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
+        commandMap.set("!sr-start", () => this.playlist.start());
+        commandMap.set("!sr-stop", () => this.playlist.stop());
+
+        const executor = commandMap.get(cmd);
+        if (executor) {
+            executor.call(this);
         }
     }
 

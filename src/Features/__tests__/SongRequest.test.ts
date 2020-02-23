@@ -102,3 +102,27 @@ test('remove last song from user', () => {
     //Assert
     expect(playlist.removeLastSongFromUser).toBeCalledWith("bob");
 });
+
+test('stop', () => {
+    // Arrange
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!sr-stop", from: "bob", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(playlist.stop).toBeCalled();
+});
+
+test('start', () => {
+    // Arrange
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!sr-start", from: "bob", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(playlist.start).toBeCalled();
+});

@@ -161,10 +161,9 @@ export class Playlist implements IPlaylist {
                 } else {
                     this.shouldUpdateAt = new Date(remainingMs);
                 }
-
             })
             .catch((err) => {
-                this.logger.warn("Playlist.update: Could not fetch remaining track time.");
+                this.logger.warn("Playlist.update: Could not fetch remaining track time.", JSON.stringify(err));
             });
     }
 }
