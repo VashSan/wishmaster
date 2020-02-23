@@ -4,7 +4,7 @@ import { mock, MockProxy } from "jest-mock-extended";
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger } from "psst-log";
 import { Seconds, IMessage } from "../../shared";
-import { IPlaylist } from "./Playlist";
+import { ISongInfo } from "./Playlist";
 
 ///<reference path="../../../node_modules/@types/spotify-api/index.d.ts" />
 ///<reference path="../../../node_modules/@types/spotify-web-api-node/index" />
@@ -173,7 +173,7 @@ describe('SpotifyApiWrapper', () => {
         expect(api.setAccessToken).toBeCalledWith("token");
     });
 
-    test('usePlaylist, requestSong', (done) => {
+    test('requestSong', async () => {
         // Arrange
         const response = createSearchResponseMock();
 
@@ -182,20 +182,14 @@ describe('SpotifyApiWrapper', () => {
         const wrapper = new SpotifyApiWrapper(chat, api, logger);
 
         // Act
-        const playlist = mock<IPlaylist>();
-        wrapper.usePlaylist(playlist);
-
         const message: IMessage = { channel: "", from: "alice", text: "!sr Innuendo Queen" };
-        wrapper.requestSong("Innuendo Queen", message);
+        const act: () => Promise<ISongInfo> = () => wrapper.getSong("Innuendo Queen", message);
 
         // Assert
-        setTimeout(() => {
-            expect(playlist.enqueue).toBeCalledTimes(1);
-            done();
-        }, new Seconds(0.1).inMilliseconds());
+        await expect(act()).resolves.toBeDefined();
     });
 
-    test('requestSong by URI', (done) => {
+    test('requestSong by URI', async () => {
         // Arrange
         const response = createSearchResponseMock();
         api.searchTracks.mockResolvedValue(response);
@@ -214,20 +208,11 @@ describe('SpotifyApiWrapper', () => {
         const wrapper = new SpotifyApiWrapper(chat, api, logger);
 
         // Act
-        const playlist = mock<IPlaylist>();
-        playlist.enqueue.mockReturnValue(true);
-        wrapper.usePlaylist(playlist);
-
         const message: IMessage = { channel: "", from: "alice", text: "!sr spotify:track:46gsGxk2iUctmgJUmQRTKz" };
-        wrapper.requestSong("spotify:track:46gsGxk2iUctmgJUmQRTKz", message);
+        const act: () => Promise<ISongInfo> = () => wrapper.getSong("spotify:track:46gsGxk2iUctmgJUmQRTKz", message);
 
         // Assert
-        setTimeout(() => {
-            expect(playlist.enqueue).toBeCalledTimes(1);
-            expect(chat.reply).toBeCalledTimes(1);
-
-            done();
-        }, new Seconds(1).inMilliseconds());
+        await expect(act()).resolves.toBeDefined();
     });
 
 });

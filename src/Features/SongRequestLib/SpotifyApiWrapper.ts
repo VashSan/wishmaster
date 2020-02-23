@@ -1,7 +1,7 @@
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
 import { IApiWrapper, ICanReply } from "../SongRequest";
-import { IPlaylist, ISongInfo, MediaLibrary } from "./Playlist";
+import { ISongInfo, MediaLibrary } from "./Playlist";
 import { IMessage, Seconds } from "../../shared";
 
 export class SongInfo implements ISongInfo {
@@ -30,7 +30,6 @@ export class SpotifyApiWrapper implements IApiWrapper {
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
     private readonly chat: ICanReply;
-    private playlist: IPlaylist | undefined;
 
     constructor(chat: ICanReply, api?: SpotifyWebApi, logger?: ILogger) {
         this.chat = chat;
@@ -38,78 +37,47 @@ export class SpotifyApiWrapper implements IApiWrapper {
         this.logger = logger ? logger : LogManager.getLogger();
     }
 
-    public usePlaylist(playlist: IPlaylist) {
-        this.playlist = playlist;
-    }
 
     public updateApiToken(token: string): void {
         this.api.setAccessToken(token);
     }
 
-    public requestSong(request: string, msg: IMessage) {
-        if (!this.playlist) {
-            this.logger.error("requestSong: No playlist initialized.");
-            return;
-        }
-
+    public getSong(request: string, msg: IMessage): Promise<ISongInfo> {
         const spotifyRegex = /spotify:track:([A-Za-z0-9]+)|https:\/\/open\.spotify\.com\/track\/([A-Za-z0-9]+)/;
         const result = spotifyRegex.exec(request);
         if (result != null && result.length > 1) {
             let songId = result[1] ? result[1] : result[2];
-            this.requestSongById(songId, msg);
+            return this.requestSongById(songId, msg);
         } else {
-            this.requestSongByName(request, msg);
+            return this.requestSongByName(request, msg);
         }
     }
 
-    private requestSongByName(request: string, msg: IMessage) {
-        this.api.searchTracks(request)
-            .then((result) => {
-                const track = result?.body.tracks?.items[0];
-                if (track != undefined) {
-                    const song = new SongInfo(track, msg.from);
-                    return this.playOrEnqueueTrack(song);
-                }
-            })
-            .catch((err) => this.handleRequestError(msg, err));
+    private requestSongByName(request: string, msg: IMessage): Promise<ISongInfo> {
+        return new Promise((resolve, reject) => {
+            this.api.searchTracks(request)
+                .then((result) => {
+                    const track = result?.body.tracks?.items[0];
+                    if (track != undefined) {
+                        const song = new SongInfo(track, msg.from);
+                        resolve(song);
+                    }
+                })
+                .catch((err) => reject(err));
+        });
     }
 
-    private requestSongById(songId: string, msg: IMessage) {
-        this.api.getTrack(songId)
-            .then((track) => {
-                if (track && track.body) {
-                    const song = new SongInfo(track.body, msg.from);
-                    return this.playOrEnqueueTrack(song);
-                }
-            })
-            .catch((err) => this.handleRequestError(msg, err));
-    }
-
-    private playOrEnqueueTrack(song: ISongInfo): Promise<void> | PromiseLike<void> | undefined {
-        if (this.playlist) {
-            if (this.playlist.isInQueue(song)){
-                this.chat.reply(`Sorry @${song.requestedBy}, the song is already in the queue.`);
-                return Promise.resolve();
-            }
-
-            if (this.playlist.enqueue(song)) {
-                this.chat.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
-            } else {
-                this.chat.reply(`Sorry @${song.requestedBy}, you can not add more songs to the playlist.`);
-            }
-            return Promise.resolve();
-        } else {
-            // API has an own response type I cannot use, so translate with this thingy
-            return this.api
-                .play({ uris: [song.uri] })
-                .then(() => Promise.resolve())
-                .catch((err) => Promise.reject(err));
-        }
-    }
-
-    private handleRequestError(msg: IMessage, err: any) {
-        this.logger.warn("[!sr] Could not retrieve song.", JSON.stringify(err), JSON.stringify(msg));
-        this.chat.reply(`Sorry @${msg.from} - your song was not found!`);
+    private requestSongById(songId: string, msg: IMessage): Promise<ISongInfo> {
+        return new Promise((resolve, reject) => {
+            this.api.getTrack(songId)
+                .then((track) => {
+                    if (track && track.body) {
+                        const song = new SongInfo(track.body, msg.from);
+                        resolve(song);
+                    }
+                })
+                .catch((err) => reject(err));
+        });
     }
 
     public requestCurrentSongInfo(msg: IMessage) {

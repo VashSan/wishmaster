@@ -2,7 +2,7 @@
 import { ILogger, LogManager } from "psst-log";
 import { IContext, IMessage, ISpotifyConfig, Seconds } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken } from "./SongRequestLib";
+import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo } from "./SongRequestLib";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -10,14 +10,8 @@ export interface ISongRequest {
 }
 
 export interface IApiWrapper {
-    /**
-     * Instead of directly playing requested songs, the API will use the provided
-     * instance to enqueue songs.
-     * @param playlist 
-     */
-    usePlaylist(playlist: IPlaylist): void;
     updateApiToken(token: string): void;
-    requestSong(request: string, msg: IMessage): void;
+    getSong(request: string, msg: IMessage): Promise<ISongInfo>;
     requestCurrentSongInfo(msg: IMessage): void;
 
     getRemainingTrackTime(): Promise<Seconds>;
@@ -47,8 +41,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.logger = logger ? logger : LogManager.getLogger();
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
         this.playlist = playlist ? playlist : new Playlist(this.api);
-
-        this.api.usePlaylist(this.playlist);
 
         this.spotifyConfig = {
             authProtocol: "",
@@ -124,9 +116,9 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.updateApiToken();
 
         const commandMap = new Map<string, () => void>();
-        commandMap.set("!sr", () => this.api.requestSong(request, msg));
-        commandMap.set("!songrequest", () => this.api.requestSong(request, msg));
-        commandMap.set("!song", () => this.api.requestCurrentSongInfo(msg));
+        commandMap.set("!sr", () => this.requestSong(request, msg));
+        commandMap.set("!songrequest", () => this.requestSong(request, msg));
+        commandMap.set("!song", () => this.requestCurrentSong());
         commandMap.set("!skip", () => this.skipCurrentSong(msg));
         commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
         commandMap.set("!sr-start", () => this.playlist.start());
@@ -147,6 +139,32 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.api.updateApiToken(token);
     }
 
+    private requestSong(request: string, msg: IMessage) {
+        this.api.getSong(request, msg)
+            .then((song: ISongInfo) => {
+                if (this.playlist.isInQueue(song)) {
+                    this.reply(`Sorry @${song.requestedBy}, the song is already in the queue.`);
+                }
+
+                if (this.playlist.enqueue(song)) {
+                    this.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
+                } else {
+                    this.reply(`Sorry @${song.requestedBy}, you can not add more songs to the playlist.`);
+                }
+            })
+            .catch((err) => {
+                this.logger.error("SongRequest.requestSong: Could not get song.", JSON.stringify(err), JSON.stringify(msg));
+                this.reply(`Sorry @${msg.from}, I could not find your song.`);
+            });
+    }
+
+    private requestCurrentSong() {
+        const song = this.playlist.getCurrent();
+        if (song) {
+            this.reply(`SingsNote Current song: '${song.title}' from ${song.artist}`);
+        }
+    }
+
     private skipCurrentSong(msg: IMessage) {
         if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
             this.playlist.skip();
@@ -160,7 +178,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     }
 
     private removeMyLastRequest(user: string) {
-        this.playlist.removeLastSongFromUser(user);
+        const removedSong = this.playlist.removeLastSongFromUser(user);
+        if (removedSong) {
+            this.reply(`@${user}, I removed '${removedSong.title}' from the playlist.`);
+        }
     }
 }
 
