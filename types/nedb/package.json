@@ -1,0 +1,55 @@
+{
+  "_from": "@types/nedb",
+  "_inBundle": false,
+  "_integrity": "sha512-w9Tl3DQCkdT0Ghes+PKhe+3/pZppBXuFFpSCjPJbb2KE3DjYmUpEyCYzjrAYlT9Y1TndnbbnChzkax2h/JorVQ==",
+  "_location": "/@types/nedb",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@types/nedb",
+    "name": "@types/nedb",
+    "escapedName": "@types%2fnedb",
+    "scope": "@types",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@types/nedb/-/nedb-1.8.9.tgz",
+  "_shasum": "3cb80a94dfe41bea1dc33c4ea39cd4e7f754abc4",
+  "_spec": "@types/nedb",
+  "_where": "C:\\Users\\Vash\\Documents\\Wishmaster",
+  "bugs": {
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped/issues"
+  },
+  "contributors": [
+    "Stefan Steinhart (https://github.com/reppners)",
+    "Anthony Nichols (https://github.com/anthonynichols)",
+    "Alejandro Fernandez Haro (https://github.com/afharo)"
+  ],
+  "dependencies": {
+    "@types/node": "*"
+  },
+  "deprecated": false,
+  "description": "TypeScript definitions for NeDB",
+  "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "name": "@types/nedb",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "directory": "types/nedb"
+  },
+  "scripts": {},
+  "typeScriptVersion": "2.3",
+  "types": "index",
+  "typesPublisherContentHash": "349de0619eeb9d14cee61bcd13531665ce18a17438435d060f4a45162b5f70c4",
+  "version": "1.8.9",
+  "keywords": [],
+  "author": ""
+}
