@@ -183,15 +183,15 @@ export class UserCollection extends Collection implements IUserCollection {
             let totalBits = 0;
             let emoteOnlyCount = 0;
             let messageCount = 0;
+            let followDate = new Date(0);
             if (doc != null) {
                 totalBits = doc.totalBits + tr.bits;
                 emoteOnlyCount = doc.emoteOnlyCount + tr.isEmoteOnly_ ? 1 : 0;
                 messageCount = doc.messageCount + 1;
-            }
 
-            let followDate = new Date(0);
-            if (doc && doc.followDate) {
-                followDate = doc.followDate;
+                if (doc.followDate) {
+                    followDate = doc.followDate;
+                }
             }
 
             // TODO New Tags? flags, badge-info
@@ -238,8 +238,12 @@ export class UserCollection extends Collection implements IUserCollection {
                     if (err != null) {
                         reject(err);
                     } else {
-                        let result = this.assembleResult(docs);
-                        resolve(result);
+                        if (docs) {
+                            let result = this.assembleResult(docs);
+                            resolve(result)
+                        } else {
+                            resolve([]);
+                        }
                     }
                 });
         });

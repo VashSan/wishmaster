@@ -175,13 +175,14 @@ declare class Nedb<G = any> extends EventEmitter {
 declare namespace Nedb {
 
     type DocumentCallback<T> = (err: Error | null, document: T | undefined) => void;
+    type DocumentArrayCallback<T> = (err: Error | null, document: T[] | undefined) => void;
 
     interface Cursor<T> {
         sort(query: any): Cursor<T>;
         skip(n: number): Cursor<T>;
         limit(n: number): Cursor<T>;
         projection(query: any): Cursor<T>;
-        exec(callback: (err: Error, documents: T[]) => void): void;
+        exec(callback: DocumentArrayCallback<T>): void;
     }
 
     interface CursorCount {

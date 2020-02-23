@@ -203,47 +203,47 @@ db.insert([{ a: 5 }, { a: 42 }, { a: 5 }], (err: Error) => {
 });
 
 // Finding all planets in the solar system
-db.find({ system: 'solar' }, (err: Error, docs: any[]) => {
+db.find({ system: 'solar' }, (err: Error | null, docs?: any[]) => {
     // docs is an array containing documents Mars, Earth, Jupiter
     // If no document is found, docs is equal to []
 });
 
 // Finding all planets whose name contain the substring 'ar' using a regular expression
-db.find({ planet: /ar/ }, (err: Error, docs: any[]) => {
+db.find({ planet: /ar/ }, (err: Error | null, docs?: any[]) => {
     // docs contains Mars and Earth
 });
 
 // Finding all inhabited planets in the solar system
-db.find({ system: 'solar', inhabited: true }, (err: Error, docs: any[]) => {
+db.find({ system: 'solar', inhabited: true }, (err: Error | null, docs?: any[]) => {
     // docs is an array containing document Earth only
 });
 
 // Use the dot-notation to match fields in subdocuments
-db.find({ "humans.genders": 2 }, (err: Error, docs: any[]) => {
+db.find({ "humans.genders": 2 }, (err: Error | null, docs?: any[]) => {
     // docs contains Earth
 });
 
 // Use the dot-notation to navigate arrays of subdocuments
-db.find({ "completeData.planets.name": "Mars" }, (err: Error, docs: any[]) => {
+db.find({ "completeData.planets.name": "Mars" }, (err: Error | null, docs?: any[]) => {
     // docs contains document 5
 });
 
-db.find({ "completeData.planets.name": "Jupiter" }, (err: Error, docs: any[]) => {
+db.find({ "completeData.planets.name": "Jupiter" }, (err: Error | null, docs?: any[]) => {
     // docs is empty
 });
 
-db.find({ "completeData.planets.0.name": "Earth" }, (err: Error, docs: any[]) => {
+db.find({ "completeData.planets.0.name": "Earth" }, (err: Error | null, docs?: any[]) => {
     // docs contains document 5
     // If we had tested against "Mars" docs would be empty because we are matching against a specific array element
 });
 
 // You can also deep-compare objects. Don't confuse this with dot-notation!
-db.find({ humans: { genders: 2 } }, (err: Error, docs: any[]) => {
+db.find({ humans: { genders: 2 } }, (err: Error | null, docs?: any[]) => {
     // docs is empty, because { genders: 2 } is not equal to { genders: 2, eyes: true }
 });
 
 // Find all documents in the collection
-db.find({}, (err: Error, docs: any[]) => {
+db.find({}, (err: Error | null, docs?: any[]) => {
 });
 
 // The same rules apply when you want to only find one document
@@ -253,60 +253,60 @@ db.findOne({ _id: 'id1' }, (err: Error | null, doc?: any) => {
 });
 
 // $lt, $lte, $gt and $gte work on numbers and strings
-db.find({ "humans.genders": { $gt: 5 } }, (err: Error, docs: any[]) => {
+db.find({ "humans.genders": { $gt: 5 } }, (err: Error | null, docs?: any[]) => {
     // docs contains Omicron Persei 8, whose humans have more than 5 genders (7).
 });
 
 // When used with strings, lexicographical order is used
-db.find({ planet: { $gt: 'Mercury' } }, (err: Error, docs: any[]) => {
+db.find({ planet: { $gt: 'Mercury' } }, (err: Error | null, docs?: any[]) => {
     // docs contains Omicron Persei 8
 });
 
 // Using $in. $nin is used in the same way
-db.find({ planet: { $in: ['Earth', 'Jupiter'] } }, (err: Error, docs: any[]) => {
+db.find({ planet: { $in: ['Earth', 'Jupiter'] } }, (err: Error | null, docs?: any[]) => {
     // docs contains Earth and Jupiter
 });
 
 // Using $exists
-db.find({ satellites: { $exists: true } }, (err: Error, docs: any[]) => {
+db.find({ satellites: { $exists: true } }, (err: Error | null, docs?: any[]) => {
     // docs contains only Mars
 });
 
 // Using $regex with another operator
-db.find({ planet: { $regex: /ar/, $nin: ['Jupiter', 'Earth'] } }, (err: Error, docs: any[]) => {
+db.find({ planet: { $regex: /ar/, $nin: ['Jupiter', 'Earth'] } }, (err: Error | null, docs?: any[]) => {
     // docs only contains Mars because Earth was excluded from the match by $nin
 });
 
 // Using an array-specific comparison function
 // Note: you can't use nested comparison functions, e.g. { $size: { $lt: 5 } } will throw an error
-db.find({ satellites: { $size: 2 } }, (err: Error, docs: any[]) => {
+db.find({ satellites: { $size: 2 } }, (err: Error | null, docs?: any[]) => {
     // docs contains Mars
 });
 
-db.find({ satellites: { $size: 1 } }, (err: Error, docs: any[]) => {
+db.find({ satellites: { $size: 1 } }, (err: Error | null, docs?: any[]) => {
     // docs is empty
 });
 
 // If a document's field is an array, matching it means matching any element of the array
-db.find({ satellites: 'Phobos' }, (err: Error, docs: any[]) => {
+db.find({ satellites: 'Phobos' }, (err: Error | null, docs?: any[]) => {
     // docs contains Mars. Result would have been the same if query had been { satellites: 'Deimos' }
 });
 
 // This also works for queries that use comparison operators
-db.find({ satellites: { $lt: 'Amos' } }, (err: Error, docs: any[]) => {
+db.find({ satellites: { $lt: 'Amos' } }, (err: Error | null, docs?: any[]) => {
     // docs is empty since Phobos and Deimos are after Amos in lexicographical order
 });
 
 // This also works with the $in and $nin operator
-db.find({ satellites: { $in: ['Moon', 'Deimos'] } }, (err: Error, docs: any[]) => {
+db.find({ satellites: { $in: ['Moon', 'Deimos'] } }, (err: Error | null, docs?: any[]) => {
     // docs contains Mars (the Earth document is not complete!)
 });
 
-db.find({ $or: [{ planet: 'Earth' }, { planet: 'Mars' }] }, (err: Error, docs: any[]) => {
+db.find({ $or: [{ planet: 'Earth' }, { planet: 'Mars' }] }, (err: Error | null, docs?: any[]) => {
     // docs contains Earth and Mars
 });
 
-db.find({ $not: { planet: 'Earth' } }, (err: Error, docs: any[]) => {
+db.find({ $not: { planet: 'Earth' } }, (err: Error | null, docs?: any[]) => {
     // docs contains Mars, Jupiter, Omicron Persei 8
 });
 
@@ -314,22 +314,22 @@ db.find({
     $where() {
         return parseInt(Object.keys(this)[0], 10) > 6;
     }
-}, (err: Error, docs: any[]) => {
+}, (err: Error | null, docs?: any[]) => {
     // docs with more than 6 properties
 });
 
 // You can mix normal queries, comparison queries and logical operators
-db.find({ $or: [{ planet: 'Earth' }, { planet: 'Mars' }], inhabited: true }, (err: Error, docs: any[]) => {
+db.find({ $or: [{ planet: 'Earth' }, { planet: 'Mars' }], inhabited: true }, (err: Error | null, docs?: any[]) => {
     // docs contains Earth
 });
 
 // No query used means all results are returned (before the Cursor modifiers)
-db.find({}).sort({ planet: 1 }).skip(1).limit(2).exec((err: Error, docs: any[]) => {
+db.find({}).sort({ planet: 1 }).skip(1).limit(2).exec((err: Error | null, docs?: any[]) => {
     // docs is [doc3, doc1]
 });
 
 // You can sort in reverse order like this
-db.find({ system: 'solar' }).sort({ planet: -1 }).exec((err: Error, docs: any[]) => {
+db.find({ system: 'solar' }).sort({ planet: -1 }).exec((err: Error | null, docs?: any[]) => {
     // docs is [doc1, doc3, doc2]
 });
 
@@ -339,28 +339,28 @@ db.find({}).sort({ firstField: 1, secondField: -1 });
 // Same database as above
 
 // Keeping only the given fields
-db.find({ planet: 'Mars' }, { planet: 1, system: 1 }, (err: Error, docs: any[]) => {
+db.find({ planet: 'Mars' }, { planet: 1, system: 1 }, (err: Error | null, docs?: any[]) => {
     // docs is [{ planet: 'Mars', system: 'solar', _id: 'id1' }]
 });
 
 // Keeping only the given fields but removing _id
-db.find({ planet: 'Mars' }, { planet: 1, system: 1, _id: 0 }, (err: Error, docs: any[]) => {
+db.find({ planet: 'Mars' }, { planet: 1, system: 1, _id: 0 }, (err: Error | null, docs?: any[]) => {
     // docs is [{ planet: 'Mars', system: 'solar' }]
 });
 
 // Omitting only the given fields and removing _id
-db.find({ planet: 'Mars' }, { planet: 0, system: 0, _id: 0 }, (err: Error, docs: any[]) => {
+db.find({ planet: 'Mars' }, { planet: 0, system: 0, _id: 0 }, (err: Error | null, docs?: any[]) => {
     // docs is [{ inhabited: false, satellites: ['Phobos', 'Deimos'] }]
 });
 
 // Failure: using both modes at the same time
-db.find({ planet: 'Mars' }, { planet: 0, system: 1 }, (err: Error, docs: any[]) => {
+db.find({ planet: 'Mars' }, { planet: 0, system: 1 }, (err: Error | null, docs?: any[]) => {
     // err is the error message, docs is undefined
 });
 
 // You can also use it in a Cursor way but this syntax is not compatible with MongoDB
 // If upstream compatibility is important don't use this method
-db.find({ planet: 'Mars' }).projection({ planet: 1, system: 1 }).exec((err: Error, docs: any[]) => {
+db.find({ planet: 'Mars' }).projection({ planet: 1, system: 1 }).exec((err: Error | null, docs?: any[]) => {
     // docs is [{ planet: 'Mars', system: 'solar', _id: 'id1' }]
 });
 

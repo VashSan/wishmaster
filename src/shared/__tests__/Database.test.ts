@@ -1,4 +1,4 @@
-import { Database, UserCollection, LogCollection } from "../Database";
+import { Database, UserCollection, LogCollection, IUserAction } from "../Database";
 
 import { MockProxy, mock } from "jest-mock-extended";
 import { IConfiguration } from "../Configuration";
@@ -87,20 +87,32 @@ describe('Database', () => {
 });
 
 describe('UserCollection', () => {
-    test('newMessage', () => {
-        const logger = mock<ILogger>();
-        const ndb = mock<Nedb>();
 
+    let logger: MockProxy<ILogger> & ILogger;
+    let nedb: MockProxy<Nedb> & Nedb;
+
+    beforeEach(() => {
+        require("nedb");
+
+        logger = mock<ILogger>();
+        nedb = mock<Nedb>();
+    });
+
+    test('newMessage', () => {
+        // Arrange
         let docWithNoFollowDate: any = {
             totalBits: 1,
             emoteOnlyCount: 1,
             messageCount: 1
         };
 
-        ndb.findOne.mockImplementation((query, callback) => {
+        nedb.findOne.mockImplementation((query, callback) => {
             callback(null, docWithNoFollowDate);
         });
-        let uc = new UserCollection("test", ndb, logger);
+
+        let uc = new UserCollection("test", nedb, logger);
+
+        // Act
         const msg: IMessage = {
             channel: "#chan",
             from: "bob",
@@ -110,8 +122,38 @@ describe('UserCollection', () => {
 
         const act = () => { uc.newMessage(msg); };
 
+        // Assert
         expect(() => act()).not.toThrow();
-        expect(ndb.update).toBeCalledTimes(1);
+        expect(nedb.update).toBeCalledTimes(1);
         expect(logger.error).toBeCalledTimes(0);
+    });
+
+    test('findLastActions', async () => {
+        // Arrange
+        interface T {
+            name: string;
+            lastAction?: string;
+            lastActionDate: Date;
+        }
+
+        const cursor = mock<Nedb.Cursor<T>>();
+        cursor.sort.mockReturnThis();
+        cursor.limit.mockReturnThis();
+
+        const resultItem: T = { name: "", lastAction: "Follow", lastActionDate: new Date(0) };
+        const result: T[] = [resultItem];
+        cursor.exec.mockImplementation((callback) => {
+            callback(null, result);
+        });
+
+        nedb.find.mockImplementation(() => cursor);
+
+        let uc = new UserCollection("test", nedb, logger);
+
+        // Act
+        const act: () => Promise<IUserAction[]> = () => uc.findLastActions(1);
+
+        // Assert
+        await expect(act()).resolves.toEqual([resultItem]);
     });
 });
