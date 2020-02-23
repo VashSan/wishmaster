@@ -1,6 +1,3 @@
-[submodule "src/sub/irc-types"]
-	path = src/sub/irc-types
-	url = https://gist.github.com/4505821403966fb4f94d7b45b7b174a8.git
 [submodule "wishmaster.wiki"]
 	path = wishmaster.wiki
 	url = https://github.com/VashSan/wishmaster.wiki.git
