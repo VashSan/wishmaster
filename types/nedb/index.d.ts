@@ -111,13 +111,13 @@ declare class Nedb<G = any> extends EventEmitter {
      * @param query MongoDB-style query
      * @param projection MongoDB-style projection
      */
-    findOne<T extends G>(query: any, projection: T, callback: (err: Error, document: T) => void): void;
+    findOne<T extends G>(query: any, projection: T, callback: Nedb.DocumentCallback<T>): void;
 
     /**
      * Find one document matching the query
      * @param query MongoDB-style query
      */
-    findOne<T extends G>(query: any, callback: (err: Error, document: T) => void): void;
+    findOne<T extends G>(query: any, callback: Nedb.DocumentCallback<T>): void;
 
     /**
      * Update all docs matching query v1.7.4 and prior signature.
@@ -173,6 +173,9 @@ declare class Nedb<G = any> extends EventEmitter {
 }
 
 declare namespace Nedb {
+
+    type DocumentCallback<T> = (err: Error | null, document: T | undefined) => void;
+
     interface Cursor<T> {
         sort(query: any): Cursor<T>;
         skip(n: number): Cursor<T>;

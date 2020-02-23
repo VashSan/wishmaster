@@ -52,7 +52,7 @@ class BaseCollection<T> {
 
     findByID(id: string): Promise<T> {
         return new Promise((resolve, reject) => {
-            this.dataStore.findOne<T>({ _id: id }, (err: Error, doc: T) => {
+            this.dataStore.findOne<T>({ _id: id }, (err: Error | null, doc?: T) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -64,7 +64,7 @@ class BaseCollection<T> {
 
     findOne(criteria: any): Promise<T> {
         return new Promise((resolve, reject) => {
-            this.dataStore.findOne<T>(criteria, (err: Error, doc: T) => {
+            this.dataStore.findOne<T>(criteria, (err: Error | null, doc?: T) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -247,7 +247,7 @@ db.find({}, (err: Error, docs: any[]) => {
 });
 
 // The same rules apply when you want to only find one document
-db.findOne({ _id: 'id1' }, (err?: Error, doc?: any) => {
+db.findOne({ _id: 'id1' }, (err: Error | null, doc?: any) => {
     // doc is the document Mars
     // If no document is found, doc is null
 });
