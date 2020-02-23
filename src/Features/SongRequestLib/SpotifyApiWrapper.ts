@@ -87,6 +87,11 @@ export class SpotifyApiWrapper implements IApiWrapper {
 
     private playOrEnqueueTrack(song: ISongInfo): Promise<void> | PromiseLike<void> | undefined {
         if (this.playlist) {
+            if (this.playlist.isInQueue(song)){
+                this.chat.reply(`Sorry @${song.requestedBy}, the song is already in the queue.`);
+                return Promise.resolve();
+            }
+
             if (this.playlist.enqueue(song)) {
                 this.chat.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
             } else {
