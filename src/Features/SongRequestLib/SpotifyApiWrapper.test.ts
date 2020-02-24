@@ -166,11 +166,27 @@ describe('SpotifyApiWrapper', () => {
     });
 
     test('updateApiToken', () => {
+        // Arrange
         const wrapper = new SpotifyApiWrapper(chat, api, logger);
 
+        // Act
         wrapper.updateApiToken("token");
 
+        // Assert
         expect(api.setAccessToken).toBeCalledWith("token");
+    });
+
+    test('setVolume', () => {
+        // Arrange
+        api.setVolume.mockImplementation(() => new Promise<Response<void>>((resolve, reject) => { resolve(); }));
+
+        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+
+        // Act
+        wrapper.setVolume(50);
+
+        // Assert
+        expect(api.setVolume).toBeCalledWith(50);
     });
 
     test('requestSong', async () => {

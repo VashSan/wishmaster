@@ -26,7 +26,6 @@ export class SongInfo implements ISongInfo {
 }
 
 export class SpotifyApiWrapper implements IApiWrapper {
-
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
     private readonly chat: ICanReply;
@@ -36,7 +35,6 @@ export class SpotifyApiWrapper implements IApiWrapper {
         this.api = api ? api : new SpotifyWebApi();
         this.logger = logger ? logger : LogManager.getLogger();
     }
-
 
     public updateApiToken(token: string): void {
         this.api.setAccessToken(token);
@@ -51,6 +49,16 @@ export class SpotifyApiWrapper implements IApiWrapper {
         } else {
             return this.requestSongByName(request, msg);
         }
+    }
+
+    public setVolume(volumePercent: number): void {
+        this.api.setVolume(volumePercent)
+            .then(() => {
+                this.logger.log("Volume set to " + volumePercent);
+            })
+            .catch((err) => {
+                this.logger.warn("Volume could not be set: ", JSON.stringify(err));
+            });
     }
 
     private requestSongByName(request: string, msg: IMessage): Promise<ISongInfo> {
