@@ -181,7 +181,6 @@ export class SpotifyAuth implements IWebAuth {
             this.defineRefreshToken();
 
             this.app.listen(this.config.authPort, (args) => {
-                console.log(args);
                 resolve();
             });
         });

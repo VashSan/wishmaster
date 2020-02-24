@@ -57,12 +57,6 @@ export class EmailAccess implements IEmailAccess {
             }
         };
 
-        function connectionCallback(err: any): void {
-            if (err) {
-                that.logger.warn("Email connection error, some features may not work: " + err);
-            }
-        }
-
         IMAP.connect(config)
             .then(function (connection: IMAP.ImapSimple): Promise<void | IMAP.ImapSimple> {
                 that.logger.log("Connected to IMAP");
@@ -70,7 +64,7 @@ export class EmailAccess implements IEmailAccess {
                 that.connection = connection;
 
                 return that.newMail(false);
-            }, connectionCallback)
+            })
             .catch((reason) => {
                 this.logger.warn("Could not connect to IMAP server", reason);
             });

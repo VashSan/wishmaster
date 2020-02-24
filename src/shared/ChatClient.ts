@@ -230,7 +230,7 @@ export class TwitchChatClient implements IChatClient {
             } else {
                 let text = payload.substring(separatorPos + 1);
                 let plainTags = new Tags(tagString, this.logger);
-                let tags = new TagReader(plainTags);
+                let tags = new TagReader(plainTags, this.logger);
 
                 let message: IMessage = {
                     from: from,

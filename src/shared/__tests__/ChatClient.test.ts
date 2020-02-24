@@ -26,8 +26,8 @@ describe('TwitchChatClient', () => {
         args: any[];
     };
 
-    function createMockedClient(client: IRC.Client, logger?: ILogger): IChatClient {
-        return new TwitchChatClient("server", "loing", "password", client, logger || mock<ILogger>());
+    function createMockedClient(client: IRC.Client): IChatClient {
+        return new TwitchChatClient("server", "loing", "password", client, logger);
     }
 
     function createIrcMock() {
@@ -35,6 +35,7 @@ describe('TwitchChatClient', () => {
     }
 
     let ircMock: MockProxy<IRC.Client> & IRC.Client;
+    let logger: MockProxy<ILogger> & ILogger;
 
     const unsetErrorCallback = () => { throw new Error("Unset error callback"); };
     let errorCallback: (arg: IWithArgs) => void = unsetErrorCallback;
@@ -46,6 +47,7 @@ describe('TwitchChatClient', () => {
     let unhandledMessageCallback: (...arg: any[]) => void = unsetUnhandledMessageCallback;
 
     beforeEach(() => {
+        logger = mock<ILogger>();
         ircMock = createIrcMock();
         ircMock.addListener.mockImplementation((name, cb): IRC.Client => {
             if (name == "error") { errorCallback = cb; }
@@ -260,7 +262,7 @@ describe('TwitchChatClient', () => {
         expect(theMessage.channel).toBe('#vash1080');
         expect(theMessage.text).toBe('hi');
         expect(theMessage.tags).not.toBeUndefined();
-        expect(theMessage.tags?.get('display-name')).toBe('Vash1080');  
+        expect(theMessage.tags?.get('display-name')).toBe('Vash1080');
     });
 
     test('Unhandled command is logged as error', () => {
@@ -269,8 +271,8 @@ describe('TwitchChatClient', () => {
         ircMock.connect.mockImplementation((retryCount, cb) => {
             unhandledMessageCallback(rawMessage);
         });
-        let logger = mock<ILogger>();
-        let client = createMockedClient(ircMock, logger);
+
+        let client = createMockedClient(ircMock);
 
         // Act
         client.connect("#channel");
@@ -285,8 +287,8 @@ describe('TwitchChatClient', () => {
         ircMock.connect.mockImplementation((retryCount, cb) => {
             unhandledMessageCallback(rawMessage);
         });
-        let logger = mock<ILogger>();
-        let client = createMockedClient(ircMock, logger);
+
+        let client = createMockedClient(ircMock);
 
         // Act
         client.connect("#channel");
@@ -303,8 +305,8 @@ describe('TwitchChatClient', () => {
             unhandledMessageCallback(rawMessage1);
             unhandledMessageCallback(rawMessage2);
         });
-        let logger = mock<ILogger>();
-        let client = createMockedClient(ircMock, logger);
+
+        let client = createMockedClient(ircMock);
 
         // Act
         client.connect("#channel");

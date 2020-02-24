@@ -70,7 +70,6 @@ test('incoming mail', (done) => {
     connection.search.mockResolvedValue([message]);
 
     let email = new EmailAccess(config, logger);
-    email.connect();
 
     email.onNewMail({
         subjectRegex: new RegExp("x"),
@@ -82,10 +81,5 @@ test('incoming mail', (done) => {
         }
     });
 
-    // Act  
-    if (imapOnMail != undefined) {
-        imapOnMail(1);
-    } else {
-        throw new Error("Missing imapOnMail callback");
-    }
+    email.connect();
 });
