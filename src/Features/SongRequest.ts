@@ -126,7 +126,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
         commandMap.set("!sr-start", () => this.playlist.start());
         commandMap.set("!sr-stop", () => this.playlist.stop());
-        commandMap.set("!volume", () => this.setVolume(request));
+        commandMap.set("!volume", () => this.setVolume(request, msg));
 
         const executor = commandMap.get(cmd);
         if (executor) {
@@ -169,7 +169,12 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         }
     }
 
-    private setVolume(request: string): void {
+    private setVolume(request: string, msg: IMessage): void {
+        if (!this.isModOrBroadcaster(msg.tags)) {
+            this.logger.log(`SongRequest.setVolumne: Request to change volume by '${msg.from}' was denied.`);
+            return;
+        }
+
         const regex = /([0-9])+/;
         let result = regex.exec(request);
         if (result && result?.length > 1) {
@@ -193,7 +198,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             return;
         }
 
-        const canSkip = msg.tags?.isMod() || msg.tags?.isBroadcaster();
+        const canSkip = this.isModOrBroadcaster(msg.tags);
         if (canSkip) {
             this.playlist.skip();
         }

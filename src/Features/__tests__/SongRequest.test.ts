@@ -10,6 +10,12 @@ let playlist: MockProxy<IPlaylist> & IPlaylist;
 let context: MockProxy<IContext> & IContext;
 let spotifyConfig: MockProxy<ISpotifyConfig> & ISpotifyConfig;
 
+const broadcasterTags = mock<ITagReader>();
+broadcasterTags.isBroadcaster.mockReturnValue(true);
+
+const modTags = mock<ITagReader>();
+modTags.isMod.mockReturnValue(true);
+
 beforeEach(() => {
     api = mock<IApiWrapper>();
     logger = mock<ILogger>();
@@ -53,12 +59,8 @@ test('skip song by mod or broadcaster', () => {
     // Arrange
     const sr = new SongRequest(context, api, playlist, logger);
 
-    const modTags = mock<ITagReader>();
-    modTags.isMod.mockReturnValue(true);
     const msgFromMod: IMessage = { text: "!skip", from: "mod", channel: "", tags: modTags };
 
-    const broadcasterTags = mock<ITagReader>();
-    broadcasterTags.isBroadcaster.mockReturnValue(true);
     const msgFromBroadcaster: IMessage = { text: "!skip", from: "broadcaster", channel: "", tags: broadcasterTags };
 
     const song = mock<ISongInfo>();
@@ -132,7 +134,7 @@ test('start', () => {
 test('volume', () => {
     // Arrange
     const sr = new SongRequest(context, api, playlist, logger);
-    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
     sr.act(msg);
@@ -141,11 +143,24 @@ test('volume', () => {
     expect(api.setVolume).toBeCalledWith(50);
 });
 
+test('volume byUser', () => {
+    // Arrange
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.setVolume).not.toBeCalled();
+});
+
+
 test('volume > max', () => {
     // Arrange
     spotifyConfig.maxVolumeByCommand = 45;
     const sr = new SongRequest(context, api, playlist, logger);
-    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
     sr.act(msg);
@@ -158,7 +173,7 @@ test('volume < min', () => {
     // Arrange
     spotifyConfig.minVolumeByCommand = 55;
     const sr = new SongRequest(context, api, playlist, logger);
-    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
     sr.act(msg);

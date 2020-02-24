@@ -1,5 +1,5 @@
 import { IFeatureResponse, ResponseCallback, IFeature } from "../shared/MessageProcessor";
-import { IConfiguration } from "../shared";
+import { IConfiguration, ITagReader } from "../shared";
 import { IMessage } from "../shared/ChatClient";
 
 export abstract class FeatureBase implements IFeature {
@@ -35,5 +35,12 @@ export abstract class FeatureBase implements IFeature {
         if (this.sendResponseCallback != null) {
             this.sendResponseCallback(null, response);
         }
+    }
+
+    protected isModOrBroadcaster(tags: ITagReader | undefined): boolean {
+        if (!tags) {
+            return false;
+        }
+        return tags?.isMod() || tags?.isBroadcaster();
     }
 }
