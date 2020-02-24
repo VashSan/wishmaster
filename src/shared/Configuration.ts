@@ -83,6 +83,8 @@ export interface ISpotifyConfig {
     secretKey: string;
     clientId: string;
     scopes: string[];
+    minVolumeByCommand: number;
+    maxVolumeByCommand: number;
 }
 
 export interface IMessageProcessorConfig {

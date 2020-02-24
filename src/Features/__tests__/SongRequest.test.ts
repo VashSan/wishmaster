@@ -1,5 +1,5 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader } from "../../shared";
+import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader, ISpotifyConfig } from "../../shared";
 import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
@@ -8,13 +8,16 @@ let api: MockProxy<IApiWrapper> & IApiWrapper;
 let logger: MockProxy<ILogger> & ILogger;
 let playlist: MockProxy<IPlaylist> & IPlaylist;
 let context: MockProxy<IContext> & IContext;
+let spotifyConfig: MockProxy<ISpotifyConfig> & ISpotifyConfig;
 
 beforeEach(() => {
     api = mock<IApiWrapper>();
     logger = mock<ILogger>();
     playlist = mock<IPlaylist>();
-
+    spotifyConfig = mock<ISpotifyConfig>();
+    
     let songConfig = mock<ISongRequestConfig>();
+    songConfig.spotify = spotifyConfig;
 
     let config = mock<IConfiguration>();
     config.getSongRequest.mockReturnValue(songConfig);
@@ -25,7 +28,6 @@ beforeEach(() => {
     context.getConfiguration.mockReturnValue(config);
     context.getFileSystem.mockReturnValue(fs);
 });
-
 
 test('construction', () => {
     expect(() => new SongRequest(context, api, playlist, logger)).not.toThrow();
@@ -125,4 +127,42 @@ test('start', () => {
 
     //Assert
     expect(playlist.start).toBeCalled();
+});
+
+test('volume', () => {
+    // Arrange
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.setVolume).toBeCalledWith(50);
+});
+
+test('volume > max', () => {
+    // Arrange
+    spotifyConfig.maxVolumeByCommand = 45;
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.setVolume).toBeCalledWith(45);
+});
+
+test('volume < min', () => {
+    // Arrange
+    spotifyConfig.minVolumeByCommand = 55;
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.setVolume).toBeCalledWith(55);
 });

@@ -17,6 +17,7 @@ export interface IApiWrapper {
     getRemainingTrackTime(): Promise<Seconds>;
     isPausedOrStopped(): Promise<boolean>;
     playNow(uri: string): void;
+    setVolume(volumePercent: number): void;
 }
 
 export interface ICanReply {
@@ -50,6 +51,8 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             secretKey: "",
             clientId: "",
             scopes: [],
+            minVolumeByCommand: 20,
+            maxVolumeByCommand: 80
         };
 
         let songRequestConfig = this.config.getSongRequest();
@@ -123,6 +126,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
         commandMap.set("!sr-start", () => this.playlist.start());
         commandMap.set("!sr-stop", () => this.playlist.stop());
+        commandMap.set("!volume", () => this.setVolume(request));
 
         const executor = commandMap.get(cmd);
         if (executor) {
@@ -162,6 +166,24 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         const song = this.playlist.getCurrent();
         if (song) {
             this.reply(`SingsNote Current song: '${song.title}' from ${song.artist}`);
+        }
+    }
+
+    private setVolume(request: string): void {
+        const regex = /([0-9])+/;
+        let result = regex.exec(request);
+        if (result && result?.length > 1) {
+            let targetVolume = parseInt(result[0]);
+            if (targetVolume > this.spotifyConfig.maxVolumeByCommand) {
+                targetVolume = this.spotifyConfig.maxVolumeByCommand;
+            }
+
+            if (targetVolume < this.spotifyConfig.minVolumeByCommand) {
+                targetVolume = this.spotifyConfig.minVolumeByCommand;
+            }
+
+            this.logger.log(`SongRequest.setVolumne: Request volume change to ${targetVolume}.`);
+            this.api.setVolume(targetVolume);
         }
     }
 
