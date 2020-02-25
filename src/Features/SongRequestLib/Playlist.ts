@@ -1,5 +1,5 @@
 import { IApiWrapper } from "../SongRequest";
-import { Seconds } from "../../shared";
+import { Seconds, IPlaylistConfig } from "../../shared";
 import { ILogger, LogManager } from "psst-log";
 
 export enum MediaLibrary {
@@ -14,12 +14,6 @@ export interface ISongInfo {
     title: string;
     artist: string;
     requestedBy: string;
-}
-
-export interface IPlaylistConfig {
-    updateIntervalInSeconds: number;
-    maxQueueLength: number;
-    maxEntriesPerUser: number;
 }
 
 export interface IPlaylist {

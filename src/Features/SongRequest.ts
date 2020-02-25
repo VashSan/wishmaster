@@ -41,7 +41,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
         this.logger = logger ? logger : LogManager.getLogger();
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
-        this.playlist = playlist ? playlist : new Playlist(this.api);
 
         this.spotifyConfig = {
             authProtocol: "",
@@ -57,12 +56,16 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
         let songRequestConfig = this.config.getSongRequest();
         if (songRequestConfig != null) {
+            this.playlist = playlist ? playlist : new Playlist(this.api, songRequestConfig.playlist);
+
             this.spotifyConfig = songRequestConfig.spotify;
 
             const fs = context.getFileSystem();
             const configDir = this.config.getConfigDir();
             const pathToTokenFile = fs.joinPaths(configDir, "spotifyToken.dat");
             this.spotifyAuth = new SpotifyAuth(this.spotifyConfig, pathToTokenFile, fs);
+        } else {
+            this.playlist = playlist ? playlist : new Playlist(this.api);
         }
     }
 

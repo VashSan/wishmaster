@@ -72,7 +72,14 @@ export interface IStomtConfig {
 }
 
 export interface ISongRequestConfig {
+    playlist: IPlaylistConfig;
     spotify: ISpotifyConfig;
+}
+
+export interface IPlaylistConfig {
+    updateIntervalInSeconds: number;
+    maxQueueLength: number;
+    maxEntriesPerUser: number;
 }
 
 export interface ISpotifyConfig {
