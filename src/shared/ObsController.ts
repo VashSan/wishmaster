@@ -69,7 +69,7 @@ export class ObsController implements IObsController {
                resolve();
             }).catch(err => {
                 this.log.warn("Could not connect to OBS: " + err);
-                reject(err);
+                reject("Could not connect to OBS: " + err);
             });
         });
     }

@@ -31,6 +31,18 @@ test('construction', async () => {
     expect(() => new ObsController(config, obs, logger)).not.toThrow();
 });
 
+test('connect fails', async () => {
+    let logger = mock<ILogger>();
+    let config = mock<IObsConfig>();
+    let obs = createMock();
+    obs.connect.mockReset();
+    obs.connect.mockRejectedValueOnce("err");
+
+    let obsController = new ObsController(config, obs, logger);
+
+    await expect(obsController.connect()).rejects.toContain("err");
+});
+
 test('switchToScene', async (done) => {
     let logger = mock<ILogger>();
     let config = mock<IObsConfig>();
