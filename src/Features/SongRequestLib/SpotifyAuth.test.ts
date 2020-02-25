@@ -1,6 +1,6 @@
-import { ISpotifyConfig, IFileSystem } from "../../shared";
+import { ISpotifyConfig, IFileSystem, Seconds } from "../../shared";
 import { mock, MockProxy } from "jest-mock-extended";
-import { SpotifyAuth, IUpdateableAccessToken } from "./SpotifyAuth";
+import { SpotifyAuth, IUpdateableAccessToken, ITokenAndExpiry, AccessToken, IWebAuth } from "./SpotifyAuth";
 import { mocked } from "ts-jest/utils";
 
 jest.mock("express");
@@ -11,6 +11,51 @@ import open = require("open");
 
 jest.mock("request");
 import request = require("request");
+import ts = require("typescript");
+
+describe('AccessToken', () => {
+    test('toString', () => {
+        // Arrange
+        const t = mock<ITokenAndExpiry>();
+        t.token = "token"
+        const auth = mock<IWebAuth>();
+        const accessToken = new AccessToken(t, auth, new Seconds(1));
+
+        // Act
+        const actualToken = accessToken.toString();
+
+        // Assert
+        expect(actualToken).toBe("token");
+    });
+
+    test('setRefreshedToken', (done) => {
+        // Arrange
+        const t3 = mock<ITokenAndExpiry>();
+        t3.expires = mock<Date>();
+        t3.expires.getTime.mockReturnValue(Date.now() + new Seconds(0.2).inMilliseconds());
+        t3.token = "token3";
+
+        const t = mock<ITokenAndExpiry>();
+        t.token = "token;"
+        const auth = mock<IWebAuth>();
+        auth.refreshAccessToken.mockResolvedValue(t3);
+        const accessToken = new AccessToken(t, auth, new Seconds(0.1));
+
+        // Act
+        const t2 = mock<ITokenAndExpiry>();
+        t2.expires = mock<Date>();
+        t2.token = "token2";
+        accessToken.setRefreshedToken(t2);
+
+        // Assert
+        expect(accessToken.toString()).toBe("token2");
+        setTimeout(() => {
+            expect(accessToken.toString()).toBe("token3");
+            done();
+        }, new Seconds(0.15).inMilliseconds());
+    });
+
+});
 
 describe('SpotifyAuth', () => {
 

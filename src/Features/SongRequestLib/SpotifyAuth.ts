@@ -30,12 +30,12 @@ export interface IUpdateableAccessToken extends IAccessToken {
     setRefreshedToken(tokenObj: ITokenAndExpiry): void;
 }
 
-interface ITokenAndExpiry {
+export interface ITokenAndExpiry {
     token: string;
     expires: Date;
 }
 
-class AccessToken implements IUpdateableAccessToken {
+export class AccessToken implements IUpdateableAccessToken {
     private expiryThreshold: Seconds = new Seconds(60);
     private token: string;
     private expires: Date;
