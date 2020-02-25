@@ -14,12 +14,23 @@ import request = require("request");
 import ts = require("typescript");
 
 describe('AccessToken', () => {
+    let token: MockProxy<ITokenAndExpiry> & ITokenAndExpiry;
+    let auth: MockProxy<IWebAuth> & IWebAuth;
+    let accessToken: AccessToken;
+
+    beforeEach(() => {
+        token = mock<ITokenAndExpiry>();
+        token.token = "token"
+        auth = mock<IWebAuth>();
+        accessToken = new AccessToken(token, auth, new Seconds(1));
+    });
+
+    afterEach(() => {
+        accessToken.stopRefresh();
+    });
+
     test('toString', () => {
         // Arrange
-        const t = mock<ITokenAndExpiry>();
-        t.token = "token"
-        const auth = mock<IWebAuth>();
-        const accessToken = new AccessToken(t, auth, new Seconds(1));
 
         // Act
         const actualToken = accessToken.toString();
@@ -35,11 +46,7 @@ describe('AccessToken', () => {
         t3.expires.getTime.mockReturnValue(Date.now() + new Seconds(0.2).inMilliseconds());
         t3.token = "token3";
 
-        const t = mock<ITokenAndExpiry>();
-        t.token = "token;"
-        const auth = mock<IWebAuth>();
         auth.refreshAccessToken.mockResolvedValue(t3);
-        const accessToken = new AccessToken(t, auth, new Seconds(0.1));
 
         // Act
         const t2 = mock<ITokenAndExpiry>();

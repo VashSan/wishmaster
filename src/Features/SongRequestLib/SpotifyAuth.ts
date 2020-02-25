@@ -58,6 +58,10 @@ export class AccessToken implements IUpdateableAccessToken {
         this.setUpdateTimer();
     }
 
+    public stopRefresh() {
+        this.clearUpdateTimer();
+    }
+
     private setUpdateTimer() {
         const alertTime = this.expires.getTime() - this.expiryThreshold.inMilliseconds();
 
