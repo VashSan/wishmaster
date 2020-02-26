@@ -159,7 +159,8 @@ export class Playlist implements IPlaylist {
         let removedSong: ISongInfo | null = null;
         [...this.list].reverse().forEach((item, index, theList) => {
             if (item.requestedBy.toLowerCase() == username.toLowerCase()) {
-                const removedOnes = theList.splice(index, 1);
+                const realIndex = theList.length - 1 - index;
+                const removedOnes = theList.splice(realIndex, 1);
                 removedSong = removedOnes[0];
             }
         });
