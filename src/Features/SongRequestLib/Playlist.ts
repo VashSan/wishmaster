@@ -8,6 +8,12 @@ export enum MediaLibrary {
     YouTube
 }
 
+export interface IPreviousSong {
+    playDate: Date;
+    wasSkipped: boolean;
+    info: ISongInfo;
+}
+
 export interface ISongInfo {
     uri: string;
     source: MediaLibrary;
@@ -23,16 +29,27 @@ export interface IPlaylist {
      */
     enqueue(song: ISongInfo): boolean;
     getCurrent(): ISongInfo | null;
+
     isInQueue(song: ISongInfo): boolean;
     skip(): void;
     start(): void;
     stop(): void;
     removeLastSongFromUser(username: string): ISongInfo | null;
+
+    /**
+     * Get a list of already played or started songs (includes current)
+     */
+    getAlreadyPlayedSongs(): IPreviousSong[];
+
+    /**
+     * Get a list of the upcoming songs
+     */
+    getUpcomingSongs(): ISongInfo[];
 }
 
 export class Playlist implements IPlaylist {
-
     private readonly list: ISongInfo[] = [];
+    private readonly alreadyPlayed: IPreviousSong[] = [];
     private readonly api: IApiWrapper;
     private readonly config: IPlaylistConfig;
     private readonly logger: ILogger;
@@ -102,8 +119,16 @@ export class Playlist implements IPlaylist {
     }
 
     public skip(): void {
+        this.alreadyPlayedSkipLastSong();
         this.playNextSong();
         this.resetNextUpdate();
+    }
+
+    private alreadyPlayedSkipLastSong() {
+        const lastIndex = this.alreadyPlayed.length - 1;
+        if (lastIndex >= 0) {
+            this.alreadyPlayed[lastIndex].wasSkipped = true;
+        }
     }
 
     private resetNextUpdate() {
@@ -145,6 +170,8 @@ export class Playlist implements IPlaylist {
         if (this.isRunning()) {
             const nextSong = this.list.shift();
             if (nextSong) {
+                this.addSongToAlreadyPlayedList(nextSong);
+
                 this.currentSong = nextSong;
                 this.logger.log(`Playlist.playNextSong: play now (${nextSong.uri})`);
                 this.api.playNow(nextSong.uri);
@@ -152,6 +179,15 @@ export class Playlist implements IPlaylist {
                 this.currentSong = null;
             }
         }
+    }
+
+    private addSongToAlreadyPlayedList(song: ISongInfo) {
+        const previousSong: IPreviousSong = {
+            info: song,
+            playDate: new Date(),
+            wasSkipped: false
+        };
+        this.alreadyPlayed.push(previousSong);
     }
 
     private update() {
@@ -177,5 +213,13 @@ export class Playlist implements IPlaylist {
             .catch((err) => {
                 this.logger.warn("Playlist.update: Could not fetch remaining track time.", JSON.stringify(err));
             });
+    }
+
+    public getAlreadyPlayedSongs(): IPreviousSong[] {
+        return [...this.alreadyPlayed];
+    }
+
+    public getUpcomingSongs(): ISongInfo[] {
+        return [...this.list];
     }
 }

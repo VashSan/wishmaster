@@ -175,3 +175,59 @@ test('isInQueue', (done) => {
         done();
     }, waitTime.inMilliseconds());
 });
+
+test('get upcoming', (done) => {
+    // Arrange
+    playlist.start();
+    playlist.enqueue(song);
+    playlist.enqueue(song2);
+
+    setTimeout(() => {
+        // Act
+        const upcoming = playlist.getUpcomingSongs();
+        expect(upcoming).toContain(song2);
+
+        // Assert
+        expect(upcoming.length).toBe(1);
+        done();
+    }, waitTime.inMilliseconds());
+});
+
+test('get played', (done) => {
+    // Arrange
+    playlist.start();
+    playlist.enqueue(song);
+    playlist.enqueue(song2);
+
+    setTimeout(() => {
+        // Act
+        const alreadyPlayed = playlist.getAlreadyPlayedSongs();
+
+        // Assert
+        expect(alreadyPlayed.length).toBe(1);
+        expect(alreadyPlayed[0].info).toBe(song);
+        done();
+    }, waitTime.inMilliseconds());
+});
+
+test('get played with skipped', (done) => {
+    // Arrange
+    playlist.start();
+    playlist.enqueue(song);
+    playlist.enqueue(song2);
+
+    // Act
+    setTimeout(() => playlist.skip(), waitTime.inMilliseconds());
+
+    // Assert
+    setTimeout(() => {
+        const alreadyPlayed = playlist.getAlreadyPlayedSongs();
+
+        expect(alreadyPlayed.length).toBe(2);
+        expect(alreadyPlayed[0].info).toBe(song);
+        expect(alreadyPlayed[0].wasSkipped).toBe(true);
+        expect(alreadyPlayed[1].info).toBe(song2);
+        expect(alreadyPlayed[1].wasSkipped).toBe(false);
+        done();
+    }, waitTime.inMilliseconds() * 2);
+});
