@@ -204,19 +204,25 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private skipCurrentSong(msg: IMessage) {
         if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
-            this.playlist.skip();
+            this.skipImmediately();
             return;
         }
 
         const canSkip = this.isModOrBroadcaster(msg.tags);
         if (canSkip) {
-            this.playlist.skip();
+            this.skipImmediately();
         }
+    }
+
+    private skipImmediately() {
+        this.playlist.skip();
+        this.updateSongList();
     }
 
     private removeMyLastRequest(user: string) {
         const removedSong = this.playlist.removeLastSongFromUser(user);
         if (removedSong) {
+            this.updateSongList();
             this.reply(`@${user}, I removed '${removedSong.title}' from the playlist.`);
         }
     }
@@ -229,6 +235,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private requestSongList(): void {
         if (this.getPublicSongListUrl() != "") {
+            this.updateSongList();
             this.replySongListHandler.handle();
         }
     }
