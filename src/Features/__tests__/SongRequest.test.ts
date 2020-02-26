@@ -21,7 +21,7 @@ beforeEach(() => {
     logger = mock<ILogger>();
     playlist = mock<IPlaylist>();
     spotifyConfig = mock<ISpotifyConfig>();
-    
+
     let songConfig = mock<ISongRequestConfig>();
     songConfig.spotify = spotifyConfig;
 
@@ -180,4 +180,20 @@ test('volume < min', () => {
 
     //Assert
     expect(api.setVolume).toBeCalledWith(55);
+});
+
+test('request song list', () => {
+    // Arrange
+    const sr = new SongRequest(context, api, playlist, logger);
+    const msg: IMessage = { text: "!songlist", from: "bob", channel: "" };
+
+    let repliesReceived = 0;
+    sr.setup(() => { repliesReceived += 1 });
+
+    // Act
+    sr.act(msg);
+    sr.act(msg); // the second is timed out
+
+    //Assert
+    expect(repliesReceived).toBe(1);
 });

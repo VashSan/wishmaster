@@ -72,6 +72,8 @@ export interface IStomtConfig {
 }
 
 export interface ISongRequestConfig {
+    writeSongListTo: string;
+    songListUrl: string;
     playlist: IPlaylistConfig;
     spotify: ISpotifyConfig;
 }

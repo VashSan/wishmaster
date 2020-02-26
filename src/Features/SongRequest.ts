@@ -1,6 +1,6 @@
 
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IMessage, ISpotifyConfig, Seconds } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo } from "./SongRequestLib";
 
@@ -28,11 +28,11 @@ export interface ICanReply {
 /** Enqueue songs to a playlist */
 export class SongRequest extends FeatureBase implements ISongRequest, ICanReply {
 
+    private readonly songRequestConfig: ISongRequestConfig | null;
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
     private readonly api: IApiWrapper;
     private readonly playlist: IPlaylist;
-
     private spotifyAuth: SpotifyAuth | undefined;
     private token: IAccessToken | undefined;
 
@@ -54,11 +54,11 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             maxVolumeByCommand: 80
         };
 
-        let songRequestConfig = this.config.getSongRequest();
-        if (songRequestConfig != null) {
-            this.playlist = playlist ? playlist : new Playlist(this.api, songRequestConfig.playlist);
+        this.songRequestConfig = this.config.getSongRequest();
+        if (this.songRequestConfig != null) {
+            this.playlist = playlist ? playlist : new Playlist(this.api, this.songRequestConfig.playlist);
 
-            this.spotifyConfig = songRequestConfig.spotify;
+            this.spotifyConfig = this.songRequestConfig.spotify;
 
             const fs = context.getFileSystem();
             const configDir = this.config.getConfigDir();
@@ -130,6 +130,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         commandMap.set("!sr-start", () => this.playlist.start());
         commandMap.set("!sr-stop", () => this.playlist.stop());
         commandMap.set("!volume", () => this.setVolume(request, msg));
+        commandMap.set("!songlist", () => this.requestSongList());
 
         const executor = commandMap.get(cmd);
         if (executor) {
@@ -212,6 +213,22 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         if (removedSong) {
             this.reply(`@${user}, I removed '${removedSong.title}' from the playlist.`);
         }
+    }
+
+    private readonly replySongListHandler = new IgnoreDuringTimeout(new Seconds(30), null, (arg) => {
+        const songListUrl = this.getPublicSongListUrl();
+        this.reply(`SingsNote The current songlist is here: ${songListUrl}`);
+        
+    });
+
+    private requestSongList(): void {
+        if (this.getPublicSongListUrl() != "") {
+            this.replySongListHandler.handle();
+        }
+    }
+
+    private getPublicSongListUrl(): string {
+        return this.songRequestConfig?.songListUrl || "";
     }
 }
 
