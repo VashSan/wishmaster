@@ -3,6 +3,7 @@ import { ILogger, LogManager } from "psst-log";
 import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo } from "./SongRequestLib";
+import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -33,10 +34,11 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly logger: ILogger;
     private readonly api: IApiWrapper;
     private readonly playlist: IPlaylist;
+    private readonly songlistWriter: ISongListWriter;
     private spotifyAuth: SpotifyAuth | undefined;
     private token: IAccessToken | undefined;
 
-    constructor(context: IContext, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger) {
+    constructor(context: IContext, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
         super(context.getConfiguration());
 
         this.logger = logger ? logger : LogManager.getLogger();
@@ -67,6 +69,9 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         } else {
             this.playlist = playlist ? playlist : new Playlist(this.api);
         }
+
+        const listTarget = this.songRequestConfig?.writeSongListTo || "";
+        this.songlistWriter = songListWriter ? songListWriter : new SongListWriter(this.playlist, listTarget);
     }
 
     public reply(text: string): void {
@@ -155,6 +160,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 }
 
                 if (this.playlist.enqueue(song)) {
+                    this.updateSongList();
                     this.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
                 } else {
                     this.reply(`Sorry @${song.requestedBy}, you can not add more songs to the playlist.`);
@@ -218,7 +224,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly replySongListHandler = new IgnoreDuringTimeout(new Seconds(30), null, (arg) => {
         const songListUrl = this.getPublicSongListUrl();
         this.reply(`SingsNote The current songlist is here: ${songListUrl}`);
-        
+
     });
 
     private requestSongList(): void {
@@ -229,6 +235,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private getPublicSongListUrl(): string {
         return this.songRequestConfig?.songListUrl || "";
+    }
+
+    private updateSongList() {
+        this.songlistWriter.update();
     }
 }
 

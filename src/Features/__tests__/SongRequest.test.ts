@@ -3,12 +3,14 @@ import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, IT
 import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
+import { ISongListWriter } from "../SongRequestLib/SongListWriter";
 
 let api: MockProxy<IApiWrapper> & IApiWrapper;
 let logger: MockProxy<ILogger> & ILogger;
 let playlist: MockProxy<IPlaylist> & IPlaylist;
 let context: MockProxy<IContext> & IContext;
 let spotifyConfig: MockProxy<ISpotifyConfig> & ISpotifyConfig;
+let songListWriter: MockProxy<ISongListWriter> & ISongListWriter;
 
 const broadcasterTags = mock<ITagReader>();
 broadcasterTags.isBroadcaster.mockReturnValue(true);
@@ -16,11 +18,16 @@ broadcasterTags.isBroadcaster.mockReturnValue(true);
 const modTags = mock<ITagReader>();
 modTags.isMod.mockReturnValue(true);
 
+function createSongRequest() {
+    return new SongRequest(context, api, playlist, logger, songListWriter);
+}
+
 beforeEach(() => {
     api = mock<IApiWrapper>();
     logger = mock<ILogger>();
     playlist = mock<IPlaylist>();
     spotifyConfig = mock<ISpotifyConfig>();
+    songListWriter = mock<ISongListWriter>();
 
     let songConfig = mock<ISongRequestConfig>();
     songConfig.spotify = spotifyConfig;
@@ -36,12 +43,36 @@ beforeEach(() => {
 });
 
 test('construction', () => {
-    expect(() => new SongRequest(context, api, playlist, logger)).not.toThrow();
+    expect(() => createSongRequest()).not.toThrow();
+});
+
+test('request song updates song list', (done) => {
+    // Arrange
+    const song = mock<ISongInfo>();
+    song.requestedBy = "bob";
+
+    api.getSong.mockResolvedValue(song);
+
+    playlist.isInQueue.mockReturnValue(false);
+    playlist.enqueue.mockReturnValue(true);
+
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!sr Innuendo Queen", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    setTimeout(() => {
+        expect(playlist.enqueue).toBeCalled();
+        expect(songListWriter.update).toBeCalled();
+        done();
+    }, 100);
 });
 
 test('skip song from user', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!skip", from: "bob", channel: "" };
 
     const song = mock<ISongInfo>();
@@ -57,7 +88,7 @@ test('skip song from user', () => {
 
 test('skip song by mod or broadcaster', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
 
     const msgFromMod: IMessage = { text: "!skip", from: "mod", channel: "", tags: modTags };
 
@@ -77,7 +108,7 @@ test('skip song by mod or broadcaster', () => {
 
 test('skip song with no permission', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
 
     const tags = mock<ITagReader>();
     tags.isMod.mockReturnValue(false);
@@ -97,7 +128,7 @@ test('skip song with no permission', () => {
 
 test('remove last song from user', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!rs", from: "bob", channel: "" };
 
     // Act
@@ -109,7 +140,7 @@ test('remove last song from user', () => {
 
 test('stop', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!sr-stop", from: "bob", channel: "" };
 
     // Act
@@ -121,7 +152,7 @@ test('stop', () => {
 
 test('start', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!sr-start", from: "bob", channel: "" };
 
     // Act
@@ -133,7 +164,7 @@ test('start', () => {
 
 test('volume', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
@@ -145,7 +176,7 @@ test('volume', () => {
 
 test('volume byUser', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!volume 50", from: "alice", channel: "" };
 
     // Act
@@ -159,7 +190,7 @@ test('volume byUser', () => {
 test('volume > max', () => {
     // Arrange
     spotifyConfig.maxVolumeByCommand = 45;
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
@@ -172,7 +203,7 @@ test('volume > max', () => {
 test('volume < min', () => {
     // Arrange
     spotifyConfig.minVolumeByCommand = 55;
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!volume 50", from: "alice", channel: "", tags: modTags };
 
     // Act
@@ -184,7 +215,23 @@ test('volume < min', () => {
 
 test('request song list', () => {
     // Arrange
-    const sr = new SongRequest(context, api, playlist, logger);
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!songlist", from: "bob", channel: "" };
+
+    let repliesReceived = 0;
+    sr.setup(() => { repliesReceived += 1 });
+
+    // Act
+    sr.act(msg);
+    sr.act(msg); // the second is timed out
+
+    //Assert
+    expect(repliesReceived).toBe(1);
+});
+
+test('add song', () => {
+    // Arrange
+    const sr = createSongRequest();
     const msg: IMessage = { text: "!songlist", from: "bob", channel: "" };
 
     let repliesReceived = 0;
