@@ -157,13 +157,14 @@ export class Playlist implements IPlaylist {
 
     public removeLastSongFromUser(username: string): ISongInfo | null {
         let removedSong: ISongInfo | null = null;
-        [...this.list].reverse().forEach((item, index, theList) => {
+        for (let index = this.list.length - 1; index >= 0; index--) {
+            const item = this.list[index];
             if (item.requestedBy.toLowerCase() == username.toLowerCase()) {
-                const realIndex = theList.length - 1 - index;
-                const removedOnes = theList.splice(realIndex, 1);
+                const removedOnes = this.list.splice(index, 1);
                 removedSong = removedOnes[0];
+                break;
             }
-        });
+        }
         return removedSong;
     }
 

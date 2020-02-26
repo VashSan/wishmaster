@@ -142,13 +142,9 @@ test('remove last song', (done) => {
     const removed2 = playlist.removeLastSongFromUser(alice);
 
     // Assert
-    playlist.skip(); // skip the first song, so alice next song should be active
     setTimeout(() => {
         expect(removed1).toBeNull();
         expect(removed2).toBe(song2);
-
-        const currentSong = playlist.getCurrent();
-        expect(currentSong?.title).toBe("1");
         done();
     }, waitTime.inMilliseconds());
 });
