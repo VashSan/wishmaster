@@ -24,27 +24,43 @@ export interface ISongInfo {
 
 export interface IPlaylist {
     /**
-     * Adds a song to the queue. Will return false if queue is full
-     * @param song the song request
+     * Adds a song to the queue.
+     * @param song the song to be added.
+     * @returns  Will return false if queue is full, otherwise true.
      */
     enqueue(song: ISongInfo): boolean;
-    getCurrent(): ISongInfo | null;
-
-    isInQueue(song: ISongInfo): boolean;
-    skip(): void;
-    start(): void;
-    stop(): void;
-    removeLastSongFromUser(username: string): ISongInfo | null;
 
     /**
-     * Get a list of already played or started songs (includes current)
+     * @returns A new list of previously played or started songs (including current).
      */
     getAlreadyPlayedSongs(): IPreviousSong[];
 
     /**
-     * Get a list of the upcoming songs
+     * @returns The current song or null if none is being played.
+     */
+    getCurrent(): ISongInfo | null;
+
+    /**
+     * @returns A new list of upcoming songs.
      */
     getUpcomingSongs(): ISongInfo[];
+
+    /**
+     * Removes a song for a distinct user.
+     * @param username The user requesting the removal.
+     * @returns the song if it could be removed, otherwise null.
+     */
+    removeLastSongFromUser(username: string): ISongInfo | null;
+
+    /**
+     * @param song Check whether this song is in the queue
+     * @returns True if the song is in the future playlist, otherwise false.
+     */
+    isInQueue(song: ISongInfo): boolean;
+
+    skip(): void;
+    start(): void;
+    stop(): void;
 }
 
 export class Playlist implements IPlaylist {
@@ -81,7 +97,7 @@ export class Playlist implements IPlaylist {
         return false;
     }
 
-    public canEnqueue(user: string): boolean {
+    private canEnqueue(user: string): boolean {
         if (this.timer == undefined) {
             return false;
         }
