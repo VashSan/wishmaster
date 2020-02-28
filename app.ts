@@ -7,4 +7,6 @@ process.on('unhandledRejection', error => {
 });
 
 const startup = new Startup();
-startup.main();
+
+let args = process.argv.slice(2);
+startup.main(args);

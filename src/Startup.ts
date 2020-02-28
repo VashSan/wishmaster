@@ -13,10 +13,14 @@ import { StaticAnswers } from "./Features/StaticAnswers";
 import { Stomt } from "./Features/Stomt";
 import { SongRequest } from "./Features/SongRequest";
 import { UrlFilter } from "./Features/UrlFilter";
+import CommandLine from "./shared/CommandLine";
 
 
 
 export class Startup {
+    private readonly features: Set<DefeatableFeature>;
+    private readonly fs: IFileSystem;
+
     private config: IConfiguration;
     private logger: ILogger;
     private msgProcessor: IMessageProcessor;
@@ -24,9 +28,6 @@ export class Startup {
     private email: IEmailAccess;
     private obsController: IObsController;
     private context: IContext;
-    private readonly features: Set<DefeatableFeature>;
-    private readonly fs: IFileSystem;
-
 
     constructor(context?: IContext, config?: IConfiguration, logger?: ILogger, msgProcessor?: IMessageProcessor) {
         if (logger) {
@@ -65,11 +66,25 @@ export class Startup {
         }
     }
 
-    public main(): number {
+    public main(args: string[]): number {
         this.configureLog();
-
+        this.parseCommandline(args);
         this.greetingsToMyHost();
+        this.configureThenStart();
+        return 0;
+    }
 
+    private parseCommandline(args: string[]) {
+        try {
+            const myArgs = new CommandLine().option("-spotify").parse(args);
+            this.context.setArguments(myArgs);
+        }
+        catch {
+            this.logger.warn("Ignoring invalid command line syntax");
+        }
+    }
+
+    private configureThenStart() {
         this.configureEmail();
 
         this.configureObs();
@@ -80,8 +95,6 @@ export class Startup {
                 this.logger.error("Database load failed: " + err);
                 process.exitCode = 1;
             });
-
-        return 0;
     }
 
     private configureDatabase() {
@@ -212,6 +225,7 @@ export class Startup {
                 break;
         }
     }
+
 }
 
 

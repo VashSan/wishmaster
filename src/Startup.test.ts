@@ -45,7 +45,7 @@ test('construction', (done) => {
     const startup = new Startup(context, config, logger, msgProcessor);
 
     // Act
-    startup.main();
+    startup.main([]);
 
     // Assert
     setTimeout(() => {
