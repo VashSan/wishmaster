@@ -227,3 +227,26 @@ test('get played with skipped', (done) => {
         done();
     }, waitTime.inMilliseconds() * 2);
 });
+
+test('onNext', (done) => {
+    // Arrange
+    let onNextInvoked = false;
+    playlist.start();
+
+    // Act
+    playlist.onNext(() => {
+        throw new Error("error");
+    });
+    playlist.onNext(() => {
+        onNextInvoked = true;
+    });
+    playlist.enqueue(song);
+
+    // Assert
+    setTimeout(() => {
+        expect(onNextInvoked).toBe(true);
+        expect(logger.error).toBeCalledTimes(1);
+        expect(logger.error).toBeCalledWith("onNext callback failed: Error: error");
+        done();
+    }, waitTime.inMilliseconds());
+});

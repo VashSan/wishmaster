@@ -58,6 +58,11 @@ export interface IPlaylist {
      */
     isInQueue(song: ISongInfo): boolean;
 
+    /**
+     * @param callback This callback is invoked, once a new song is triggered by the playlist.
+     */
+    onNext(callback: (song: ISongInfo) => void): void;
+
     skip(): void;
     start(): void;
     stop(): void;
@@ -69,6 +74,7 @@ export class Playlist implements IPlaylist {
     private readonly api: IApiWrapper;
     private readonly config: IPlaylistConfig;
     private readonly logger: ILogger;
+    private readonly onNextCallbacks: ((song: ISongInfo) => void)[] = [];
 
     private currentSong: ISongInfo | null = null;
     private timer: NodeJS.Timer | undefined = undefined;
@@ -184,6 +190,21 @@ export class Playlist implements IPlaylist {
         return removedSong;
     }
 
+    public onNext(callback: (song: ISongInfo) => void): void {
+        this.onNextCallbacks.push(callback);
+    }
+
+    private invokeOnNext(song: ISongInfo) {
+        this.onNextCallbacks.forEach((cb) => {
+            try {
+                cb(song);
+            }
+            catch (err) {
+                this.logger.error("onNext callback failed: " + err);
+            }
+        });
+    }
+
     private playNextSong() {
         if (this.isRunning()) {
             const nextSong = this.list.shift();
@@ -193,6 +214,7 @@ export class Playlist implements IPlaylist {
                 this.currentSong = nextSong;
                 this.logger.log(`Playlist.playNextSong: play now (${nextSong.uri})`);
                 this.api.playNow(nextSong.uri);
+                this.invokeOnNext(nextSong);
             } else {
                 this.currentSong = null;
             }
