@@ -70,6 +70,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             this.playlist = playlist ? playlist : new Playlist(this.api);
         }
 
+        this.playlist.onNext(() => {
+            this.updateSongList();
+        });
+
         const listTarget = this.songRequestConfig?.writeSongListTo || "";
         this.songlistWriter = songListWriter ? songListWriter : new SongListWriter(this.playlist, listTarget);
     }
@@ -216,7 +220,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private skipImmediately() {
         this.playlist.skip();
-        this.updateSongList();
     }
 
     private removeMyLastRequest(user: string) {
@@ -235,7 +238,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private requestSongList(): void {
         if (this.getPublicSongListUrl() != "") {
-            this.updateSongList();
             this.replySongListHandler.handle();
         }
     }
