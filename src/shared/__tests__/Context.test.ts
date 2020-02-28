@@ -52,3 +52,18 @@ test('isDeveloper', () => {
         process.env.NODE_ENV = original
     }
 });
+
+test('arguments', () => {
+    // Arrange
+    let context = getContext();
+    const arg = { name: "a", values: [] };
+    context.setArguments([arg]);
+
+    // Act
+    const argument1 = context.getArgument("A");
+    const argument2 = context.getArgument("B");
+
+    // Assert
+    expect(argument1).toBe(arg);
+    expect(argument2).toBeUndefined();
+});

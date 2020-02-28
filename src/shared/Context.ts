@@ -4,12 +4,15 @@ import { MediaPlayer, IMediaPlayer } from "./MediaPlayer";
 import { IEmailAccess } from "./Email";
 import { IFileSystem } from "./FileSystem";
 import { textSpanIntersectsWith } from "typescript";
+import { IArgument } from "./CommandLine";
 
 export interface IService {
     getServiceName(): string;
 }
 
 export interface IContext {
+    setArguments(args: IArgument[]): void;
+    getArgument(name: string): IArgument | undefined;
     getConfiguration(): IConfiguration;
     getDatabase(): IDatabase;
     getMediaPlayer(): IMediaPlayer;
@@ -19,6 +22,18 @@ export interface IContext {
 }
 
 export class Context implements IContext {
+
+    private arguments: IArgument[] = [];
+    setArguments(args: IArgument[]): void {
+        this.arguments = [...args];
+    }
+
+    getArgument(name: string): IArgument | undefined {
+        return this.arguments.find((item)=>{
+            return item.name.toLowerCase() == name.toLowerCase();
+        });
+    }
+
     private readonly email: IEmailAccess;
     getEmail(): IEmailAccess {
         return this.email;
@@ -47,7 +62,7 @@ export class Context implements IContext {
     }
 
     public readonly obs: IObsController;
-    getObs(): IObsController { 
+    getObs(): IObsController {
         return this.obs;
     }
 
