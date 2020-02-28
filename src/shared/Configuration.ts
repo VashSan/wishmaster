@@ -88,6 +88,7 @@ export interface ISpotifyConfig {
     authProtocol: string;
     authHost: string;
     authPort: number;
+    device: string;
     tokenExpiresInHours: number;
     secretKey: string;
     clientId: string;
@@ -219,14 +220,20 @@ export class Configuration implements IConfiguration {
         }
 
         let configString = this.fs.readAll(this.configFilePath);
-        let configObj = JSON.parse(configString);
 
-        (<any>Object).assign(this, configObj);
+        try {
+            let configObj = JSON.parse(configString);
+            (<any>Object).assign(this, configObj);
+        } catch (err) {
+            logger.error("Error in configuration file, exiting program.", err);
+            process.exit(1);
+        }
+
 
         this.rootPath = path.dirname(process.argv[1]);
     }
 
-    enabledFeatures:  DefeatableFeature[] = [];
+    enabledFeatures: DefeatableFeature[] = [];
     getEnabledFeatures(): DefeatableFeature[] {
         return this.enabledFeatures;
     }
@@ -260,7 +267,7 @@ export class Configuration implements IConfiguration {
     getCreateLogFile(): boolean {
         return this.createLogFile;
     }
-    
+
     createLogConsole: boolean = true;
     getCreateLogConsole(): boolean {
         return this.createLogConsole;
@@ -285,12 +292,12 @@ export class Configuration implements IConfiguration {
     getEmail(): IEmailConfig | null {
         return this.email;
     }
-    
+
     obs: IObsConfig | null = null;
     getObs(): IObsConfig | null {
         return this.obs;
     }
-    
+
     urlWhiteList: string[] = [];
     getUrlWhiteList(): string[] {
         return this.urlWhiteList;
@@ -310,7 +317,7 @@ export class Configuration implements IConfiguration {
     getStomt(): IStomtConfig | null {
         return this.stomt;
     }
-        
+
     songRequest: ISongRequestConfig | null = null;
     getSongRequest(): ISongRequestConfig | null {
         return this.songRequest;
@@ -325,7 +332,7 @@ export class Configuration implements IConfiguration {
     getRootPath(): string {
         return this.rootPath;
     }
-    
+
     logDir: string;
     getLogDir(): string {
         return this.logDir;

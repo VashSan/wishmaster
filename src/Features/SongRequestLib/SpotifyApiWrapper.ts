@@ -135,6 +135,11 @@ export class SpotifyApiWrapper implements IApiWrapper {
     public async getRemainingTrackTime(): Promise<Seconds> {
         const state = await this.api.getMyCurrentPlaybackState();
 
+        if (this.device && state.statusCode == 204) {
+            // ASSUMPTION: if the device is set, nothing is done on the client
+            return Promise.resolve(new Seconds(0));
+        }
+
         if (state.body.is_playing == undefined) {
             return Promise.reject("Unknown playback state");
         } else {
@@ -161,7 +166,11 @@ export class SpotifyApiWrapper implements IApiWrapper {
             playOptions.device_id = this.device.id;
         }
 
-        this.api.play(playOptions);
+        this.api.play(playOptions)
+            .then()
+            .catch((err) => {
+                this.logger.warn("Could not start playback: ", err);
+            });
     }
 
     public getPlaybackDevices(): Promise<IPlaybackDevice[]> {

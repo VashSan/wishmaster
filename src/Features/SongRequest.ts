@@ -4,6 +4,7 @@ import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, Ignore
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo } from "./SongRequestLib";
 import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
+import { IArgument } from "../shared/CommandLine";
 
 export interface ISongRequest {
     /** Invoke first to initialize the connection to spotify api */
@@ -34,18 +35,20 @@ export interface ICanReply {
 
 /** Enqueue songs to a playlist */
 export class SongRequest extends FeatureBase implements ISongRequest, ICanReply {
-
+    private readonly argument: IArgument | undefined;
     private readonly songRequestConfig: ISongRequestConfig | null;
     private readonly spotifyConfig: ISpotifyConfig;
     private readonly logger: ILogger;
     private readonly api: IApiWrapper;
     private readonly playlist: IPlaylist;
     private readonly songlistWriter: ISongListWriter;
+    private readonly deviceList: IPlaybackDevice[] = [];
     private spotifyAuth: SpotifyAuth | undefined;
     private token: IAccessToken | undefined;
 
     constructor(context: IContext, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
         super(context.getConfiguration());
+        this.argument = context.getArgument("spotify");
 
         this.logger = logger ? logger : LogManager.getLogger();
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
@@ -54,6 +57,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             authProtocol: "",
             authHost: "",
             authPort: 0,
+            device: "",
             tokenExpiresInHours: 0,
             secretKey: "",
             clientId: "",
@@ -95,6 +99,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 this.token = this.spotifyAuth?.getAccessToken();
                 this.updateApiToken();
                 this.playlist.start();
+                this.updatePlaybackDevices();
             });
         } else {
             if (!this.spotifyAuth) {
@@ -104,6 +109,55 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             } else {
                 this.logger.warn("Spotify is not configured correctly");
             }
+        }
+    }
+
+    private updatePlaybackDevices() {
+        this.api.getPlaybackDevices()
+            .then((devices) => {
+                devices.forEach((item) => {
+                    this.deviceList.push(item);
+                    this.logger.info(`Spotify Device Name: '${item.name}', ID: '${item.id}'`);
+                });
+
+                if (this.spotifyConfig.device != "") {
+                    this.useDeviceId(this.spotifyConfig.device);
+                }
+
+                this.evalArgument();
+            })
+            .catch((err) => {
+                this.logger.warn("Could not update playback devices: ", err);
+            });
+    }
+
+    private evalArgument() {
+        if (this.argument) {
+            switch (this.argument.values[0].toLowerCase()) {
+                case "useDeviceId".toLowerCase():
+                    this.useDeviceId(this.argument.values[1]);
+                    break;
+
+                default:
+                    this.logger.warn("Invalid Syntax: -spotify useDeviceId <id>");
+            }
+        }
+    }
+    private useDeviceId(arg: string | undefined) {
+        if (arg) {
+            const searchArg = arg.toLowerCase();
+            const device = this.deviceList.find((item) => {
+                return item.name.toLowerCase() == searchArg || item.id.toLowerCase() == searchArg;
+            });
+            if (device) {
+                this.api.setPlaybackDevice(device);
+                this.logger.info(`Using Device: '${device.name}'`);
+            } else {
+                this.logger.warn("No device found with id or name: " + arg);
+            }
+
+        } else {
+            this.logger.warn("-spotify: No Device ID given");
         }
     }
 
