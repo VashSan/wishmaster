@@ -2,7 +2,7 @@
 import { ILogger, LogManager } from "psst-log";
 import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout } from "../shared";
 import { FeatureBase } from "./FeatureBase";
-import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo } from "./SongRequestLib";
+import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo, IWebAuth } from "./SongRequestLib";
 import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
 import { IArgument } from "../shared/CommandLine";
 
@@ -43,10 +43,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly playlist: IPlaylist;
     private readonly songlistWriter: ISongListWriter;
     private readonly deviceList: IPlaybackDevice[] = [];
-    private spotifyAuth: SpotifyAuth | undefined;
+    private spotifyAuth: IWebAuth | undefined;
     private token: IAccessToken | undefined;
 
-    constructor(context: IContext, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
+    constructor(context: IContext, apiAuth?: IWebAuth, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
         super(context.getConfiguration());
         this.argument = context.getArgument("spotify");
 
@@ -75,7 +75,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             const fs = context.getFileSystem();
             const configDir = this.config.getConfigDir();
             const pathToTokenFile = fs.joinPaths(configDir, "spotifyToken.dat");
-            this.spotifyAuth = new SpotifyAuth(this.spotifyConfig, pathToTokenFile, fs);
+            this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, fs);
         } else {
             this.playlist = playlist ? playlist : new Playlist(this.api);
         }
@@ -143,6 +143,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             }
         }
     }
+
     private useDeviceId(arg: string | undefined) {
         if (arg) {
             const searchArg = arg.toLowerCase();
@@ -151,9 +152,12 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             });
             if (device) {
                 this.api.setPlaybackDevice(device);
-                this.logger.info(`Using Device: '${device.name}'`);
+                this.logger.info(`Spotify Device found: '${device.name}'`);
             } else {
-                this.logger.warn("No device found with id or name: " + arg);
+                this.logger.warn(`Spotify Device '${arg}' was not found. Will retry in a few seconds.`);
+                setTimeout(() => {
+                    this.updatePlaybackDevices();
+                }, new Seconds(5).inMilliseconds());
             }
 
         } else {

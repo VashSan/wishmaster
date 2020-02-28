@@ -4,8 +4,11 @@ import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
 import { ISongListWriter } from "../SongRequestLib/SongListWriter";
+import { IWebAuth, IAccessToken } from "../SongRequestLib";
 
 let api: MockProxy<IApiWrapper> & IApiWrapper;
+let apiAuth: MockProxy<IWebAuth> & IWebAuth;
+let accessToken: MockProxy<IAccessToken> & IAccessToken;
 let logger: MockProxy<ILogger> & ILogger;
 let playlist: MockProxy<IPlaylist> & IPlaylist;
 let context: MockProxy<IContext> & IContext;
@@ -19,11 +22,16 @@ const modTags = mock<ITagReader>();
 modTags.isMod.mockReturnValue(true);
 
 function createSongRequest() {
-    return new SongRequest(context, api, playlist, logger, songListWriter);
+    return new SongRequest(context, apiAuth, api, playlist, logger, songListWriter);
 }
 
 beforeEach(() => {
     api = mock<IApiWrapper>();
+    accessToken = mock<IAccessToken>();
+
+    apiAuth = mock<IWebAuth>();
+    apiAuth.getAccessToken.mockReturnValue(accessToken);
+
     logger = mock<ILogger>();
     playlist = mock<IPlaylist>();
     spotifyConfig = mock<ISpotifyConfig>();
@@ -241,6 +249,24 @@ test('add song', () => {
     sr.act(msg);
     sr.act(msg); // the second is timed out
 
-    //Assert
+    // Assert
     expect(repliesReceived).toBe(1);
+});
+
+test('connect', (done) => {
+    // Arrange
+    spotifyConfig.device = "id";
+    apiAuth.authenticate.mockImplementation((authCallback) => authCallback());
+    api.getPlaybackDevices.mockResolvedValue([{ id: "id", name: "name" }]);
+    const sr = createSongRequest();
+
+    // Act
+    sr.connect();
+
+    // Assert
+    setTimeout(() => {
+        expect(api.updateApiToken).toBeCalledWith(expect.any(String));
+        expect(api.setPlaybackDevice).toBeCalledWith({ id: "id", name: "name" });
+        done();
+    });
 });

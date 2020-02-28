@@ -74,8 +74,9 @@ describe('SpotifyApiWrapper', () => {
 
     beforeEach(() => {
         chat = mock<ICanReply>();
-        api = mock<SpotifyWebApi>();
         logger = mock<ILogger>();
+        api = mock<SpotifyWebApi>();
+        api.play.mockImplementation(() => new Promise<Response<void>>((resolve) => resolve()));
     });
 
     test('construction', () => {
