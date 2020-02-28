@@ -10,15 +10,21 @@ export interface ISongRequest {
     connect(): void;
 }
 
-export interface IApiWrapper {
-    updateApiToken(token: string): void;
-    getSong(request: string, msg: IMessage): Promise<ISongInfo>;
-    requestCurrentSongInfo(msg: IMessage): void;
+export interface IPlaybackDevice {
+    id: string;
+    name: string;
+}
 
+export interface IApiWrapper {
+    getPlaybackDevices(): Promise<IPlaybackDevice[]>;
     getRemainingTrackTime(): Promise<Seconds>;
+    getSong(request: string, msg: IMessage): Promise<ISongInfo>;
     isPausedOrStopped(): Promise<boolean>;
     playNow(uri: string): void;
+    requestCurrentSongInfo(msg: IMessage): void;
     setVolume(volumePercent: number): void;
+    setPlaybackDevice(device: IPlaybackDevice): void;
+    updateApiToken(token: string): void;
 }
 
 export interface ICanReply {

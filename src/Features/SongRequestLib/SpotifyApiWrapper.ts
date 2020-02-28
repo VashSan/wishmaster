@@ -1,8 +1,16 @@
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
-import { IApiWrapper, ICanReply } from "../SongRequest";
+import { IApiWrapper, ICanReply, IPlaybackDevice } from "../SongRequest";
 import { ISongInfo, MediaLibrary } from "./Playlist";
 import { IMessage, Seconds } from "../../shared";
+
+/**
+ * partial SpotifyWebApi.PlayOptions
+ */
+interface MyPlayOptions {
+    uris: string[];
+    device_id?: string;
+}
 
 export class SongInfo implements ISongInfo {
     constructor(track: SpotifyApi.TrackObjectFull, requestBy: string, logger?: ILogger) {
@@ -29,6 +37,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
     private readonly chat: ICanReply;
+    private device: IPlaybackDevice | undefined;
 
     constructor(chat: ICanReply, api?: SpotifyWebApi, logger?: ILogger) {
         this.chat = chat;
@@ -69,7 +78,9 @@ export class SpotifyApiWrapper implements IApiWrapper {
                     if (track != undefined) {
                         const song = new SongInfo(track, msg.from);
                         resolve(song);
+
                     }
+                    return Promise.resolve(undefined);
                 })
                 .catch((err) => reject(err));
         });
@@ -144,7 +155,41 @@ export class SpotifyApiWrapper implements IApiWrapper {
     }
 
     public playNow(uri: string): void {
-        this.api.play({ uris: [uri] });
+
+        let playOptions: MyPlayOptions = { uris: [uri] };
+        if (this.device) {
+            playOptions.device_id = this.device.id;
+        }
+
+        this.api.play(playOptions);
+    }
+
+    public getPlaybackDevices(): Promise<IPlaybackDevice[]> {
+        return new Promise<IPlaybackDevice[]>((resolve, reject) => {
+            this.api.getMyDevices()
+                .then((deviceObj) => {
+                    const result: IPlaybackDevice[] = [];
+                    deviceObj.body.devices.forEach((deviceItem) => {
+                        if (deviceItem.id) {
+                            const newItem = {
+                                id: deviceItem.id,
+                                name: deviceItem.name
+                            };
+                            result.push(newItem);
+                        } else {
+                            this.logger.log("Skipped device item with no id");
+                        }
+                    });
+                    resolve(result);
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    public setPlaybackDevice(device: IPlaybackDevice): void {
+        this.device = device;
     }
 }
 

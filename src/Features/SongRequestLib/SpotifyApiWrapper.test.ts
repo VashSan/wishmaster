@@ -102,6 +102,7 @@ describe('SpotifyApiWrapper', () => {
 
         // Assert
         expect(api.play).toBeCalledTimes(1);
+        expect(api.play).toBeCalledWith({ uris: ["test"] });
     });
 
     test('isPausedOrStopped isPlaying', async () => {
@@ -229,6 +230,39 @@ describe('SpotifyApiWrapper', () => {
 
         // Assert
         await expect(act()).resolves.toBeDefined();
+    });
+
+    test('setDevice', () => {
+        // Arrange
+        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+
+        // Act
+        wrapper.setPlaybackDevice({ id: "id", name: "name" });
+        wrapper.playNow("test");
+
+        // Assert
+        expect(api.play).toBeCalledTimes(1);
+        expect(api.play).toBeCalledWith({ uris: ["test"], device_id: "id" });
+    });
+
+    test('getDeviceLice', async () => {
+        // Arrange
+        let testDevice = mock<SpotifyApi.UserDevice>();
+        testDevice.id = "id";
+        testDevice.name = "name";
+
+        let response = mock<Response<SpotifyApi.UserDevicesResponse>>();
+        response.body.devices = [testDevice];
+
+        api.getMyDevices.mockResolvedValue(response);
+        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+
+        // Act
+        const act = () => wrapper.getPlaybackDevices();
+
+        // Act & Assert
+        const expectedResult = [{ id: "id", name: "name" }];
+        await expect(act()).resolves.toEqual(expectedResult);
     });
 
 });
