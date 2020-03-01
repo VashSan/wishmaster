@@ -11,7 +11,6 @@ import open = require("open");
 
 jest.mock("request");
 import request = require("request");
-import ts = require("typescript");
 
 describe('AccessToken', () => {
     let token: MockProxy<ITokenAndExpiry> & ITokenAndExpiry;
@@ -92,6 +91,7 @@ describe('SpotifyAuth', () => {
         fs.exists.mockReturnValue(true);
         fs.readAll.mockReturnValue(token);
 
+        Request.post.mockReset();
         Request.post.mockImplementation((options, handler) => {
             let response = mock<request.Response>();
             response.statusCode = 200;
@@ -129,5 +129,87 @@ describe('SpotifyAuth', () => {
         fs.exists.mockReturnValue(false);
         let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
         auth.authenticate(() => { });
+    });
+
+    test('get /login', (done) => {
+        const response = {
+            cookie: jest.fn(),
+            redirect: jest.fn()
+        };
+
+        expressMock.get = jest.fn().mockImplementation((redirect, callback) => {
+            if (redirect == "/login") {
+                callback(undefined, response);
+            }
+        });
+
+        config.scopes = [];
+
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        auth.authenticate(() => { });
+
+        setTimeout(() => {
+            expect(response.cookie).toHaveBeenCalledTimes(1);
+            expect(response.redirect).toHaveBeenCalledTimes(1);
+            done();
+        }, new Seconds(0.1).inMilliseconds());
+    });
+
+    test('get /callback', (done) => {
+        const request = {
+            query: { code: "code", state: "state" },
+            cookies: { spotify_auth_state: "state" }
+        };
+
+        const response = {
+            //cookie: jest.fn(),
+            //redirect: jest.fn()
+            clearCookie: jest.fn()
+        };
+
+        expressMock.get = jest.fn().mockImplementation((redirect, callback) => {
+            if (redirect == "/callback") {
+                callback(request, response);
+            }
+        });
+
+        config.scopes = [];
+
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        auth.authenticate(() => { });
+
+        setTimeout(() => {
+            expect(response.clearCookie).toHaveBeenCalledTimes(1);
+            expect(Request.post).toHaveBeenCalledTimes(1);
+            done();
+        }, new Seconds(0.1).inMilliseconds());
+    });
+
+    test('get /refresh', (done) => {
+        const request = {
+            query: { refresh_token: "refreshToken" },
+        };
+
+        const response = {
+            send: jest.fn(),
+            redirect: jest.fn()
+        };
+
+        expressMock.get = jest.fn().mockImplementation((redirect, callback) => {
+            if (redirect == "/refresh_token") {
+                callback(request, response);
+            }
+        });
+
+        config.scopes = [];
+
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        auth.authenticate(() => { });
+
+        setTimeout(() => {
+            expect(response.send).toHaveBeenCalledTimes(1);
+            expect(response.redirect).toHaveBeenCalledTimes(0);
+            done();
+        }, new Seconds(0.1).inMilliseconds());
     });
 });
