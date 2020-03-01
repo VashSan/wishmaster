@@ -1,6 +1,6 @@
-import { ISpotifyConfig, IFileSystem, Seconds } from "../../shared";
+import { ISpotifyConfig, IFileSystem, Seconds } from "../../../shared";
 import { mock, MockProxy } from "jest-mock-extended";
-import { SpotifyAuth, IUpdateableAccessToken, ITokenAndExpiry, AccessToken, IWebAuth } from "./SpotifyAuth";
+import { SpotifyAuth, IUpdateableAccessToken, ITokenAndExpiry, AccessToken, IWebAuth } from "../SpotifyAuth";
 import { mocked } from "ts-jest/utils";
 
 jest.mock("express");

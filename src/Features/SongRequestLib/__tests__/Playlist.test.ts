@@ -1,8 +1,8 @@
-import { Playlist, ISongInfo } from "./Playlist";
+import { Playlist, ISongInfo } from "../Playlist";
 import { mock, MockProxy } from "jest-mock-extended";
-import { IApiWrapper } from "../SongRequest";
+import { IApiWrapper } from "../../SongRequest";
 import { ILogger } from "psst-log";
-import { Seconds, IPlaylistConfig } from "../../shared";
+import { Seconds, IPlaylistConfig } from "../../../shared";
 
 const waitTime = new Seconds(0.1);
 let api: MockProxy<IApiWrapper> & IApiWrapper;

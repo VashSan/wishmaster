@@ -1,8 +1,8 @@
-import { SongListWriter } from "./SongListWriter";
+import { SongListWriter } from "../SongListWriter";
 import { mock } from "jest-mock-extended";
-import { IPlaylist } from ".";
-import { IFileSystem } from "../../shared";
-import { MediaLibrary } from "./Playlist";
+import { IPlaylist } from "..";
+import { IFileSystem } from "../../../shared";
+import { MediaLibrary } from "../Playlist";
 
 test('update', () => {
     // Prepare

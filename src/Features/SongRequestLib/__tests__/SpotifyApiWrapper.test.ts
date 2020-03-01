@@ -1,10 +1,10 @@
-import { SpotifyApiWrapper, SongInfo } from ".";
-import { ICanReply } from "../SongRequest";
+import { SpotifyApiWrapper, SongInfo } from "..";
+import { ICanReply } from "../../SongRequest";
 import { mock, MockProxy } from "jest-mock-extended";
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger } from "psst-log";
-import { Seconds, IMessage } from "../../shared";
-import { ISongInfo } from "./Playlist";
+import { Seconds, IMessage } from "../../../shared";
+import { ISongInfo } from "../Playlist";
 
 ///<reference path="../../../node_modules/@types/spotify-api/index.d.ts" />
 ///<reference path="../../../node_modules/@types/spotify-web-api-node/index" />
