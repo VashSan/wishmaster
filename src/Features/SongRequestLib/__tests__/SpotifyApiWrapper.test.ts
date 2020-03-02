@@ -178,6 +178,22 @@ describe('SpotifyApiWrapper', () => {
         expect(api.setAccessToken).toBeCalledWith("token");
     });
 
+    test('getVolume', () => {
+        // Arrange
+        let r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
+        r.body.device = mock<SpotifyApi.UserDevice>();
+        r.body.device.volume_percent = 33;
+        api.getMyCurrentPlaybackState.mockResolvedValue(r);
+
+        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+
+        // Act
+        const act = () => wrapper.getVolume();
+
+        // Assert
+        expect(act()).resolves.toBe(33);
+    });
+
     test('setVolume', () => {
         // Arrange
         api.setVolume.mockImplementation(() => new Promise<Response<void>>((resolve, reject) => { resolve(); }));
