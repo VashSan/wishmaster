@@ -180,7 +180,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('getVolume', () => {
         // Arrange
-        let r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
+        const r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
         r.body.device = mock<SpotifyApi.UserDevice>();
         r.body.device.volume_percent = 33;
         api.getMyCurrentPlaybackState.mockResolvedValue(r);

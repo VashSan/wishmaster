@@ -63,12 +63,15 @@ export class SpotifyApiWrapper implements IApiWrapper {
     public getVolume(): Promise<number> {
         return new Promise<number>(async (resolve, reject) => {
             const state = await this.api.getMyCurrentPlaybackState();
-            const volumePercent = state.body.device.volume_percent || null;
-            if (volumePercent) {
-                resolve(volumePercent);
-            } else {
-                reject("Can not get volume right now");
+            if (state.statusCode == 200) {
+                const volumePercent = state.body.device.volume_percent || null;
+                if (volumePercent) {
+                    resolve(volumePercent);
+                    return;
+                }
             }
+            
+            reject("Can not get volume right now");            
         });
     }
 

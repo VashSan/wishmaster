@@ -203,7 +203,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
         commandMap.set("!sr-start", () => this.playlist.start());
         commandMap.set("!sr-stop", () => this.playlist.stop());
-        commandMap.set("!volume", () => this.setVolume(request, msg));
+        commandMap.set("!volume", () => this.getOrSetVolume(request, msg));
         commandMap.set("!songlist", () => this.requestSongList());
 
         const executor = commandMap.get(cmd);
@@ -248,14 +248,14 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         }
     }
 
-    private setVolume(request: string, msg: IMessage): void {
+    private async getOrSetVolume(request: string, msg: IMessage): Promise<void> {
         if (!this.isModOrBroadcaster(msg.tags)) {
             this.logger.log(`SongRequest.setVolumne: Request to change volume by '${msg.from}' was denied.`);
             return;
         }
 
         const regex = /([0-9])+/;
-        let result = regex.exec(request);
+        const result = regex.exec(request);
         if (result && result?.length > 1) {
             let targetVolume = parseInt(result[0]);
             if (targetVolume > this.spotifyConfig.maxVolumeByCommand) {
@@ -268,6 +268,13 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
             this.logger.log(`SongRequest.setVolumne: Request volume change to ${targetVolume}.`);
             this.api.setVolume(targetVolume);
+        } else {
+            try {
+                const volume = await this.api.getVolume();
+                this.reply("Current volume = " + volume);
+            } catch (err) {
+                this.logger.log("SongRequest.getVolume: failed. ", JSON.stringify(err));
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader, ISpotifyConfig } from "../../shared";
+import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader, ISpotifyConfig, IFeatureResponse, Seconds } from "../../shared";
 import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
@@ -194,6 +194,47 @@ test('volume byUser', () => {
     expect(api.setVolume).not.toBeCalled();
 });
 
+test('get volume', (done) => {
+    // Arrange
+    let theResponse: IFeatureResponse;
+    const sr = createSongRequest();
+    sr.setup((err, response) => {
+        theResponse = response;
+    });
+    const msg: IMessage = { text: "!volume", from: "alice", channel: "", tags: modTags };
+    api.getVolume.mockResolvedValue(44);
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    setTimeout(() => {
+        expect(api.getVolume).toBeCalled();
+        expect(theResponse.message.text).toMatch(/44/);
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+});
+
+test('get volume fails', (done) => {
+    // Arrange
+    let theResponse: IFeatureResponse;
+    const sr = createSongRequest();
+    sr.setup((err, response) => {
+        theResponse = response;
+    });
+    const msg: IMessage = { text: "!volume", from: "alice", channel: "", tags: modTags };
+    api.getVolume.mockRejectedValue("err");
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    setTimeout(() => {
+        expect(api.getVolume).toBeCalled();
+        expect(theResponse).not.toBeDefined();
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+});
 
 test('volume > max', () => {
     // Arrange
