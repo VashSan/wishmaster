@@ -1,6 +1,6 @@
 
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout, IFileSystem } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo, IWebAuth } from "./SongRequestLib";
 import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
@@ -44,13 +44,14 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly playlist: IPlaylist;
     private readonly songlistWriter: ISongListWriter;
     private readonly deviceList: IPlaybackDevice[] = [];
+    private readonly fileSystem: IFileSystem;
     private spotifyAuth: IWebAuth | undefined;
     private token: IAccessToken | undefined;
 
     constructor(context: IContext, apiAuth?: IWebAuth, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
         super(context.getConfiguration());
         this.argument = context.getArgument("spotify");
-
+        this.fileSystem = context.getFileSystem();
         this.logger = logger ? logger : LogManager.getLogger();
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
 
@@ -73,16 +74,16 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
             this.spotifyConfig = this.songRequestConfig.spotify;
 
-            const fs = context.getFileSystem();
             const configDir = this.config.getConfigDir();
-            const pathToTokenFile = fs.joinPaths(configDir, "spotifyToken.dat");
-            this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, fs);
+            const pathToTokenFile = this.fileSystem.joinPaths(configDir, "spotifyToken.dat");
+            this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, this.fileSystem);
         } else {
             this.playlist = playlist ? playlist : new Playlist(this.api);
         }
 
         this.playlist.onNext(() => {
             this.updateSongList();
+            this.updateOverlay();
         });
 
         const listTarget = this.songRequestConfig?.writeSongListTo || "";
@@ -320,6 +321,22 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private updateSongList() {
         this.songlistWriter.update();
+    }
+
+    private updateOverlay() {
+        const song = this.playlist.getCurrent();
+        if(song == null) {
+            return;
+        }
+
+        let html = '<html><head><style>body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }</style>' 
+        + '<script type="text/javascript">setTimeout(function(){location.reload(true);}, 1000);</script><body> <em>[[TITLE]]</em> [[ARTIST]]'
+        + '</body></html>';
+        
+        html = html.replace("[[ARTIST]]", song.artist);
+        html = html.replace("[[TITLE]]", song.title);
+        
+        this.fileSystem.writeAll("E:\\test.html", html);
     }
 }
 
