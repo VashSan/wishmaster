@@ -20,6 +20,7 @@ export interface ISongInfo {
     title: string;
     artist: string;
     requestedBy: string;
+    imageUrl: string;
 }
 
 export interface IPlaylist {

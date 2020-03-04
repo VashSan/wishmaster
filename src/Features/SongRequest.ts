@@ -341,8 +341,10 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         const template = this.songRequestConfig.currentSong.htmlTemplateFile;
         let html = this.fileSystem.readAll(template);
 
-        html = html.replace("[[ARTIST]]", song.artist);
-        html = html.replace("[[TITLE]]", song.title);
+        html = html
+            .replace("[[ARTIST]]", song.artist)
+            .replace("[[TITLE]]", song.title)
+            .replace("[[IMAGE]]", song.imageUrl);
 
         const htmlFile = this.songRequestConfig.currentSong.htmlObsFile;
         this.fileSystem.writeAll(htmlFile, html);

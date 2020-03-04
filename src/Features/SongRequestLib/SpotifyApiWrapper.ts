@@ -20,6 +20,12 @@ export class SongInfo implements ISongInfo {
             this.title = track.name;
             this.artist = track.artists[0].name;
             this.requestedBy = requestBy;
+
+            const firstImage = track.album.images[0];
+            if(firstImage) {
+                this.imageUrl = firstImage.url;
+            }
+
         } catch (err) {
             const log = logger ? logger : LogManager.getLogger();
             log.error(err);
@@ -31,6 +37,7 @@ export class SongInfo implements ISongInfo {
     title: string = "";
     artist: string = "";
     requestedBy: string = "";
+    imageUrl: string = "";
 }
 
 export class SpotifyApiWrapper implements IApiWrapper {
