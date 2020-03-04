@@ -1,6 +1,6 @@
 
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout, IFileSystem } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout, IFileSystem, IObsController } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo, IWebAuth } from "./SongRequestLib";
 import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
@@ -44,6 +44,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly playlist: IPlaylist;
     private readonly songlistWriter: ISongListWriter;
     private readonly deviceList: IPlaybackDevice[] = [];
+    private readonly obs: IObsController;
     private readonly fileSystem: IFileSystem;
     private spotifyAuth: IWebAuth | undefined;
     private token: IAccessToken | undefined;
@@ -53,6 +54,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.argument = context.getArgument("spotify");
         this.fileSystem = context.getFileSystem();
         this.logger = logger ? logger : LogManager.getLogger();
+        this.obs = context.getObs();
         this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
 
         this.spotifyConfig = {
@@ -324,19 +326,23 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     }
 
     private updateOverlay() {
+        this.obs.setSourceVisible("Current Song", false);
+
         const song = this.playlist.getCurrent();
-        if(song == null) {
+        if (song == null) {
             return;
         }
 
-        let html = '<html><head><style>body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }</style>' 
-        + '<script type="text/javascript">setTimeout(function(){location.reload(true);}, 1000);</script><body> <em>[[TITLE]]</em> [[ARTIST]]'
-        + '</body></html>';
-        
+        let html = this.fileSystem.readAll("E:\\input.html");
+
         html = html.replace("[[ARTIST]]", song.artist);
         html = html.replace("[[TITLE]]", song.title);
-        
+
         this.fileSystem.writeAll("E:\\test.html", html);
+
+        setTimeout(() => {
+            this.obs.setSourceVisible("Current Song", true);
+        }, new Seconds(0.1).inMilliseconds());
     }
 }
 
