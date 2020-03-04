@@ -4,7 +4,6 @@ import { ILogger, LogManager } from "psst-log";
 import { IObsConfig } from "./Configuration";
 
 export interface IObsController {
-    // todo provide promise
     /** establish connection to OBS */
     connect(): Promise<void>;
 
@@ -16,6 +15,17 @@ export interface IObsController {
      * @param durationInSeconds 0 for a one time toggle, otherwise after the timespan the toggle is reverted
      */
     toggleSource(sourceName: string, durationInSeconds?: number): void;
+
+    /** sets visibility state of the given source.
+     * @param sourceName the OBS source to modify.
+     * @param setVisible if true sets the source visible, otherwise it will be hidden.
+     */
+    setSourceVisible(sourceName: string, isVisible: boolean): void;
+
+    /** gets visibility state of the given source.
+     * @param sourceName the OBS source to query.
+     */
+    isSourceVisible(sourceName: string,): Promise<boolean>;
 
     /** sets the text property of a OBS text source */
     setText(textSourceName: string, text: string): void;
@@ -66,7 +76,7 @@ export class ObsController implements IObsController {
                     this.availableScenes.set(scene.name, scene);
                 });
 
-               resolve();
+                resolve();
             }).catch(err => {
                 this.log.warn("Could not connect to OBS: " + err);
                 reject("Could not connect to OBS: " + err);
@@ -106,6 +116,19 @@ export class ObsController implements IObsController {
             }).catch(err => {
                 this.log.warn("Error toggling source: " + err);
             });
+    }
+
+    public setSourceVisible(sourceName: string, isVisible: boolean): void {
+        const props = ObsController.Get_SetSceneItemProperties(sourceName, isVisible);
+        this.obs.send('SetSceneItemProperties', props)
+            .catch(err => {
+                this.log.warn("OBS.setSourceVisible error: " + err);
+            });
+    }
+
+    public async isSourceVisible(sourceName: string): Promise<boolean> {
+        const result = await this.obs.send('GetSceneItemProperties', { item: sourceName });
+        return result.visible;
     }
 
     public setText(textSourceName: string, text: string) {

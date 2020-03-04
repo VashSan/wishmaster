@@ -67,7 +67,7 @@ test('setText', () => {
     let logger = mock<ILogger>();
     let config = mock<IObsConfig>();
     let obs = createMock();
-    let obsController= new ObsController(config, obs, logger);
+    let obsController = new ObsController(config, obs, logger);
     //There is bug that the "render" property is not recognized
     obs.send.mockResolvedValueOnce();
     // {
@@ -98,4 +98,30 @@ test('setText', () => {
     //   });
     obsController.setText(TestSceneName, "text");
     expect(obs.send).toBeCalledTimes(1);
+});
+
+test('setVisible', () => {
+    let logger = mock<ILogger>();
+    let config = mock<IObsConfig>();
+    let obs = createMock();
+    let obsController = new ObsController(config, obs, logger);
+
+    obs.send.mockResolvedValueOnce();
+
+    obsController.setSourceVisible("source", true);
+
+    expect(obs.send).toBeCalledWith("SetSceneItemProperties", expect.any(Object));
+});
+
+test('getVisible', () => {
+    let logger = mock<ILogger>();
+    let config = mock<IObsConfig>();
+    let obs = createMock();
+    let obsController = new ObsController(config, obs, logger);
+
+    obs.send.mockResolvedValueOnce();
+
+    obsController.isSourceVisible("source");
+
+    expect(obs.send).toBeCalledWith("GetSceneItemProperties", { item: "source" });
 });
