@@ -74,8 +74,15 @@ export interface IStomtConfig {
 export interface ISongRequestConfig {
     writeSongListTo: string;
     songListUrl: string;
+    currentSong: ICurrentSongConfig;
     playlist: IPlaylistConfig;
     spotify: ISpotifyConfig;
+}
+
+export interface ICurrentSongConfig {
+    obsSource: string;
+    htmlObsFile: string;
+    htmlTemplateFile: string;
 }
 
 export interface IPlaylistConfig {

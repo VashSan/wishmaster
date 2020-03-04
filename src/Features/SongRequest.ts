@@ -326,22 +326,29 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     }
 
     private updateOverlay() {
-        this.obs.setSourceVisible("Current Song", false);
+        if (!this.songRequestConfig) {
+            return;
+        }
+
+        const source = this.songRequestConfig.currentSong.obsSource;
+        this.obs.setSourceVisible(source, false);
 
         const song = this.playlist.getCurrent();
         if (song == null) {
             return;
         }
 
-        let html = this.fileSystem.readAll("E:\\input.html");
+        const template = this.songRequestConfig.currentSong.htmlTemplateFile;
+        let html = this.fileSystem.readAll(template);
 
         html = html.replace("[[ARTIST]]", song.artist);
         html = html.replace("[[TITLE]]", song.title);
 
-        this.fileSystem.writeAll("E:\\test.html", html);
+        const htmlFile = this.songRequestConfig.currentSong.htmlObsFile;
+        this.fileSystem.writeAll(htmlFile, html);
 
         setTimeout(() => {
-            this.obs.setSourceVisible("Current Song", true);
+            this.obs.setSourceVisible(source, true);
         }, new Seconds(0.1).inMilliseconds());
     }
 }

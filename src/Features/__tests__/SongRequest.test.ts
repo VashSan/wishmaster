@@ -1,10 +1,11 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader, ISpotifyConfig, IFeatureResponse, Seconds } from "../../shared";
+import { IConfiguration, IContext, ISongRequestConfig, IFileSystem, IMessage, ITagReader, ISpotifyConfig, IFeatureResponse, Seconds, IObsController } from "../../shared";
 import { SongRequest, IApiWrapper } from "../SongRequest";
 import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
 import { ISongListWriter } from "../SongRequestLib/SongListWriter";
 import { IWebAuth, IAccessToken } from "../SongRequestLib";
+import { fstat } from "fs";
 
 let api: MockProxy<IApiWrapper> & IApiWrapper;
 let apiAuth: MockProxy<IWebAuth> & IWebAuth;
@@ -12,6 +13,8 @@ let accessToken: MockProxy<IAccessToken> & IAccessToken;
 let logger: MockProxy<ILogger> & ILogger;
 let playlist: MockProxy<IPlaylist> & IPlaylist;
 let context: MockProxy<IContext> & IContext;
+let obs: MockProxy<IObsController> & IObsController;
+let fileSystem: MockProxy<IFileSystem> & IFileSystem;
 let spotifyConfig: MockProxy<ISpotifyConfig> & ISpotifyConfig;
 let songListWriter: MockProxy<ISongListWriter> & ISongListWriter;
 
@@ -43,11 +46,14 @@ beforeEach(() => {
     let config = mock<IConfiguration>();
     config.getSongRequest.mockReturnValue(songConfig);
 
-    let fs = mock<IFileSystem>();
+    fileSystem = mock<IFileSystem>();
+
+    obs = mock<IObsController>();
 
     context = mock<IContext>();
     context.getConfiguration.mockReturnValue(config);
-    context.getFileSystem.mockReturnValue(fs);
+    context.getFileSystem.mockReturnValue(fileSystem);
+    context.getObs.mockReturnValue(obs);
 });
 
 test('construction', () => {
@@ -75,7 +81,7 @@ test('request song updates song list', (done) => {
         expect(playlist.enqueue).toBeCalled();
         expect(songListWriter.update).toBeCalled();
         done();
-    }, 100);
+    }, new Seconds(0.1).inMilliseconds());
 });
 
 test('skip song from user', () => {
@@ -310,4 +316,39 @@ test('connect', (done) => {
         expect(api.setPlaybackDevice).toBeCalledWith({ id: "id", name: "name" });
         done();
     });
+});
+
+test('on next update overlay', (done) => {
+    // Arrange
+    const song = mock<ISongInfo>();
+    song.requestedBy = "bob";
+    song.artist = "Hämatom";
+    song.title = "Eva";
+
+    api.getSong.mockResolvedValue(song);
+
+    let onNextCallback: ((song: ISongInfo | null) => void) | undefined;
+    playlist.onNext.mockImplementation(callback => onNextCallback = callback);
+    playlist.isInQueue.mockReturnValue(false);
+    playlist.enqueue.mockReturnValue(true);
+    playlist.getCurrent.mockReturnValue(song);
+
+    fileSystem.readAll.mockReturnValue("[[TITLE]] [[ARTIST]]");
+
+    const sr = createSongRequest();
+
+    // Act
+    if (onNextCallback) {
+        onNextCallback(song);
+    }
+
+    //Assert
+    setTimeout(() => {
+        expect(songListWriter.update).toBeCalled();
+        expect(obs.setSourceVisible).toHaveBeenNthCalledWith(1, undefined, false);
+        expect(obs.setSourceVisible).toHaveBeenNthCalledWith(2, undefined, true);
+        expect(fileSystem.readAll).toBeCalledWith(undefined);
+        expect(fileSystem.writeAll).toBeCalledWith(undefined, "Eva Hämatom");
+        done();
+    }, new Seconds(0.2).inMilliseconds());
 });
