@@ -60,7 +60,7 @@ export interface IPlaylist {
     isInQueue(song: ISongInfo): boolean;
 
     /**
-     * @param callback This callback is invoked, once a new song is triggered by the playlist.
+     * @param callback This callback is invoked, once a new song is triggered by the playlist or with null if the playlist ended.
      */
     onNext(callback: (song: ISongInfo | null) => void): void;
 
