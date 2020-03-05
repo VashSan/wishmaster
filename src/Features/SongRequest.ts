@@ -49,6 +49,8 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly fileSystem: IFileSystem;
     private spotifyAuth: IWebAuth | undefined;
     private token: IAccessToken | undefined;
+    private defaultPlaylist: ISongInfo[] = [];
+    private defaultPlaylistIndex: number = 0;
 
     constructor(context: IContext, apiAuth?: IWebAuth, apiWrapper?: IApiWrapper, playlist?: IPlaylist, logger?: ILogger, songListWriter?: ISongListWriter) {
         super(context.getConfiguration());
@@ -105,6 +107,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 this.updateApiToken();
                 this.playlist.start();
                 this.updatePlaybackDevices();
+                this.updateDefaultPlaylist();
             });
         } else {
             if (!this.spotifyAuth) {
@@ -115,6 +118,16 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 this.logger.warn("Spotify is not configured correctly");
             }
         }
+    }
+
+    private async updateDefaultPlaylist() {
+        const playlistId = this.songRequestConfig?.defaultPlaylist || "";
+        if (playlistId == "") {
+            return;
+        }
+
+        const result = await this.api.getPlaylist(playlistId);
+        this.defaultPlaylist = result;
     }
 
     private updatePlaybackDevices() {
@@ -155,6 +168,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             const device = this.deviceList.find((item) => {
                 return item.name.toLowerCase() == searchArg || item.id.toLowerCase() == searchArg;
             });
+
             if (device) {
                 this.api.setPlaybackDevice(device);
                 this.logger.info(`Spotify Device found: '${device.name}'`);
