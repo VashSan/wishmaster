@@ -18,17 +18,24 @@ describe('SongInfo', () => {
         expect(logger.error).toBeCalledTimes(1);
     });
 
-    test('does not throw if artists missing', () => {
+    test('create song info', () => {
         const artist = mock<SpotifyApi.ArtistObjectSimplified>();
         artist.name = "Queen";
 
         const track = mock<SpotifyApi.TrackObjectFull>();
         track.artists = [artist];
+        track.album = mock<SpotifyApi.AlbumObjectSimplified>();
+
+        const image = mock<SpotifyApi.ImageObject>();
+        image.url = "xxx";
+        track.album.images = [image];
+
         const logger = mock<ILogger>();
 
         let songInfo: SongInfo = new SongInfo(track, "", logger);
         expect(logger.error).toBeCalledTimes(0);
         expect(songInfo.artist).toBe("Queen");
+        expect(songInfo.imageUrl).toBe("xxx");
     });
 });
 
