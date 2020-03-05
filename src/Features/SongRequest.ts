@@ -20,6 +20,7 @@ export interface IApiWrapper {
     getPlaybackDevices(): Promise<IPlaybackDevice[]>;
     getRemainingTrackTime(): Promise<Seconds>;
     getSong(request: string, msg: IMessage): Promise<ISongInfo>;
+    getPlaylist(id: string): Promise<ISongInfo[]>;
     getVolume(): Promise<number>;
     isPausedOrStopped(): Promise<boolean>;
     playNow(uri: string): void;
