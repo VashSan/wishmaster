@@ -4,7 +4,8 @@ import { mock, MockProxy } from "jest-mock-extended";
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger } from "psst-log";
 import { Seconds, IMessage } from "../../../shared";
-import { ISongInfo } from "../Playlist";
+import { ISongInfo, MediaLibrary } from "../Playlist";
+import { response } from "express";
 
 ///<reference path="../../../node_modules/@types/spotify-api/index.d.ts" />
 ///<reference path="../../../node_modules/@types/spotify-web-api-node/index" />
@@ -289,4 +290,31 @@ describe('SpotifyApiWrapper', () => {
         await expect(act()).resolves.toEqual(expectedResult);
     });
 
+    test('getPlaylist', async () => {
+        // Arrange
+        const track = mock<SpotifyApi.TrackObjectFull>();
+        track.uri = "trackid";
+        track.name = "trackname";
+        track.artists = [];
+
+        const trackObject = mock<SpotifyApi.PlaylistTrackObject>();
+        trackObject.track = track;
+
+        const responseBody = mock<SpotifyApi.PlaylistTrackResponse>();
+        responseBody.items = [trackObject];
+
+        const apiResponse = mock<Response<SpotifyApi.PlaylistTrackResponse>>();
+        apiResponse.body = responseBody;
+
+        api.getPlaylistTracks.mockResolvedValue(apiResponse);
+        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+
+        // Act
+        const act = () => wrapper.getPlaylist("playlistid");
+
+        // Assert
+        const expectedResult: ISongInfo[] = [{ uri: "trackid", source: MediaLibrary.Spotify, title: "trackname", artist: "", requestedBy: "", imageUrl: "" }];
+        await expect(act()).resolves.toEqual(expectedResult);
+
+    });
 });

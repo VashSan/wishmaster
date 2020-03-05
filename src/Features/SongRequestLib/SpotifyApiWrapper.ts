@@ -22,7 +22,7 @@ export class SongInfo implements ISongInfo {
             this.requestedBy = requestBy;
 
             const firstImage = track.album.images[0];
-            if(firstImage) {
+            if (firstImage) {
                 this.imageUrl = firstImage.url;
             }
 
@@ -77,8 +77,8 @@ export class SpotifyApiWrapper implements IApiWrapper {
                     return;
                 }
             }
-            
-            reject("Can not get volume right now");            
+
+            reject("Can not get volume right now");
         });
     }
 
@@ -221,6 +221,26 @@ export class SpotifyApiWrapper implements IApiWrapper {
 
     public setPlaybackDevice(device: IPlaybackDevice): void {
         this.device = device;
+    }
+
+    public getPlaylist(id: string): Promise<ISongInfo[]> {
+        return new Promise<ISongInfo[]>(async (resolve, reject) => {
+            try {
+                const result: ISongInfo[] = [];
+
+                const response = await this.api.getPlaylistTracks(id);
+                response.body.items.forEach((trackItem: SpotifyApi.PlaylistTrackObject)=>{
+                    const song = new SongInfo(trackItem.track, "");
+                    result.push(song);
+                });
+                
+                resolve(result);
+            }
+            catch (err) {
+                reject(err)
+            }
+        });
+
     }
 }
 
