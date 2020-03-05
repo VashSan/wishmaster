@@ -82,10 +82,6 @@ export class SpotifyApiWrapper implements IApiWrapper {
         });
     }
 
-    private updateVolume(device: SpotifyApi.UserDevice) {
-        
-    }
-
     public setVolume(volumePercent: number): void {
         this.api.setVolume(volumePercent)
             .then(() => {
