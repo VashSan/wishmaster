@@ -98,7 +98,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
                 .then((result) => {
                     const track = result?.body.tracks?.items[0];
                     if (track != undefined) {
-                        const song = new SongInfo(track, msg.from);
+                        const song = new SongInfo(track, msg.from, this.logger);
                         resolve(song);
 
                     }
@@ -113,7 +113,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
             this.api.getTrack(songId)
                 .then((track) => {
                     if (track && track.body) {
-                        const song = new SongInfo(track.body, msg.from);
+                        const song = new SongInfo(track.body, msg.from, this.logger);
                         resolve(song);
                     }
                 })
@@ -230,7 +230,7 @@ export class SpotifyApiWrapper implements IApiWrapper {
 
                 const response = await this.api.getPlaylistTracks(id);
                 response.body.items.forEach((trackItem: SpotifyApi.PlaylistTrackObject)=>{
-                    const song = new SongInfo(trackItem.track, "");
+                    const song = new SongInfo(trackItem.track, "", this.logger);
                     result.push(song);
                 });
                 

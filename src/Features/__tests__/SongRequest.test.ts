@@ -17,6 +17,7 @@ let obs: MockProxy<IObsController> & IObsController;
 let fileSystem: MockProxy<IFileSystem> & IFileSystem;
 let spotifyConfig: MockProxy<ISpotifyConfig> & ISpotifyConfig;
 let songListWriter: MockProxy<ISongListWriter> & ISongListWriter;
+let songConfig: MockProxy<ISongRequestConfig> & ISongRequestConfig;
 
 const broadcasterTags = mock<ITagReader>();
 broadcasterTags.isBroadcaster.mockReturnValue(true);
@@ -40,7 +41,7 @@ beforeEach(() => {
     spotifyConfig = mock<ISpotifyConfig>();
     songListWriter = mock<ISongListWriter>();
 
-    let songConfig = mock<ISongRequestConfig>();
+    songConfig = mock<ISongRequestConfig>();
     songConfig.spotify = spotifyConfig;
 
     let config = mock<IConfiguration>();
@@ -351,4 +352,44 @@ test('on next update overlay', (done) => {
         expect(fileSystem.writeAll).toBeCalledWith(undefined, "Eva Hämatom");
         done();
     }, new Seconds(0.2).inMilliseconds());
+});
+
+test('play default song', (done) => {
+    songConfig.defaultPlaylist = "default";
+
+    const song = mock<ISongInfo>();
+    song.requestedBy = "bob";
+    song.artist = "Hämatom";
+    song.title = "Eva";
+
+    api.getPlaylist.mockResolvedValue([song]);
+    api.getPlaybackDevices.mockResolvedValue([]);
+
+    let onNextCallback: ((song: ISongInfo | null) => void) | undefined;
+    playlist.onNext.mockImplementation(callback => onNextCallback = callback);
+    playlist.isInQueue.mockReturnValue(false);
+    playlist.enqueue.mockReturnValue(true);
+    playlist.getCurrent.mockReturnValue(song);
+
+    fileSystem.readAll.mockReturnValue("[[TITLE]] [[ARTIST]]");
+
+
+    apiAuth.authenticate.mockImplementation((authCallback) => authCallback());
+
+    const sr = createSongRequest();
+    sr.connect();
+
+    // Act
+    setTimeout(() => {
+        if (onNextCallback) {
+            onNextCallback(null);
+        }
+    }, new Seconds(0.075).inMilliseconds());
+
+    //Assert
+    setTimeout(() => {
+        expect(playlist.enqueue).toBeCalledTimes(1);
+        done();
+    }, new Seconds(0.15).inMilliseconds());
+
 });

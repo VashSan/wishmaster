@@ -233,11 +233,13 @@ export class Playlist implements IPlaylist {
 
     private update() {
         const tolerance = 100;
-        if (this.list.length == 0) {
+
+        if (Date.now() < this.shouldUpdateAt.getTime()) {
             return;
         }
 
-        if (Date.now() < this.shouldUpdateAt.getTime()) {
+        if (this.list.length == 0) {
+            this.invokeOnNext(null);
             return;
         }
 

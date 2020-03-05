@@ -86,9 +86,13 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             this.playlist = playlist ? playlist : new Playlist(this.api);
         }
 
-        this.playlist.onNext(() => {
-            this.updateSongList();
-            this.updateOverlay();
+        this.playlist.onNext((song) => {
+            if (song == null) {
+                this.playNextFromDefaultPlayList();
+            } else {
+                this.updateSongList();
+                this.updateOverlay();
+            }
         });
 
         const listTarget = this.songRequestConfig?.writeSongListTo || "";
@@ -246,8 +250,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                     this.reply(`Sorry @${song.requestedBy}, the song is already in the queue.`);
                 }
 
-                if (this.playlist.enqueue(song)) {
-                    this.updateSongList();
+                if (this.enqueueSong(song)) {
                     this.reply(`SingsNote @${song.requestedBy} added '${song.title}' (from ${song.artist}) to the playlist SingsNote`);
                 } else {
                     this.reply(`Sorry @${song.requestedBy}, you can not add more songs to the playlist.`);
@@ -257,6 +260,13 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
                 this.logger.error("SongRequest.requestSong: Could not get song.", JSON.stringify(err), JSON.stringify(msg));
                 this.reply(`Sorry @${msg.from}, I could not find your song.`);
             });
+    }
+
+    private enqueueSong(song: ISongInfo) {
+        if (this.playlist.enqueue(song)) {
+            this.updateSongList();
+            return true;
+        }
     }
 
     private requestCurrentSong() {
@@ -338,6 +348,18 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private updateSongList() {
         this.songlistWriter.update();
+    }
+
+    private playNextFromDefaultPlayList() {
+        const index = this.defaultPlaylistIndex;
+        this.defaultPlaylistIndex += 1;
+
+        const nextSong = this.defaultPlaylist[index];
+        if (nextSong) {
+            this.enqueueSong(nextSong);
+        } else {
+            this.defaultPlaylistIndex = 0;
+        }
     }
 
     private updateOverlay() {
