@@ -26,7 +26,7 @@ export class Hours {
     }
     inMilliseconds() {
         return this.hours * 60 * 60 * 1000;
-    } 
+    }
 }
 
 /** calls a handler only if the timeout expired */
@@ -79,5 +79,19 @@ export class Generate {
     public static Base64(source: string): string {
         const buffer = Buffer.from(source);
         return buffer.toString('base64');
+    }
+}
+
+export class ArrayManip {
+    /**
+     * Randomize array in-place using Durstenfeld shuffle.
+     */
+    public static Shuffle<T>(theArray: T[]) {
+        for (var i = theArray.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = theArray[i];
+            theArray[i] = theArray[j];
+            theArray[j] = temp;
+        }
     }
 }

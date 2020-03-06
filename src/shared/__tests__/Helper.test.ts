@@ -1,6 +1,6 @@
 import { IgnoreDuringTimeout, Seconds, Generate } from "..";
 import "../custom-matcher";
-import { Hours, Minutes } from "../Helper";
+import { Hours, Minutes, ArrayManip } from "../Helper";
 
 describe('seconds', () => {
     test('milliseconds', () => {
@@ -100,5 +100,14 @@ describe('Generate', () => {
     test('Base64', () => {
         const result = Generate.Base64("Wishmaster");
         expect(result).toBe("V2lzaG1hc3Rlcg==");
+    });
+});
+
+describe('ArrayManip', ()=>{
+    test('Shuffle', ()=>{
+        let source = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let target = [...source];
+        ArrayManip.Shuffle(target);
+        expect(target).not.toEqual(source);
     });
 });
