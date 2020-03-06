@@ -132,6 +132,9 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
         const result = await this.api.getPlaylist(playlistId);
         this.defaultPlaylist = result;
+        this.defaultPlaylist.forEach(song => {
+            song.requestedBy = this.config.getNickname();
+        });
     }
 
     private updatePlaybackDevices() {
