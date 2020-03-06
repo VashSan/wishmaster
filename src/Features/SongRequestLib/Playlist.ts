@@ -70,6 +70,7 @@ export interface IPlaylist {
 }
 
 export class Playlist implements IPlaylist {
+    private readonly maxWaitTimeUntilUpdate = new Seconds(10);
     private readonly list: ISongInfo[] = [];
     private readonly alreadyPlayed: IPreviousSong[] = [];
     private readonly api: IApiWrapper;
@@ -238,11 +239,6 @@ export class Playlist implements IPlaylist {
             return;
         }
 
-        if (this.list.length == 0) {
-            this.invokeOnNext(null);
-            return;
-        }
-
         this.api
             .getRemainingTrackTime()
             .then((remaining: Seconds) => {
@@ -250,7 +246,10 @@ export class Playlist implements IPlaylist {
                 if (remainingMs < tolerance) {
                     this.playNextSong();
                 } else {
-                    this.shouldUpdateAt = new Date(remainingMs);
+                    const max = this.maxWaitTimeUntilUpdate.inMilliseconds();
+                    const nextUpdate = remainingMs < max ? remainingMs : max;
+                    const updateAt = Date.now() + nextUpdate;
+                    this.shouldUpdateAt.setTime(updateAt);
                 }
             })
             .catch((err) => {
