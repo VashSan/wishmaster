@@ -99,7 +99,7 @@ describe('SpotifyApiWrapper', () => {
         api.getMyCurrentPlaybackState.mockResolvedValue(currentPlaybackResponse);
 
         // Act & Assert
-        await expect(wrapper.getRemainingTrackTime()).resolves.toEqual({ "seconds": 2 });
+        await expect(wrapper.getRemainingTrackTime()).resolves.toEqual(new Seconds(2));
     });
 
     test('play', () => {
@@ -189,6 +189,7 @@ describe('SpotifyApiWrapper', () => {
     test('getVolume', () => {
         // Arrange
         const r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
+        r.statusCode = 200;
         r.body.device = mock<SpotifyApi.UserDevice>();
         r.body.device.volume_percent = 33;
         api.getMyCurrentPlaybackState.mockResolvedValue(r);

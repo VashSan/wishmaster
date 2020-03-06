@@ -113,15 +113,16 @@ test('setVisible', () => {
     expect(obs.send).toBeCalledWith("SetSceneItemProperties", expect.any(Object));
 });
 
-test('getVisible', () => {
-    let logger = mock<ILogger>();
-    let config = mock<IObsConfig>();
-    let obs = createMock();
-    let obsController = new ObsController(config, obs, logger);
+test('getVisible', async () => {
+    const logger = mock<ILogger>();
+    const config = mock<IObsConfig>();
+    const obs = createMock();
+    const obsController = new ObsController(config, obs, logger);
 
-    obs.send.mockResolvedValueOnce();
+    obs.send.mockResolvedValueOnce({ visible: true } as any);
 
-    obsController.isSourceVisible("source");
+    const visibility = await obsController.isSourceVisible("source");
 
+    expect(visibility).toBe(true);
     expect(obs.send).toBeCalledWith("GetSceneItemProperties", { item: "source" });
 });

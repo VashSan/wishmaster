@@ -31,6 +31,7 @@ function createSongRequest() {
 
 beforeEach(() => {
     api = mock<IApiWrapper>();
+    api.getPlaylist.mockResolvedValue([]);
     accessToken = mock<IAccessToken>();
 
     apiAuth = mock<IWebAuth>();

@@ -163,7 +163,7 @@ describe('SpotifyAuth', () => {
 
         const response = {
             //cookie: jest.fn(),
-            //redirect: jest.fn()
+            redirect: jest.fn(),
             clearCookie: jest.fn()
         };
 
@@ -180,7 +180,7 @@ describe('SpotifyAuth', () => {
 
         setTimeout(() => {
             expect(response.clearCookie).toHaveBeenCalledTimes(1);
-            expect(Request.post).toHaveBeenCalledTimes(1);
+            expect(Request.post).toHaveBeenCalledTimes(2);
             done();
         }, new Seconds(0.1).inMilliseconds());
     });
