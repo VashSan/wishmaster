@@ -1,31 +1,39 @@
 /** Use to convert seconds to other unit */
-export class Seconds {
-    private seconds: number;
-    constructor(n: number) {
-        this.seconds = n;
+
+class TimeBase {
+    protected milliseconds: number;
+    constructor(ms: number) {
+        this.milliseconds = ms;
     }
-    inMilliseconds() {
-        return this.seconds * 1000;
+    public inMilliseconds() {
+        return this.milliseconds;
+    }
+    public toSeconds(): Seconds {
+        return new Seconds(this.milliseconds / 1000);
+    }
+    public toMinutes(): Seconds {
+        return new Minutes(this.milliseconds / (1000 * 60));
+    }
+    public toHours(): Seconds {
+        return new Hours(this.milliseconds / 1000 * 60 * 60);
     }
 }
 
-export class Minutes {
-    private minutes: number;
+export class Seconds extends TimeBase {
     constructor(n: number) {
-        this.minutes = n;
-    }
-    inMilliseconds() {
-        return this.minutes * 60 * 1000;
+        super(n * 1000);
     }
 }
 
-export class Hours {
-    private hours: number;
+export class Minutes extends TimeBase {
     constructor(n: number) {
-        this.hours = n;
+        super(n * 60 * 1000);
     }
-    inMilliseconds() {
-        return this.hours * 60 * 60 * 1000;
+}
+
+export class Hours extends TimeBase {
+    constructor(n: number) {
+        super(n * 60 * 60 * 1000);
     }
 }
 
