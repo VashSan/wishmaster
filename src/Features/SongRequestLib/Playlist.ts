@@ -1,5 +1,5 @@
 import { IApiWrapper } from "../SongRequest";
-import { Seconds, IPlaylistConfig } from "../../shared";
+import { Seconds, IPlaylistConfig, ArrayManip } from "../../shared";
 import { ILogger, LogManager } from "psst-log";
 
 export enum MediaLibrary {
@@ -63,6 +63,11 @@ export interface IPlaylist {
      * @param callback This callback is invoked, once a new song is triggered by the playlist or with null if the playlist ended.
      */
     onNext(callback: (song: ISongInfo | null) => void): void;
+
+    /**
+     * Shuffles all songs in the current playlist.
+     */
+    shuffle(): void;
 
     skip(): void;
     start(): void;
@@ -140,6 +145,10 @@ export class Playlist implements IPlaylist {
         }
 
         return false;
+    }
+
+    public shuffle(): void {
+        ArrayManip.Shuffle(this.list);
     }
 
     public skip(): void {

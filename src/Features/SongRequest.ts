@@ -1,6 +1,6 @@
 
 import { ILogger, LogManager } from "psst-log";
-import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout, IFileSystem, IObsController } from "../shared";
+import { IContext, IMessage, ISpotifyConfig, Seconds, ISongRequestConfig, IgnoreDuringTimeout, IFileSystem, IObsController, ArrayManip, Minutes } from "../shared";
 import { FeatureBase } from "./FeatureBase";
 import { Playlist, IPlaylist, SpotifyAuth, SpotifyApiWrapper, IAccessToken, ISongInfo, IWebAuth } from "./SongRequestLib";
 import SongListWriter, { ISongListWriter } from "./SongRequestLib/SongListWriter";
@@ -230,6 +230,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         commandMap.set("!sr-stop", () => this.playlist.stop());
         commandMap.set("!volume", () => this.getOrSetVolume(request, msg));
         commandMap.set("!songlist", () => this.requestSongList());
+        commandMap.set("!shuffle", () => this.shufflePlaylist());
 
         const executor = commandMap.get(cmd);
         if (executor) {
@@ -309,6 +310,16 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         }
     }
 
+    private shufflePlaylistHandler = new IgnoreDuringTimeout(new Minutes(30).toSeconds(), undefined, () => {
+        ArrayManip.Shuffle(this.defaultPlaylist);
+        this.playlist.shuffle();
+        this.reply("Everyday I'm shuffling duDudu SingsNote");
+    });
+
+    public shufflePlaylist(): void {
+        this.shufflePlaylistHandler.handle();
+    }
+
     private skipCurrentSong(msg: IMessage) {
         if (this.playlist.getCurrent()?.requestedBy.toLowerCase() == msg.from.toLowerCase()) {
             this.skipImmediately();
@@ -336,7 +347,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
     private readonly replySongListHandler = new IgnoreDuringTimeout(new Seconds(30), null, (arg) => {
         const songListUrl = this.getPublicSongListUrl();
         this.reply(`SingsNote The current songlist is here: ${songListUrl}`);
-
     });
 
     private requestSongList(): void {
