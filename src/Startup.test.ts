@@ -1,5 +1,5 @@
 import Startup from "./Startup";
-import { IFileSystem, IConfiguration, IContext, IEmailAccess, IEmail, IDatabase } from "./shared";
+import { IFileSystem, IConfiguration, IContext, IEmailAccess, IEmail, IDatabase, DefeatableFeature, IObsController } from "./shared";
 import { mock, MockProxy } from "jest-mock-extended";
 import { ILogger } from "psst-log";
 import { IMessageProcessor } from "./shared/MessageProcessor";
@@ -40,7 +40,7 @@ test('construction', () => {
     expect(() => new Startup(context, config, logger, msgProcessor)).not.toThrow();
 });
 
-test('construction', (done) => {
+test('main (disabled features)', (done) => {
     // Arrange
     const startup = new Startup(context, config, logger, msgProcessor);
 
@@ -53,4 +53,38 @@ test('construction', (done) => {
         expect(msgProcessor.connect).toBeCalledTimes(1);
         done();
     }, 100);
+});
+
+test('main with enabled features', (done) => {
+    // Arrange
+    // TODO some features cause the test to fail. Can we mock the features?
+    config.getEnabledFeatures.mockReturnValue([
+        // DefeatableFeature.Alerts,
+        DefeatableFeature.Bets,
+        //DefeatableFeature.Console,
+        DefeatableFeature.EmailConnection,
+        DefeatableFeature.MediaPlayer,
+        DefeatableFeature.ObsController,
+        //DefeatableFeature.SongRequest,
+        // DefeatableFeature.StaticAnswers,
+        DefeatableFeature.Stomt,
+        DefeatableFeature.UrlFilter
+    ]);
+
+    const obs = mock<IObsController>();
+    obs.connect.mockResolvedValue();
+
+    context.getObs.mockReturnValue(obs);
+
+    const startup = new Startup(context, config, logger, msgProcessor);
+
+    // Act
+    startup.main([]);
+
+    // Assert
+    setTimeout(() => {
+        expect(database.createCollection).toBeCalledTimes(2);
+        expect(msgProcessor.connect).toBeCalledTimes(1);
+        done();
+    }, 200);
 });
