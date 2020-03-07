@@ -1,23 +1,16 @@
-
 import { LogManager, ILogger } from "psst-log";
-
 import { MessageProcessor, IFeature, IMessageProcessor } from "./shared/MessageProcessor";
 import {
-    Configuration, Context, Database, DefeatableFeature, FileSystem, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
+    Context, Database, DefeatableFeature, FileSystem, EmailAccess, UserCollection, ObsController, Seconds, LogCollection,
     IConfiguration, IContext, IDatabase, IObsController, IEmailAccess, IFileSystem
 } from "./shared";
-import { Alerts } from "./Features/Alerts";
-import { Bets } from "./Features/Bets";
-import { Harvest } from "./Features/Harvest";
-import { StaticAnswers } from "./Features/StaticAnswers";
-import { Stomt } from "./Features/Stomt";
-import { SongRequest } from "./Features/SongRequest";
-import { UrlFilter } from "./Features/UrlFilter";
 import CommandLine from "./shared/CommandLine";
+import { IMainFactory, MainFactory } from "./MainFactory";
 
 
 
 export class Startup {
+    private readonly factory: IMainFactory;
     private readonly features: Set<DefeatableFeature>;
     private readonly fs: IFileSystem;
 
@@ -29,7 +22,7 @@ export class Startup {
     private obsController: IObsController;
     private context: IContext;
 
-    constructor(context?: IContext, config?: IConfiguration, logger?: ILogger, msgProcessor?: IMessageProcessor) {
+    constructor(factory?: IMainFactory, context?: IContext, logger?: ILogger, msgProcessor?: IMessageProcessor) {
         if (logger) {
             this.logger = logger;
         } else {
@@ -37,11 +30,8 @@ export class Startup {
             LogManager.addConsoleTarget();
         }
 
-        if (config) {
-            this.config = config;
-        } else {
-            this.config = new Configuration();
-        }
+        this.factory = factory ? factory : new MainFactory();
+        this.config = this.factory.createConfiguration();
 
         this.features = new Set<DefeatableFeature>(this.config.getEnabledFeatures());
 
@@ -58,6 +48,8 @@ export class Startup {
             this.fs = new FileSystem();
             this.context = new Context(this.config, this.logger, this.db, this.obsController, this.email, this.fs);
         }
+
+        this.factory.setContext(this.context);
 
         if (msgProcessor) {
             this.msgProcessor = msgProcessor;
@@ -155,39 +147,27 @@ export class Startup {
         const set = new Set<IFeature>();
         const log = this.logger.log.bind(this.logger);
 
-        set.add(new Harvest(this.context));
+        const harvest = this.factory.createHarvest();
+        set.add(harvest);
 
-        if (this.features.has(DefeatableFeature.Alerts)) {
-            log("Alerts enabled");
-            set.add(new Alerts(this.context));
-        }
+        const map = new Map<DefeatableFeature, () => IFeature>();
+        map.set(DefeatableFeature.Alerts, () => this.factory.createAlerts());
+        map.set(DefeatableFeature.StaticAnswers, () => this.factory.createStaticAnswers());
+        map.set(DefeatableFeature.UrlFilter, () => this.factory.createUrlFilter());
+        map.set(DefeatableFeature.Bets, () => this.factory.createBets());
+        //map.set(DefeatableFeature.Stomt, ()=>this.factory.createStomt());
+        map.set(DefeatableFeature.SongRequest, () => this.factory.createSongRequest());
 
-        if (this.features.has(DefeatableFeature.StaticAnswers)) {
-            log("Static Answers enabled");
-            set.add(new StaticAnswers(this.context));
-        }
+        this.features.forEach(feature => {
+            const factory = map.get(feature);
+            if (factory) {
+                const featureName = feature.toString();
+                log(`Feature '${featureName}' enabled`);
 
-        if (this.features.has(DefeatableFeature.UrlFilter)) {
-            log("URL Filter enabled");
-            set.add(new UrlFilter(this.context));
-        }
-
-        if (this.features.has(DefeatableFeature.Bets)) {
-            log("Bets enabled");
-            set.add(new Bets(this.context));
-        }
-
-        if (this.features.has(DefeatableFeature.Stomt)) {
-            // log("Stomt enabled");
-            // set.add(new Stomt(this.context));
-        }
-
-        if (this.features.has(DefeatableFeature.SongRequest)) {
-            log("Song Request enabled");
-            const sr = new SongRequest(this.context);
-            set.add(sr);
-            sr.connect();
-        }
+                const instance = factory();
+                set.add(instance);
+            }
+        });
 
         return set;
     }
