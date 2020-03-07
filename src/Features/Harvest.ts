@@ -13,11 +13,8 @@ export class Harvest extends FeatureBase implements IFeature {
 
     constructor(context: IContext, logger?: ILogger) {
         super(context.getConfiguration());
-        if (logger) {
-            this.logger = logger;
-        } else {
-            this.logger = LogManager.getLogger();
-        }
+
+        this.logger = logger ? logger : LogManager.getLogger();
 
         const db = context.getDatabase();        
         this.userDb = <IUserCollection>db.get("user");
@@ -37,7 +34,7 @@ export class Harvest extends FeatureBase implements IFeature {
     }
 
     private updateLog(msg: IMessage) {
-        if (msg.tags == null) {
+        if (!msg.tags) {
             this.logger.warn("If tags are not set we cannot update log");
             return;
         }
@@ -83,7 +80,6 @@ export class Harvest extends FeatureBase implements IFeature {
             // if tags dont work we wont collect user stats for now
             return;
         }
-        
 
         this.userDb.newMessage(message);
     }
