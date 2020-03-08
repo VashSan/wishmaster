@@ -5,6 +5,7 @@ import * as express from "express";
 import * as open from "open";
 import { ISpotifyConfig, Generate, IFileSystem, Seconds } from "../../shared";
 import { ILogger, LogManager } from "psst-log";
+import { IApiWrapper } from "../SongRequest";
 
 export interface IWebAuth {
     /**
@@ -38,17 +39,20 @@ export interface ITokenAndExpiry {
 }
 
 export class AccessToken implements IUpdateableAccessToken {
+    private readonly api: IApiWrapper;
     private expiryThreshold: Seconds = new Seconds(60);
     private token: string;
     private expires: Date;
     private auth: IWebAuth;
     private refreshTimeout: NodeJS.Timer | undefined;
     private isRefreshing: boolean = false;
+    
 
-    constructor(tokenObj: ITokenAndExpiry, auth: IWebAuth, expiryThreshold?: Seconds) {
+    constructor(tokenObj: ITokenAndExpiry, auth: IWebAuth, api: IApiWrapper, expiryThreshold?: Seconds) {
         this.token = tokenObj.token;
         this.expires = this.getExpiryDate(tokenObj.expires);
         this.auth = auth;
+        this.api = api;
         if (expiryThreshold) {
             this.expiryThreshold = expiryThreshold;
         }
@@ -57,6 +61,7 @@ export class AccessToken implements IUpdateableAccessToken {
     public setRefreshedToken(tokenObj: ITokenAndExpiry): void {
         this.clearUpdateTimer();
         this.token = tokenObj.token;
+        this.api.updateApiToken(this.token);
         this.expires = this.getExpiryDate(tokenObj.expires);
         this.setUpdateTimer();
     }
@@ -120,6 +125,7 @@ export class SpotifyAuth implements IWebAuth {
     private readonly config: ISpotifyConfig;
     private readonly fs: IFileSystem;
     private readonly tokenFile: string;
+    private readonly api: IApiWrapper;
 
     private accessToken: IUpdateableAccessToken;
 
@@ -127,15 +133,17 @@ export class SpotifyAuth implements IWebAuth {
 
     private isStarting: boolean = false;
     private onAuthentication: (() => void) | null = null;
+    
 
 
-    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application, token?: IUpdateableAccessToken, logger?: ILogger) {
+    constructor(config: ISpotifyConfig, tokenFile: string, api: IApiWrapper, fs: IFileSystem, ex?: express.Application, token?: IUpdateableAccessToken, logger?: ILogger) {
         this.config = config;
         this.tokenFile = tokenFile;
         this.fs = fs;
         this.logger = logger ? logger : LogManager.getLogger();
+        this.api = api;
 
-        this.accessToken = token ? token : new AccessToken({ token: "", expires: new Date() }, this);
+        this.accessToken = token ? token : new AccessToken({ token: "", expires: new Date() }, this, this.api);
 
         if (ex) {
             this.app = ex;

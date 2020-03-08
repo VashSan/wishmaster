@@ -81,9 +81,11 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             } catch (err) {
                 if (err.statusCode && err.statusCode == 401 && this.token) {
                     this.token.forceRefresh();
-                    throw "TrackInfoHandler: Can not fetch remaining track time, will update token.";
+                    this.logger.log("getRemainingTrackTime: Can not fetch remaining track time, will update token.");
+                    return new Seconds(2); // just to let the invoker know when to try again
                 }
-                throw "TrackInfoHandler: Can not fetch remaining track time";
+                this.logger.warn("getRemainingTrackTime: Can not fetch remaining track time.", err);
+                throw new Error("Can not fetch remaining track time.");
             }
         };
         if (this.songRequestConfig != null) {
@@ -93,7 +95,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
             const configDir = this.config.getConfigDir();
             const pathToTokenFile = this.fileSystem.joinPaths(configDir, "spotifyToken.dat");
-            this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, this.fileSystem);
+            this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, this.api, this.fileSystem);
         } else {
             this.playlist = playlist ? playlist : new Playlist(getRemainingTrackTime);
         }
@@ -121,10 +123,15 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         if (!this.isSpotifyConnected() && this.spotifyAuth) {
             this.spotifyAuth.authenticate(() => {
                 this.token = this.spotifyAuth?.getAccessToken();
-                this.updateApiToken();
-                this.playlist.start();
-                this.updatePlaybackDevices();
-                this.updateDefaultPlaylist();
+                const token = this.token?.toString();
+                if (token) {
+                    this.api.updateApiToken(token);
+                    this.playlist.start();
+                    this.updatePlaybackDevices();
+                    this.updateDefaultPlaylist();
+                } else {
+                    this.logger.warn("SongRequest.connect: Could not connect to Spotify");
+                }
             });
         } else {
             if (!this.spotifyAuth) {
@@ -231,8 +238,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             return;
         }
 
-        this.updateApiToken();
-
         const commandMap = new Map<string, () => void>();
         commandMap.set("!sr", () => this.requestSong(request, msg));
         commandMap.set("!songrequest", () => this.requestSong(request, msg));
@@ -249,15 +254,6 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         if (executor) {
             executor.call(this);
         }
-    }
-
-    private updateApiToken() {
-        const token = this.token?.toString() || "";
-        if (this.token && this.token.toString() == "") {
-            return;
-        }
-
-        this.api.updateApiToken(token);
     }
 
     private requestSong(request: string, msg: IMessage) {
