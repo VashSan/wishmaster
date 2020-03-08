@@ -224,7 +224,6 @@ export class Playlist implements IPlaylist {
 
                 this.currentSong = nextSong;
                 this.logger.log(`Playlist.playNextSong: play now (${nextSong.uri})`);
-                this.api.playNow(nextSong.uri);
             } else {
                 this.currentSong = null;
             }
@@ -263,6 +262,11 @@ export class Playlist implements IPlaylist {
             })
             .catch((err) => {
                 this.logger.warn("Playlist.update: Could not fetch remaining track time.", JSON.stringify(err));
+                if (err.statusCode && err.statusCode == 401) {
+                    // this.api. TODO callback 
+                } else {
+                    
+                }
             });
     }
 

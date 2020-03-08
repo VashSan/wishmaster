@@ -11,6 +11,7 @@ let song: MockProxy<ISongInfo> & ISongInfo;
 let song2: MockProxy<ISongInfo> & ISongInfo;
 let config: MockProxy<IPlaylistConfig> & IPlaylistConfig;
 let playlist: Playlist;
+let onNext: jest.Mock;
 
 beforeEach(() => {
     api = mock<IApiWrapper>();
@@ -25,7 +26,10 @@ beforeEach(() => {
         updateIntervalInSeconds: 0.1
     }
 
+    onNext = jest.fn();
+
     playlist = new Playlist(api, config, logger);
+    playlist.onNext(onNext);
 });
 
 afterEach(() => {
@@ -86,7 +90,8 @@ test('getCurrent', (done) => {
         const currentSong = playlist.getCurrent();
 
         // Assert
-        expect(api.playNow).toBeCalledTimes(1);
+        expect(onNext).toBeCalledTimes(1);
+        expect(onNext.mock.calls[0][0]).toBe(song); // toBeCalledWith() did not work for me
         expect(currentSong).toBe(song);
         done();
     }, waitTime.inMilliseconds());
@@ -111,7 +116,9 @@ test('skip', (done) => {
         const secondSong = playlist.getCurrent();
 
         // Assert
-        expect(api.playNow).toBeCalledTimes(2);
+        expect(onNext).toBeCalledTimes(2);
+        //expect(onNext).toBeCalledWith(song2); does not work it seems
+        expect(onNext.mock.calls[1][0]).toBe(song2);
         expect(secondSong).toBe(song2);
         done();
     }, waitTime.inMilliseconds());

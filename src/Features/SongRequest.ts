@@ -90,6 +90,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             if (song == null) {
                 this.playNextFromDefaultPlayList();
             } else {
+                this.api.playNow(song.uri);
                 this.updateSongList();
                 this.updateOverlay();
             }
