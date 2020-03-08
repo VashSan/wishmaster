@@ -11,6 +11,7 @@ import open = require("open");
 
 jest.mock("request");
 import request = require("request");
+import { ILogger } from "psst-log";
 
 describe('AccessToken', () => {
     let token: MockProxy<ITokenAndExpiry> & ITokenAndExpiry;
@@ -70,6 +71,7 @@ describe('SpotifyAuth', () => {
     let Open = mocked(open, true);
     let Request = mocked(request, true);
 
+    let logger: MockProxy<ILogger> & ILogger;
     let config: MockProxy<ISpotifyConfig> & ISpotifyConfig;
     let fs: MockProxy<IFileSystem> & IFileSystem;
     let tokenMock: MockProxy<IUpdateableAccessToken> & IUpdateableAccessToken;
@@ -103,11 +105,11 @@ describe('SpotifyAuth', () => {
     });
 
     test('construction', () => {
-        expect(() => new SpotifyAuth(config, "", fs, expressMock, tokenMock)).not.toThrow();
+        expect(() => new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger)).not.toThrow();
     });
 
     test('authenticate with token', (done) => {
-        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger);
         auth.authenticate(() => {
             // Assert
             expect(Open).toBeCalledTimes(0);
@@ -127,7 +129,7 @@ describe('SpotifyAuth', () => {
         });
 
         fs.exists.mockReturnValue(false);
-        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger);
         auth.authenticate(() => { });
     });
 
@@ -145,7 +147,7 @@ describe('SpotifyAuth', () => {
 
         config.scopes = [];
 
-        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger);
         auth.authenticate(() => { });
 
         setTimeout(() => {
@@ -175,7 +177,7 @@ describe('SpotifyAuth', () => {
 
         config.scopes = [];
 
-        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger);
         auth.authenticate(() => { });
 
         setTimeout(() => {
@@ -203,7 +205,7 @@ describe('SpotifyAuth', () => {
 
         config.scopes = [];
 
-        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock);
+        let auth = new SpotifyAuth(config, "", fs, expressMock, tokenMock, logger);
         auth.authenticate(() => { });
 
         setTimeout(() => {

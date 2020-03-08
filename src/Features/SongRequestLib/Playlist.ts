@@ -1,4 +1,3 @@
-import { IApiWrapper } from "../SongRequest";
 import { Seconds, IPlaylistConfig, ArrayManip } from "../../shared";
 import { ILogger, LogManager } from "psst-log";
 
@@ -78,7 +77,7 @@ export class Playlist implements IPlaylist {
     private readonly maxWaitTimeUntilUpdate = new Seconds(10);
     private readonly list: ISongInfo[] = [];
     private readonly alreadyPlayed: IPreviousSong[] = [];
-    private readonly api: IApiWrapper;
+    private readonly getRemainingTrackTime: () => Promise<Seconds>;
     private readonly config: IPlaylistConfig;
     private readonly logger: ILogger;
     private readonly onNextCallbacks: ((song: ISongInfo | null) => void)[] = [];
@@ -87,8 +86,8 @@ export class Playlist implements IPlaylist {
     private timer: NodeJS.Timer | undefined = undefined;
     private shouldUpdateAt: Date = new Date();
 
-    constructor(apiWrapper: IApiWrapper, config?: IPlaylistConfig, logger?: ILogger) {
-        this.api = apiWrapper;
+    constructor(trackInfo: () => Promise<Seconds>, config?: IPlaylistConfig, logger?: ILogger) {
+        this.getRemainingTrackTime = trackInfo;
         this.logger = logger ? logger : LogManager.getLogger();
         this.config = config ? config : {
             updateIntervalInSeconds: 2,
@@ -247,8 +246,7 @@ export class Playlist implements IPlaylist {
             return;
         }
 
-        this.api
-            .getRemainingTrackTime()
+        this.getRemainingTrackTime()
             .then((remaining: Seconds) => {
                 const remainingMs = remaining.inMilliseconds();
                 if (remainingMs < tolerance) {
@@ -261,12 +259,7 @@ export class Playlist implements IPlaylist {
                 }
             })
             .catch((err) => {
-                this.logger.warn("Playlist.update: Could not fetch remaining track time.", JSON.stringify(err));
-                if (err.statusCode && err.statusCode == 401) {
-                    // this.api. TODO callback 
-                } else {
-                    
-                }
+                this.logger.warn("Playlist.update: Could not fetch remaining track time. ", JSON.stringify(err));
             });
     }
 

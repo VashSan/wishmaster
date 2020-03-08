@@ -1,11 +1,10 @@
 import { Playlist, ISongInfo } from "../Playlist";
 import { mock, MockProxy } from "jest-mock-extended";
-import { IApiWrapper } from "../../SongRequest";
 import { ILogger } from "psst-log";
 import { Seconds, IPlaylistConfig } from "../../../shared";
 
 const waitTime = new Seconds(0.1);
-let api: MockProxy<IApiWrapper> & IApiWrapper;
+let getRemainingTrackTime: jest.Mock;
 let logger: MockProxy<ILogger> & ILogger;
 let song: MockProxy<ISongInfo> & ISongInfo;
 let song2: MockProxy<ISongInfo> & ISongInfo;
@@ -14,9 +13,6 @@ let playlist: Playlist;
 let onNext: jest.Mock;
 
 beforeEach(() => {
-    api = mock<IApiWrapper>();
-    api.getRemainingTrackTime.mockResolvedValue(new Seconds(0));
-
     logger = mock<ILogger>();
     song = mock<ISongInfo>();
     song2 = mock<ISongInfo>();
@@ -28,7 +24,10 @@ beforeEach(() => {
 
     onNext = jest.fn();
 
-    playlist = new Playlist(api, config, logger);
+    getRemainingTrackTime = jest.fn();
+    getRemainingTrackTime.mockResolvedValue(new Seconds(0));
+
+    playlist = new Playlist(getRemainingTrackTime, config, logger);
     playlist.onNext(onNext);
 });
 
@@ -38,7 +37,6 @@ afterEach(() => {
 
 test('enqueue to stopped playlist', () => {
     // Arrange
-
 
     // Act
     const wasQueued = playlist.enqueue(song);
@@ -73,8 +71,8 @@ test('stop', () => {
 
 test('getCurrent', (done) => {
     // Arrange
-    api.getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
-    api.getRemainingTrackTime.mockResolvedValue(new Seconds(3));
+    getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
+    getRemainingTrackTime.mockResolvedValue(new Seconds(3));
 
     const currentSongBeforeStart = playlist.getCurrent();
     expect(currentSongBeforeStart).toBeNull();
@@ -99,8 +97,8 @@ test('getCurrent', (done) => {
 
 test('skip', (done) => {
     // Arrange
-    api.getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
-    api.getRemainingTrackTime.mockResolvedValue(new Seconds(3));
+    getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
+    getRemainingTrackTime.mockResolvedValue(new Seconds(3));
 
     playlist.start();
 
@@ -127,8 +125,8 @@ test('skip', (done) => {
 test('remove last song', (done) => {
     // Arrange
     const alice = "alice";
-    api.getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
-    api.getRemainingTrackTime.mockResolvedValue(new Seconds(3));
+    getRemainingTrackTime.mockResolvedValueOnce(new Seconds(0));
+    getRemainingTrackTime.mockResolvedValue(new Seconds(3));
 
     song.requestedBy = alice;
     song.title = "1";

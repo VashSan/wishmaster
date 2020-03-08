@@ -4,6 +4,7 @@ import * as querystring from "querystring";
 import * as express from "express";
 import * as open from "open";
 import { ISpotifyConfig, Generate, IFileSystem, Seconds } from "../../shared";
+import { ILogger, LogManager } from "psst-log";
 
 export interface IWebAuth {
     /**
@@ -23,6 +24,7 @@ export interface IWebAuth {
 }
 
 export interface IAccessToken {
+    forceRefresh(): void;
     toString(): string;
 }
 
@@ -41,6 +43,7 @@ export class AccessToken implements IUpdateableAccessToken {
     private expires: Date;
     private auth: IWebAuth;
     private refreshTimeout: NodeJS.Timer | undefined;
+    private isRefreshing: boolean = false;
 
     constructor(tokenObj: ITokenAndExpiry, auth: IWebAuth, expiryThreshold?: Seconds) {
         this.token = tokenObj.token;
@@ -72,10 +75,18 @@ export class AccessToken implements IUpdateableAccessToken {
         }
 
         this.refreshTimeout = setTimeout(() => {
+            this.forceRefresh();
+        }, timeout);
+    }
+
+    public forceRefresh() {
+        if (!this.isRefreshing) {
+            this.isRefreshing = true;
             this.auth.refreshAccessToken().then((token: ITokenAndExpiry) => {
                 this.setRefreshedToken(token);
+                this.isRefreshing = false;
             });
-        }, timeout);
+        }
     }
 
     private clearUpdateTimer() {
@@ -104,6 +115,7 @@ export class SpotifyAuth implements IWebAuth {
     private readonly redirect = "callback";
     private readonly login = "login";
 
+    private readonly logger: ILogger;
     private readonly app: express.Application;
     private readonly config: ISpotifyConfig;
     private readonly fs: IFileSystem;
@@ -117,16 +129,13 @@ export class SpotifyAuth implements IWebAuth {
     private onAuthentication: (() => void) | null = null;
 
 
-    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application, token?: IUpdateableAccessToken) {
+    constructor(config: ISpotifyConfig, tokenFile: string, fs: IFileSystem, ex?: express.Application, token?: IUpdateableAccessToken, logger?: ILogger) {
         this.config = config;
-        this.tokenFile = tokenFile; this.app = express();
+        this.tokenFile = tokenFile;
         this.fs = fs;
+        this.logger = logger ? logger : LogManager.getLogger();
 
-        if (token) {
-            this.accessToken = token;
-        } else {
-            this.accessToken = new AccessToken({ token: "", expires: new Date() }, this);
-        }
+        this.accessToken = token ? token : new AccessToken({ token: "", expires: new Date() }, this);
 
         if (ex) {
             this.app = ex;
@@ -331,8 +340,10 @@ export class SpotifyAuth implements IWebAuth {
             request.post(authOptions, (error, response, body) => {
                 if (!error && response.statusCode === 200) {
                     let newToken = this.createTokenAndExpiry(body.access_token, body.expires_in);
+                    this.logger.log("SpotifyAuth.refreshAccessToken: new token received");
                     resolve(newToken);
                 } else {
+                    this.logger.warn("SpotifyAuth.refreshAccessToken: Could not refresh access token.", error);
                     reject(`Status ${response.statusCode}: ${error}`);
                 }
             });

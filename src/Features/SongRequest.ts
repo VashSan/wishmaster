@@ -74,8 +74,20 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         };
 
         this.songRequestConfig = this.config.getSongRequest();
+
+        const getRemainingTrackTime = async (): Promise<Seconds> => {
+            try {
+                return await this.api.getRemainingTrackTime();
+            } catch (err) {
+                if (err.statusCode && err.statusCode == 401 && this.token) {
+                    this.token.forceRefresh();
+                    throw "TrackInfoHandler: Can not fetch remaining track time, will update token.";
+                }
+                throw "TrackInfoHandler: Can not fetch remaining track time";
+            }
+        };
         if (this.songRequestConfig != null) {
-            this.playlist = playlist ? playlist : new Playlist(this.api, this.songRequestConfig.playlist);
+            this.playlist = playlist ? playlist : new Playlist(getRemainingTrackTime, this.songRequestConfig.playlist);
 
             this.spotifyConfig = this.songRequestConfig.spotify;
 
@@ -83,7 +95,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
             const pathToTokenFile = this.fileSystem.joinPaths(configDir, "spotifyToken.dat");
             this.spotifyAuth = apiAuth ? apiAuth : new SpotifyAuth(this.spotifyConfig, pathToTokenFile, this.fileSystem);
         } else {
-            this.playlist = playlist ? playlist : new Playlist(this.api);
+            this.playlist = playlist ? playlist : new Playlist(getRemainingTrackTime);
         }
 
         this.playlist.onNext((song) => {
@@ -208,7 +220,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     /** Enqueue the requested song to the playlist */
     public act(msg: IMessage): void {
-        if (this.token == "") {
+        if (this.token && this.token.toString() == "") {
             return;
         }
         const splits = msg.text.split(" ");
@@ -241,7 +253,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
 
     private updateApiToken() {
         const token = this.token?.toString() || "";
-        if (this.token == "") {
+        if (this.token && this.token.toString() == "") {
             return;
         }
 
