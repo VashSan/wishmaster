@@ -86,7 +86,7 @@ export class ObsController implements IObsController {
         }
     }
 
-    public toggleSource(sourceName: string, durationInSeconds: number = 0) {
+    public toggleSource(sourceName: string, durationInSeconds: number = 0): void {
         if (!this.isConnected) {
             return;
         }
@@ -98,10 +98,7 @@ export class ObsController implements IObsController {
             }).then(() => {
                 if (durationInSeconds != 0) {
                     let timeout = 1000 * durationInSeconds;
-                    let that = this;
-                    setTimeout(function () {
-                        that.toggleSource(sourceName);
-                    }, timeout);
+                    setTimeout(() => this.toggleSource(sourceName), timeout);
                 }
             }).catch(err => {
                 this.log.warn("Error toggling source: " + err);

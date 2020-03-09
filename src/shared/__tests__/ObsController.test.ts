@@ -55,12 +55,12 @@ test('switchToScene', async (done) => {
     await obsController.connect();
 
     obsController.switchToScene(TestSceneName);
-    
+
     setTimeout((err) => {
         expect(logger.warn).toBeCalledTimes(0);
         expect(logger.info).toBeCalledTimes(2);
         expect(err).toBeUndefined();
-        
+
         expect(obs.send).toHaveBeenCalledTimes(2);
         expect(obs.send).toHaveBeenCalledWith("SetCurrentScene", expect.any(Object));
         done();
@@ -130,4 +130,30 @@ test('getVisible', async () => {
 
     expect(visibility).toBe(true);
     expect(obs.send).toBeCalledWith("GetSceneItemProperties", { item: "source" });
+});
+
+test('toggleSource', async (done) => {
+    // Arrange
+    const logger = mock<ILogger>();
+    const config = mock<IObsConfig>();
+    const obs = createMock();
+
+    mockSendInit(obs);
+    const obsController = new ObsController(config, obs, logger);
+    await obsController.connect();
+
+    obs.send.mockResolvedValue({ visible: true } as any);
+
+    // Act
+    obsController.toggleSource("source", 0.01);
+
+    // Assert
+    setTimeout(() => {
+        expect(obs.send).toHaveBeenNthCalledWith(2, "GetSceneItemProperties", expect.any(Object));
+        expect(obs.send).toHaveBeenNthCalledWith(3, "SetSceneItemProperties", expect.any(Object));
+        expect(obs.send).toHaveBeenNthCalledWith(4, "GetSceneItemProperties", expect.any(Object));
+        expect(obs.send).toHaveBeenNthCalledWith(5, "SetSceneItemProperties", expect.any(Object));
+        done();
+    }, new Seconds(0.1).inMilliseconds());
+
 });
