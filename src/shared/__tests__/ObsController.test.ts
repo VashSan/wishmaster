@@ -3,6 +3,7 @@ import { ObsController } from '../ObsController';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ILogger } from 'psst-log';
 import { IObsConfig } from '../Configuration';
+import { Seconds } from '../Helper';
 
 const TestSceneName = 'testScene';
 
@@ -51,16 +52,19 @@ test('switchToScene', async (done) => {
 
     let obsController = new ObsController(config, obs, logger);
 
-    obsController.connect().then((err) => {
+    await obsController.connect();
+
+    obsController.switchToScene(TestSceneName);
+    
+    setTimeout((err) => {
         expect(logger.warn).toBeCalledTimes(0);
         expect(logger.info).toBeCalledTimes(2);
         expect(err).toBeUndefined();
+        
+        expect(obs.send).toHaveBeenCalledTimes(2);
+        expect(obs.send).toHaveBeenCalledWith("SetCurrentScene", expect.any(Object));
         done();
-    });
-
-    // obsController.switchToScene(TestSceneName);
-
-    // expect(obs.send).toHaveBeenCalledTimes(2);
+    }, new Seconds(0.1).inMilliseconds());
 });
 
 test('setText', () => {
@@ -98,6 +102,7 @@ test('setText', () => {
     //   });
     obsController.setText(TestSceneName, "text");
     expect(obs.send).toBeCalledTimes(1);
+    expect(obs.send).toHaveBeenCalledWith("SetTextGDIPlusProperties", expect.any(Object));
 });
 
 test('setVisible', () => {

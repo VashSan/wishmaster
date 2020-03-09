@@ -39,18 +39,8 @@ export class ObsController implements IObsController {
     private availableScenes: Map<string, OBSWebSocket.Scene> = new Map<string, OBSWebSocket.Scene>();
 
     constructor(obsConfig: IObsConfig | null, obsApi?: OBSWebSocket, logger?: ILogger) {
-        if (logger) {
-            this.log = logger;
-        } else {
-            this.log = LogManager.getLogger();
-        }
-
-        if (obsApi) {
-            this.obs = obsApi;
-        } else {
-            this.obs = new OBSWebSocket();
-        }
-
+        this.log = logger ? logger : LogManager.getLogger();
+        this.obs = obsApi ? obsApi : new OBSWebSocket();
         this.config = obsConfig;
     }
 
