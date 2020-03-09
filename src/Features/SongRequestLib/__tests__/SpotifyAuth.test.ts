@@ -94,6 +94,7 @@ describe('SpotifyAuth', () => {
     }
 
     beforeEach(() => {
+        logger = mock<ILogger>();
         api = mock<IApiWrapper>();
         tokenMock = mock<IUpdateableAccessToken>();
         config = mock<ISpotifyConfig>();
