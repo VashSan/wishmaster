@@ -3,6 +3,4 @@ node_js:
     - 12
 after_success:
   - codecov
-
-coverage:
-  range: "70...85"
+  
