@@ -148,33 +148,6 @@ describe('SpotifyApiWrapper', () => {
         await expect(wrapper.isPausedOrStopped()).rejects.toBeTruthy();
     });
 
-    test('requestCurrentSongInfo', () => {
-        // Arrange
-        const currentPlayback = createCurrentPlaybackResponseMock();
-        api.getMyCurrentPlaybackState.mockResolvedValue(currentPlayback);
-
-        const artist = mock<SpotifyApi.ArtistObjectSimplified>();
-        artist.name = "Hämatom";
-
-        const track = mock<SpotifyApi.TrackObjectFull>();
-        track.name = "boom boom boom";
-        track.artists = [artist];
-
-        const currentTrack = mock<Response<SpotifyApi.CurrentlyPlayingResponse>>();
-        currentTrack.body.item = track;
-
-        api.getMyCurrentPlayingTrack.mockResolvedValue(currentTrack);
-
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
-
-        // Act
-        const message: IMessage = { channel: "", from: "lion", text: "!song" };
-        wrapper.requestCurrentSongInfo(message);
-
-        // Assert
-        expect(api.getMyCurrentPlaybackState).toBeCalledTimes(1);
-    });
-
     test('updateApiToken', () => {
         // Arrange
         const wrapper = new SpotifyApiWrapper(chat, api, logger);

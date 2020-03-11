@@ -24,7 +24,6 @@ export interface IApiWrapper {
     getVolume(): Promise<number>;
     isPausedOrStopped(): Promise<boolean>;
     playNow(uri: string): void;
-    requestCurrentSongInfo(msg: IMessage): void;
     setVolume(volumePercent: number): void;
     setPlaybackDevice(device: IPlaybackDevice): void;
     updateApiToken(token: string): void;

@@ -2,7 +2,7 @@ import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
 import { IApiWrapper, ICanReply, IPlaybackDevice } from "../SongRequest";
 import { ISongInfo, MediaLibrary } from "./Playlist";
-import { IMessage, Seconds } from "../../shared";
+import { IMessage, Seconds, ICurrentSongConfig } from "../../shared";
 
 /**
  * partial SpotifyWebApi.PlayOptions
@@ -118,28 +118,6 @@ export class SpotifyApiWrapper implements IApiWrapper {
                     }
                 })
                 .catch((err) => reject(err));
-        });
-    }
-
-    public requestCurrentSongInfo(msg: IMessage) {
-        this.api.getMyCurrentPlaybackState().then((state) => {
-            if (state.body.is_playing) {
-                return this.api.getMyCurrentPlayingTrack();
-            }
-        }).then((result) => {
-            if (result) {
-                const trackNameOpt = result.body.item?.name.toString();
-                const trackName = trackNameOpt || "";
-                const artistOpt = result.body.item?.artists[0].name.toString();
-                const artist = artistOpt || "";
-
-                if (trackName != "") {
-                    this.chat.reply(`Current song: '${trackName}' from ${artist}`);
-                }
-            }
-        }).catch((err) => {
-            // What could possibly go wrong?
-            this.logger.error("[!song] Could not retrieve song info.", JSON.stringify(err), JSON.stringify(msg));
         });
     }
 
