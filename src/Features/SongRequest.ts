@@ -237,7 +237,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         commandMap.set("!songrequest", () => this.requestSong(request, msg));
         commandMap.set("!song", () => this.requestCurrentSong());
         commandMap.set("!skip", () => this.skipCurrentSong(msg));
-        commandMap.set("!rs", () => this.removeMyLastRequest(msg.from));
+        commandMap.set("!rs", () => this.removeMyLastRequest(request, msg.from));
         commandMap.set("!sr-start", () => this.playlist.start());
         commandMap.set("!sr-stop", () => this.playlist.stop());
         commandMap.set("!volume", () => this.getOrSetVolume(request, msg));
@@ -339,7 +339,11 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         this.playlist.skip();
     }
 
-    private removeMyLastRequest(user: string) {
+    private removeMyLastRequest(request: string, user: string) {
+        if (request.trim() != "") {
+            return;
+        }
+
         const removedSong = this.playlist.removeLastSongFromUser(user);
         if (removedSong) {
             this.updateSongList();

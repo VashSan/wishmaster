@@ -142,16 +142,28 @@ test('skip song with no permission', () => {
     expect(playlist.skip).not.toBeCalled();
 });
 
-test('remove last song from user', () => {
+test('removeLastSongFromUser', () => {
     // Arrange
     const sr = createSongRequest();
-    const msg: IMessage = { text: "!rs", from: "bob", channel: "" };
+    const msg: IMessage = { text: "!rs   ", from: "bob", channel: "" };
 
     // Act
     sr.act(msg);
 
     //Assert
     expect(playlist.removeLastSongFromUser).toBeCalledWith("bob");
+});
+
+test('removeLastSongFromUser is ignored if a text is passed', () => {
+    // Arrange
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!rs  unexpected text  ", from: "alice", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(playlist.removeLastSongFromUser).not.toBeCalledWith("alice");
 });
 
 test('stop', () => {
