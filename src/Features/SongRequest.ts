@@ -138,17 +138,41 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         }
     }
 
-    private async updateDefaultPlaylist() {
+    private updateDefaultPlaylist() {
         const playlistId = this.songRequestConfig?.defaultPlaylist || "";
         if (playlistId == "") {
             return;
         }
 
-        const result = await this.api.getPlaylist(playlistId);
+        const broadcaster = this.config.getNickname();
+        this.setPlaylist(playlistId, broadcaster);
+    }
+
+    private async updatePlaylistByCommand(id: string, msg: IMessage) {
+        if (msg.tags?.isMod() || msg.tags?.isBroadcaster()) {
+            const success = await this.setPlaylist(id, msg.from);
+            if (success) {
+                this.reply("Updated playlist SingsNote.");
+            } else {
+                this.reply("Playlist was not found");
+            }
+        }
+    }
+
+    private async setPlaylist(id: string, from: string): Promise<boolean> {
+        let result: ISongInfo[];
+        try {
+            result = await this.api.getPlaylist(id);
+        } catch {
+            this.logger.warn("Could not update playlist. ID/from:", id, from);
+            return false;
+        }
+        this.defaultPlaylistIndex = 0;
         this.defaultPlaylist = result;
         this.defaultPlaylist.forEach(song => {
-            song.requestedBy = this.config.getNickname();
+            song.requestedBy = from;
         });
+        return true;
     }
 
     private updatePlaybackDevices() {
@@ -243,6 +267,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         commandMap.set("!volume", () => this.getOrSetVolume(request, msg));
         commandMap.set("!songlist", () => this.requestSongList());
         commandMap.set("!shuffle", () => this.shufflePlaylist());
+        commandMap.set("!playlist", () => this.updatePlaylistByCommand(request, msg));
 
         const executor = commandMap.get(cmd);
         if (executor) {

@@ -281,11 +281,21 @@ describe('SpotifyApiWrapper', () => {
         const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
-        const act = () => wrapper.getPlaylist("playlistid");
+        const act = () => wrapper.getPlaylist("spotify:playlist:id");
 
         // Assert
         const expectedResult: ISongInfo[] = [{ uri: "trackid", source: MediaLibrary.Spotify, title: "trackname", artist: "", requestedBy: "", imageUrl: "" }];
         await expect(act()).resolves.toEqual(expectedResult);
+    });
 
+    test('getPlaylist with wrong id format', async () => {
+        // Arrange
+        const wrapper = new SpotifyApiWrapper(api, logger);
+
+        // Act
+        const act = () => wrapper.getPlaylist("id");
+
+        // Assert
+        await expect(act()).rejects.toEqual("Wrong id format");
     });
 });

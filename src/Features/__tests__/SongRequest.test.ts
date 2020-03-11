@@ -5,7 +5,6 @@ import { ILogger } from "psst-log";
 import { IPlaylist, ISongInfo } from "../SongRequestLib/PlayList";
 import { ISongListWriter } from "../SongRequestLib/SongListWriter";
 import { IWebAuth, IAccessToken } from "../SongRequestLib";
-import { fstat } from "fs";
 
 let api: MockProxy<IApiWrapper> & IApiWrapper;
 let apiAuth: MockProxy<IWebAuth> & IWebAuth;
@@ -405,4 +404,28 @@ test('play default song', (done) => {
         done();
     }, new Seconds(0.15).inMilliseconds());
 
+});
+
+test('setPlaylist', () => {
+    // Arrange
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!playlist spotify:playlist:1234", from: "alice", channel: "", tags: modTags };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.getPlaylist).toBeCalledWith("spotify:playlist:1234");
+});
+
+test('setPlaylist without Mod', () => {
+    // Arrange
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!playlist spotify:playlist:1234", from: "bob", channel: "" };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(api.getPlaylist).not.toBeCalled();
 });

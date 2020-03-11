@@ -200,11 +200,20 @@ export class SpotifyApiWrapper implements IApiWrapper {
     }
 
     public getPlaylist(id: string): Promise<ISongInfo[]> {
+        let playlistId: string;
+        const spotifyRegex = /spotify:playlist:([A-Za-z0-9]+)|https:\/\/open\.spotify\.com\/playlist\/([A-Za-z0-9]+)/;
+        const result = spotifyRegex.exec(id);
+        if (result != null && result.length > 1) {
+            playlistId = result[1] ? result[1] : result[2];
+        } else {
+            return Promise.reject("Wrong id format");
+        }
+
         return new Promise<ISongInfo[]>(async (resolve, reject) => {
             try {
                 const result: ISongInfo[] = [];
 
-                const response = await this.api.getPlaylistTracks(id);
+                const response = await this.api.getPlaylistTracks(playlistId);
                 response.body.items.forEach((trackItem: SpotifyApi.PlaylistTrackObject)=>{
                     const song = new SongInfo(trackItem.track, "", this.logger);
                     result.push(song);
