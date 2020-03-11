@@ -1,5 +1,4 @@
 import { SpotifyApiWrapper, SongInfo } from "..";
-import { ICanReply } from "../../SongRequest";
 import { mock, MockProxy } from "jest-mock-extended";
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger } from "psst-log";
@@ -43,7 +42,6 @@ describe('SongInfo', () => {
 
 describe('SpotifyApiWrapper', () => {
     let logger: MockProxy<ILogger> & ILogger;
-    let chat: MockProxy<ICanReply> & ICanReply;
     let api: MockProxy<SpotifyWebApi> & SpotifyWebApi;
 
     function createCurrentPlaybackResponseMock() {
@@ -81,19 +79,18 @@ describe('SpotifyApiWrapper', () => {
     }
 
     beforeEach(() => {
-        chat = mock<ICanReply>();
         logger = mock<ILogger>();
         api = mock<SpotifyWebApi>();
         api.play.mockImplementation(() => new Promise<Response<void>>((resolve) => resolve()));
     });
 
     test('construction', () => {
-        expect(() => { new SpotifyApiWrapper(chat, api, logger) }).not.toThrow();
+        expect(() => { new SpotifyApiWrapper(api, logger) }).not.toThrow();
     });
 
     test('getRemainingTrackTime', async () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         let currentPlaybackResponse = createCurrentPlaybackResponseMock();
         api.getMyCurrentPlaybackState.mockResolvedValue(currentPlaybackResponse);
@@ -104,7 +101,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('play', () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         wrapper.playNow("test");
@@ -116,7 +113,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('isPausedOrStopped isPlaying', async () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         let r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
         r.body.is_playing = true;
@@ -129,7 +126,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('isPausedOrStopped stopped', async () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         let r = mock<Response<SpotifyApi.CurrentPlaybackResponse>>();
         r.body.is_playing = false;
@@ -142,7 +139,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('isPausedOrStopped undefined', async () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act & Assert
         await expect(wrapper.isPausedOrStopped()).rejects.toBeTruthy();
@@ -150,7 +147,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('updateApiToken', () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         wrapper.updateApiToken("token");
@@ -167,7 +164,7 @@ describe('SpotifyApiWrapper', () => {
         r.body.device.volume_percent = 33;
         api.getMyCurrentPlaybackState.mockResolvedValue(r);
 
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         const act = () => wrapper.getVolume();
@@ -180,7 +177,7 @@ describe('SpotifyApiWrapper', () => {
         // Arrange
         api.setVolume.mockImplementation(() => new Promise<Response<void>>((resolve, reject) => { resolve(); }));
 
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         wrapper.setVolume(50);
@@ -195,7 +192,7 @@ describe('SpotifyApiWrapper', () => {
 
         api.searchTracks.mockResolvedValue(response);
 
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         const message: IMessage = { channel: "", from: "alice", text: "!sr Innuendo Queen" };
@@ -221,7 +218,7 @@ describe('SpotifyApiWrapper', () => {
 
         api.getTrack.mockResolvedValue(track);
 
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         const message: IMessage = { channel: "", from: "alice", text: "!sr spotify:track:46gsGxk2iUctmgJUmQRTKz" };
@@ -233,7 +230,7 @@ describe('SpotifyApiWrapper', () => {
 
     test('setDevice', () => {
         // Arrange
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         wrapper.setPlaybackDevice({ id: "id", name: "name" });
@@ -254,7 +251,7 @@ describe('SpotifyApiWrapper', () => {
         response.body.devices = [testDevice];
 
         api.getMyDevices.mockResolvedValue(response);
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         const act = () => wrapper.getPlaybackDevices();
@@ -281,7 +278,7 @@ describe('SpotifyApiWrapper', () => {
         apiResponse.body = responseBody;
 
         api.getPlaylistTracks.mockResolvedValue(apiResponse);
-        const wrapper = new SpotifyApiWrapper(chat, api, logger);
+        const wrapper = new SpotifyApiWrapper(api, logger);
 
         // Act
         const act = () => wrapper.getPlaylist("playlistid");

@@ -1,6 +1,6 @@
 import SpotifyWebApi = require("spotify-web-api-node");
 import { ILogger, LogManager } from "psst-log";
-import { IApiWrapper, ICanReply, IPlaybackDevice } from "../SongRequest";
+import { IApiWrapper, IPlaybackDevice } from "../SongRequest";
 import { ISongInfo, MediaLibrary } from "./Playlist";
 import { IMessage, Seconds, ICurrentSongConfig } from "../../shared";
 
@@ -43,11 +43,9 @@ export class SongInfo implements ISongInfo {
 export class SpotifyApiWrapper implements IApiWrapper {
     private readonly api: SpotifyWebApi;
     private readonly logger: ILogger;
-    private readonly chat: ICanReply;
     private device: IPlaybackDevice | undefined;
 
-    constructor(chat: ICanReply, api?: SpotifyWebApi, logger?: ILogger) {
-        this.chat = chat;
+    constructor(api?: SpotifyWebApi, logger?: ILogger) {
         this.api = api ? api : new SpotifyWebApi();
         this.logger = logger ? logger : LogManager.getLogger();
     }

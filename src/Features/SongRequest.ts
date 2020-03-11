@@ -29,13 +29,8 @@ export interface IApiWrapper {
     updateApiToken(token: string): void;
 }
 
-export interface ICanReply {
-    reply(text: string): void;
-}
-
-
 /** Enqueue songs to a playlist */
-export class SongRequest extends FeatureBase implements ISongRequest, ICanReply {
+export class SongRequest extends FeatureBase implements ISongRequest {
     private readonly argument: IArgument | undefined;
     private readonly songRequestConfig: ISongRequestConfig | null;
     private readonly spotifyConfig: ISpotifyConfig;
@@ -57,7 +52,7 @@ export class SongRequest extends FeatureBase implements ISongRequest, ICanReply 
         this.fileSystem = context.getFileSystem();
         this.logger = logger ? logger : LogManager.getLogger();
         this.obs = context.getObs();
-        this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper(this);
+        this.api = apiWrapper ? apiWrapper : new SpotifyApiWrapper();
 
         this.spotifyConfig = {
             authProtocol: "",
