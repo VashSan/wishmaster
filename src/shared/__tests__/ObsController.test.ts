@@ -6,8 +6,15 @@ import { IObsConfig } from '../Configuration';
 import { Seconds } from '../Helper';
 
 const TestSceneName = 'testScene';
+const defaultWaitTime = new Seconds(0.01);
+
+let logger: MockProxy<ILogger> & ILogger;
+let obs: MockProxy<OBSWebSocket> & OBSWebSocket;
+let config: MockProxy<IObsConfig> & IObsConfig;
+
 
 function mockSendInit(obs: MockProxy<OBSWebSocket> & OBSWebSocket) {
+    obs.send.mockReset();
     return obs.send.mockResolvedValueOnce({
         messageId: "1",
         status: "ok",
@@ -19,38 +26,68 @@ function mockSendInit(obs: MockProxy<OBSWebSocket> & OBSWebSocket) {
     });
 }
 
-function createMock(): MockProxy<OBSWebSocket> & OBSWebSocket {
+function createObsWebSocketMock(): MockProxy<OBSWebSocket> & OBSWebSocket {
     let obs = mock<OBSWebSocket>();
     obs.connect.mockResolvedValueOnce();
     return obs;
 }
 
+function createObs(reconnectIn = new Seconds(0)): ObsController {
+    return new ObsController(config, obs, logger, reconnectIn);
+}
+
+beforeEach(() => {
+    logger = mock<ILogger>();
+    obs = createObsWebSocketMock();
+    config = mock<IObsConfig>();
+})
+
 test('construction', async () => {
-    let logger = mock<ILogger>();
-    let obs = mock<OBSWebSocket>();
-    let config = mock<IObsConfig>();
-    expect(() => new ObsController(config, obs, logger)).not.toThrow();
+    expect(() => createObs()).not.toThrow();
 });
 
 test('connect fails', async () => {
-    let logger = mock<ILogger>();
-    let config = mock<IObsConfig>();
-    let obs = createMock();
     obs.connect.mockReset();
     obs.connect.mockRejectedValueOnce("err");
 
-    let obsController = new ObsController(config, obs, logger);
+    let obsController = createObs();
 
-    await expect(obsController.connect()).rejects.toContain("err");
+    let actualErr: string = "";
+    try {
+        await obsController.connect();
+    } catch (err) {
+        actualErr = err;
+    }
+
+    expect(actualErr).toContain("err");
+});
+
+test('reconnect succeeds', async (done) => {
+    obs.connect.mockReset();
+    obs.connect
+        .mockRejectedValueOnce("err")
+        .mockResolvedValueOnce();
+
+    let obsController = createObs(new Seconds(0.01));
+
+    try {
+        await obsController.connect();
+    } catch (err) {
+        expect(err).toContain("err");
+        mockSendInit(obs);
+    }
+
+    setTimeout(() => {
+        const isConnected = obsController.getIsConnected();
+        expect(isConnected).toBeTruthy();
+        done();
+    }, defaultWaitTime.inMilliseconds());
 });
 
 test('switchToScene', async (done) => {
-    let logger = mock<ILogger>();
-    let config = mock<IObsConfig>();
-    let obs = createMock();
-    mockSendInit(obs).mockResolvedValueOnce();
+    mockSendInit(obs).mockResolvedValue();
 
-    let obsController = new ObsController(config, obs, logger);
+    let obsController = createObs();
 
     await obsController.connect();
 
@@ -64,14 +101,11 @@ test('switchToScene', async (done) => {
         expect(obs.send).toHaveBeenCalledTimes(2);
         expect(obs.send).toHaveBeenCalledWith("SetCurrentScene", expect.any(Object));
         done();
-    }, new Seconds(0.1).inMilliseconds());
+    }, defaultWaitTime.inMilliseconds());
 });
 
 test('setText', () => {
-    let logger = mock<ILogger>();
-    let config = mock<IObsConfig>();
-    let obs = createMock();
-    let obsController = new ObsController(config, obs, logger);
+    let obsController = createObs();
     //There is bug that the "render" property is not recognized
     obs.send.mockResolvedValueOnce();
     // {
@@ -106,10 +140,7 @@ test('setText', () => {
 });
 
 test('setVisible', () => {
-    let logger = mock<ILogger>();
-    let config = mock<IObsConfig>();
-    let obs = createMock();
-    let obsController = new ObsController(config, obs, logger);
+    let obsController = createObs();
 
     obs.send.mockResolvedValueOnce();
 
@@ -119,10 +150,7 @@ test('setVisible', () => {
 });
 
 test('getVisible', async () => {
-    const logger = mock<ILogger>();
-    const config = mock<IObsConfig>();
-    const obs = createMock();
-    const obsController = new ObsController(config, obs, logger);
+    const obsController = createObs();
 
     obs.send.mockResolvedValueOnce({ visible: true } as any);
 
@@ -134,12 +162,8 @@ test('getVisible', async () => {
 
 test('toggleSource', async (done) => {
     // Arrange
-    const logger = mock<ILogger>();
-    const config = mock<IObsConfig>();
-    const obs = createMock();
-
     mockSendInit(obs);
-    const obsController = new ObsController(config, obs, logger);
+    const obsController = createObs();
     await obsController.connect();
 
     obs.send.mockResolvedValue({ visible: true } as any);
@@ -154,6 +178,5 @@ test('toggleSource', async (done) => {
         expect(obs.send).toHaveBeenNthCalledWith(4, "GetSceneItemProperties", expect.any(Object));
         expect(obs.send).toHaveBeenNthCalledWith(5, "SetSceneItemProperties", expect.any(Object));
         done();
-    }, new Seconds(0.1).inMilliseconds());
-
+    }, defaultWaitTime.inMilliseconds() * 2);
 });

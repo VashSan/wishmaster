@@ -2,6 +2,7 @@ import * as OBSWebSocket from "obs-websocket-js";
 import { ILogger, LogManager } from "psst-log";
 
 import { IObsConfig } from "./Configuration";
+import { Seconds } from "./Helper";
 
 export interface IObsController {
     /** establish connection to OBS */
@@ -25,7 +26,7 @@ export interface IObsController {
     /** gets visibility state of the given source.
      * @param sourceName the OBS source to query.
      */
-    isSourceVisible(sourceName: string,): Promise<boolean>;
+    isSourceVisible(sourceName: string, ): Promise<boolean>;
 
     /** sets the text property of a OBS text source */
     setText(textSourceName: string, text: string): void;
@@ -34,17 +35,31 @@ export interface IObsController {
 export class ObsController implements IObsController {
     private readonly config: IObsConfig | null;
     private readonly obs: OBSWebSocket;
+    private readonly reconnectIn: Seconds;
     private isConnected: boolean = false;
+    private isConnecting: boolean = false;
     private log: ILogger;
     private availableScenes: Map<string, OBSWebSocket.Scene> = new Map<string, OBSWebSocket.Scene>();
 
-    constructor(obsConfig: IObsConfig | null, obsApi?: OBSWebSocket, logger?: ILogger) {
+    constructor(obsConfig: IObsConfig | null, obsApi?: OBSWebSocket, logger?: ILogger, reconnectIn?: Seconds) {
         this.log = logger ? logger : LogManager.getLogger();
         this.obs = obsApi ? obsApi : new OBSWebSocket();
         this.config = obsConfig;
+        this.reconnectIn = reconnectIn ? reconnectIn : new Seconds(10);
+    }
+
+    public getIsConnected() {
+        return this.isConnected;
     }
 
     public connect(): Promise<void> {
+        if (this.isConnecting) {
+            return Promise.reject("Currently connecting");
+        }
+        if (this.isConnected) {
+            return Promise.resolve();
+        }
+        this.isConnecting = true;
         return new Promise((resolve, reject) => {
             if (this.config == null) {
                 this.log.warn("OBS connection skipped due to missing config.");
@@ -58,6 +73,7 @@ export class ObsController implements IObsController {
             }).then(() => {
                 this.log.info("Connected to OBS.");
                 this.isConnected = true;
+                this.isConnecting = false;
                 return this.obs.send('GetSceneList', undefined);
             }).then((data: any) => {
                 this.log.info(`Scanning ${data.scenes.length} available scenes!`);
@@ -70,6 +86,14 @@ export class ObsController implements IObsController {
             }).catch(err => {
                 this.log.warn("Could not connect to OBS: " + err);
                 reject("Could not connect to OBS: " + err);
+                this.isConnecting = false;
+
+                const reconnectInMs = this.reconnectIn.inMilliseconds();
+                if (reconnectInMs != 0) {
+                    setTimeout(() => {
+                        this.connect();
+                    }, reconnectInMs);
+                }
             });
         });
     }
