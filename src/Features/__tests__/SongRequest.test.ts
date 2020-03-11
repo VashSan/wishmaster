@@ -167,6 +167,20 @@ test('removeLastSongFromUser is ignored if a text is passed', () => {
 
 test('stop', () => {
     // Arrange
+    songConfig.currentSong.obsSource = "obsSource";
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!sr-stop", from: "alice", channel: "", tags: modTags };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(playlist.stop).toBeCalled();
+    expect(obs.setSourceVisible).toBeCalledWith("obsSource", false);
+});
+
+test('stop by non mod', () => {
+    // Arrange
     const sr = createSongRequest();
     const msg: IMessage = { text: "!sr-stop", from: "bob", channel: "" };
 
@@ -174,10 +188,23 @@ test('stop', () => {
     sr.act(msg);
 
     //Assert
-    expect(playlist.stop).toBeCalled();
+    expect(playlist.stop).not.toBeCalled();
+    expect(obs.setSourceVisible).not.toBeCalled();
 });
 
 test('start', () => {
+    // Arrange
+    const sr = createSongRequest();
+    const msg: IMessage = { text: "!sr-start", from: "alice", channel: "", tags: modTags };
+
+    // Act
+    sr.act(msg);
+
+    //Assert
+    expect(playlist.start).toBeCalled();
+});
+
+test('start by non mod', () => {
     // Arrange
     const sr = createSongRequest();
     const msg: IMessage = { text: "!sr-start", from: "bob", channel: "" };
@@ -186,7 +213,7 @@ test('start', () => {
     sr.act(msg);
 
     //Assert
-    expect(playlist.start).toBeCalled();
+    expect(playlist.start).not.toBeCalled();
 });
 
 test('volume', () => {

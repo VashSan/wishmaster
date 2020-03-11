@@ -262,8 +262,8 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         commandMap.set("!song", () => this.requestCurrentSong());
         commandMap.set("!skip", () => this.skipCurrentSong(msg));
         commandMap.set("!rs", () => this.removeMyLastRequest(request, msg.from));
-        commandMap.set("!sr-start", () => this.playlist.start());
-        commandMap.set("!sr-stop", () => this.playlist.stop());
+        commandMap.set("!sr-start", () => this.startPlaylist(msg));
+        commandMap.set("!sr-stop", () => this.stopPlaylist(msg));
         commandMap.set("!volume", () => this.getOrSetVolume(request, msg));
         commandMap.set("!songlist", () => this.requestSongList());
         commandMap.set("!shuffle", () => this.shufflePlaylist());
@@ -272,6 +272,25 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         const executor = commandMap.get(cmd);
         if (executor) {
             executor.call(this);
+        }
+    }
+
+    private startPlaylist(msg: IMessage) {
+        if (!this.isModOrBroadcaster(msg.tags)) {
+            this.logger.log(`SongRequest.startPlaylist: Request to start playlist by '${msg.from}' was denied.`);
+            return;
+        }
+        this.playlist.start();
+    }
+
+    private stopPlaylist(msg: IMessage) {
+        if (!this.isModOrBroadcaster(msg.tags)) {
+            this.logger.log(`SongRequest.stopPlaylist: Request to stop playlist by '${msg.from}' was denied.`);
+            return;
+        }
+        this.playlist.stop();
+        if (this.songRequestConfig) {
+            this.obs.setSourceVisible(this.songRequestConfig.currentSong.obsSource, false);
         }
     }
 
