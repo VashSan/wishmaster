@@ -93,12 +93,12 @@ export class Alerts extends FeatureBase {
     private performNewHostActions(hostFrom: string) {
 
         let newFollowerAlert = new PendingAlert(hostFrom, () => {
+            this.sendHostThanksToChat(hostFrom);
             this.userDb.newHostFrom(hostFrom);
             this.mediaPlayer.play(Sound.Bell);
             //this.setObsNewHostText(hostFrom);
             this.appendToViewerActionsHistory(hostFrom, "Host");
             //this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
-            this.sendHostThanksToChat(hostFrom);
         });
 
         this.notifyNewAlert(newFollowerAlert);
@@ -121,11 +121,11 @@ export class Alerts extends FeatureBase {
     private performNewFollowerActions(newFollower: string) {
 
         let newFollowerAlert = new PendingAlert(newFollower, () => {
+            this.sendFollowerThanksToChat(newFollower);
             this.userDb.newFollowFrom(newFollower);
             this.setObsNewFollowerText(newFollower);
             this.appendToViewerActionsHistory(newFollower, null);
             this.obs.toggleSource(this.alertConfig.parameter, this.alertConfig.durationInSeconds);
-            this.sendFollowerThanksToChat(newFollower);
         });
 
         this.notifyNewAlert(newFollowerAlert);
