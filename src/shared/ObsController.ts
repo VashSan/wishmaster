@@ -125,7 +125,7 @@ export class ObsController implements IObsController {
                     setTimeout(() => this.toggleSource(sourceName), timeout);
                 }
             }).catch(err => {
-                this.log.warn("Error toggling source: " + err);
+                this.log.warn("Error toggling source: ", err);
             });
     }
 
@@ -133,7 +133,7 @@ export class ObsController implements IObsController {
         const props = ObsController.Get_SetSceneItemProperties(sourceName, isVisible);
         this.obs.send('SetSceneItemProperties', props)
             .catch(err => {
-                this.log.warn("OBS.setSourceVisible error: " + err);
+                this.log.warn("OBS.setSourceVisible error: ", err);
             });
     }
 

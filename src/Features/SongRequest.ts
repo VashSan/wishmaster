@@ -163,8 +163,8 @@ export class SongRequest extends FeatureBase implements ISongRequest {
         let result: ISongInfo[];
         try {
             result = await this.api.getPlaylist(id);
-        } catch {
-            this.logger.warn("Could not update playlist. ID/from:", id, from);
+        } catch(err) {
+            this.logger.warn("Could not update playlist. ID/from:", id, from, err);
             return false;
         }
         this.defaultPlaylistIndex = 0;
@@ -452,7 +452,7 @@ export class SongRequest extends FeatureBase implements ISongRequest {
 
         setTimeout(() => {
             this.obs.setSourceVisible(source, true);
-        }, new Seconds(0.1).inMilliseconds());
+        }, new Seconds(1).inMilliseconds());
     }
 }
 
